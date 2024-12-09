@@ -10,21 +10,10 @@ window.toggleLanguage = function() {
     setCurrentLang(currentLang);
     document.documentElement.lang = currentLang;
     document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
-    updateLanguageDisplay();
     
     const langToggle = document.getElementById('language-toggle');
     langToggle.textContent = currentLang === 'he' ? 'EN' : 'עב';
 };
-
-function updateLanguageDisplay() {
-    document.querySelectorAll('[data-lang]').forEach(el => {
-        if (el.getAttribute('data-lang') === currentLang) {
-            el.style.display = '';
-        } else {
-            el.style.display = 'none';
-        }
-    });
-}
 
 // Show error message
 function showError(message) {
@@ -46,7 +35,6 @@ async function handleLogin(event) {
     
     let username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    const errorDiv = document.getElementById('login-error');
     
     // Normalize username by removing hyphens
     username = username.replace(/-/g, '');
@@ -60,23 +48,18 @@ async function handleLogin(event) {
             body: JSON.stringify({ username, password })
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-            const data = await response.json();
             throw new Error(data.message || 'Login failed');
         }
 
-        const data = await response.json();
-        
         // Store the session token and member ID
-        localStorage.setItem('sessionToken', data.sessionToken);
-        localStorage.setItem('memberId', data.member.id);
-        localStorage.setItem('isLoggedIn', 'true');
-        
-        // Redirect to member page in edit mode
-        const baseUrl = location.hostname === 'localhost' 
-            ? '' 
-            : '/Optopia-3.0';
-        window.location.href = `${baseUrl}/member.html?id=${data.member.id}&edit=true`;
+        localStorage.setItem('sessionToken', data.token);
+        localStorage.setItem('memberId', data.memberId);
+
+        // Redirect to member page
+        window.location.href = `member.html?id=${data.memberId}`;
     } catch (error) {
         console.error('Login error:', error);
         showError({
@@ -93,7 +76,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
-    
-    // Initialize language display
-    updateLanguageDisplay();
 });

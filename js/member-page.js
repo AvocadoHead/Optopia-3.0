@@ -62,48 +62,182 @@ async function loadMemberData(memberId) {
 }
 
 function toggleEditMode() {
-    const editButton = document.getElementById('edit-button');
-    if (!editButton) return;
-
     isEditMode = !isEditMode;
     document.body.classList.toggle('edit-mode', isEditMode);
-    
-    // Update button text
-    if (currentLang === 'he') {
-        editButton.querySelector('[data-lang="he"]').textContent = isEditMode ? 'שמור שינויים' : 'ערוך פרופיל';
-    } else {
-        editButton.querySelector('[data-lang="en"]').textContent = isEditMode ? 'Save Changes' : 'Edit Profile';
-    }
 
-    // Show/hide add buttons
+    // Show/hide add buttons based on edit mode
     const addButtons = document.querySelectorAll('#add-gallery-item, #add-course');
     addButtons.forEach(button => {
         if (button) button.style.display = isEditMode ? 'block' : 'none';
     });
 
-    if (isEditMode) {
-        // Make fields editable
-        const editables = document.querySelectorAll('.editable');
-        editables.forEach(field => {
-            field.contentEditable = true;
-            field.addEventListener('blur', handleFieldEdit);
+    // Toggle edit button text
+    const editButton = document.getElementById('edit-button');
+    if (editButton) {
+        const heSpan = editButton.querySelector('[data-lang="he"]');
+        const enSpan = editButton.querySelector('[data-lang="en"]');
+        if (isEditMode) {
+            heSpan.textContent = 'צא ממצב עריכה';
+            enSpan.textContent = 'Exit Edit Mode';
+
+            // Create edit controls
+            const editControls = document.createElement('div');
+            editControls.className = 'edit-controls';
+            editControls.style.display = 'block';
+            editControls.innerHTML = `
+                <button id="save-changes" class="nav-btn">
+                    <span data-lang="he">שמור שינויים</span>
+                    <span data-lang="en" style="display:none;">Save Changes</span>
+                </button>
+                <button id="cancel-changes" class="nav-btn">
+                    <span data-lang="he">בטל שינויים</span>
+                    <span data-lang="en" style="display:none;">Cancel Changes</span>
+                </button>
+            `;
+            
+            // Add event listeners to the new buttons
+            const saveBtn = editControls.querySelector('#save-changes');
+            const cancelBtn = editControls.querySelector('#cancel-changes');
+            saveBtn.addEventListener('click', saveChanges);
+            cancelBtn.addEventListener('click', cancelChanges);
+
+            // Add the controls to the page
+            const memberProfile = document.querySelector('.member-profile');
+            memberProfile.appendChild(editControls);
+
+            // Create password change button
+            const changePasswordBtn = document.createElement('button');
+            changePasswordBtn.id = 'change-password-button';
+            changePasswordBtn.className = 'nav-btn';
+            changePasswordBtn.innerHTML = `
+                <span data-lang="he">שנה סיסמה</span>
+                <span data-lang="en" style="display:none;">Change Password</span>
+            `;
+            changePasswordBtn.addEventListener('click', showChangePasswordDialog);
+            editControls.appendChild(changePasswordBtn);
+        } else {
+            heSpan.textContent = 'ערוך פרופיל';
+            enSpan.textContent = 'Edit Profile';
+
+            // Remove edit controls (which includes password change button)
+            const editControls = document.querySelector('.edit-controls');
+            if (editControls) {
+                editControls.remove();
+            }
+        }
+    }
+
+    // Make fields editable
+    const editableFields = document.querySelectorAll('.editable');
+    editableFields.forEach(field => {
+        field.contentEditable = isEditMode;
+        if (isEditMode) {
+            field.addEventListener('input', handleFieldEdit);
+        } else {
+            field.removeEventListener('input', handleFieldEdit);
+        }
+    });
+
+    // Reset to original data if canceling edit mode
+    if (!isEditMode) {
+        currentData = { ...originalData };
+        updateMemberDetails(currentData);
+        renderMemberGallery(currentData.gallery_items || []);
+        renderMemberCourses(currentData.courses || []);
+    }
+}
+
+function showChangePasswordDialog() {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'edit-dialog';
+    dialog.innerHTML = `
+        <h3>
+            <span data-lang="he">שינוי סיסמה</span>
+            <span data-lang="en" style="display:none;">Change Password</span>
+        </h3>
+        <form id="change-password-form" class="change-password-form">
+            <div class="form-group">
+                <label for="current-password">
+                    <span data-lang="he">סיסמה נוכחית</span>
+                    <span data-lang="en" style="display:none;">Current Password</span>
+                </label>
+                <input type="password" id="current-password" required>
+            </div>
+            <div class="form-group">
+                <label for="new-password">
+                    <span data-lang="he">סיסמה חדשה</span>
+                    <span data-lang="en" style="display:none;">New Password</span>
+                </label>
+                <input type="password" id="new-password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">
+                    <span data-lang="he">אימות סיסמה חדשה</span>
+                    <span data-lang="en" style="display:none;">Confirm New Password</span>
+                </label>
+                <input type="password" id="confirm-password" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span data-lang="he">עדכן סיסמה</span>
+                    <span data-lang="en" style="display:none;">Update Password</span>
+                </button>
+                <button type="button" class="btn" onclick="this.closest('dialog').close()">
+                    <span data-lang="he">ביטול</span>
+                    <span data-lang="en" style="display:none;">Cancel</span>
+                </button>
+            </div>
+        </form>
+    `;
+
+    // Add to document and show
+    document.body.appendChild(dialog);
+    dialog.showModal();
+
+    // Handle form submission
+    const form = dialog.querySelector('#change-password-form');
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        await handlePasswordChange(event);
+        dialog.close();
+    });
+
+    // Update language display
+    updateLanguageDisplay();
+}
+
+async function handlePasswordChange(event) {
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    
+    if (newPassword !== confirmPassword) {
+        alert('New passwords do not match');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+            },
+            body: JSON.stringify({
+                currentPassword,
+                newPassword
+            })
         });
 
-        // Re-render courses to show all available ones
-        renderMemberCourses(currentData.courses || []);
-    } else {
-        // Save changes
-        saveChanges();
-        
-        // Make fields non-editable
-        const editables = document.querySelectorAll('.editable');
-        editables.forEach(field => {
-            field.contentEditable = false;
-            field.removeEventListener('blur', handleFieldEdit);
-        });
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || 'Failed to change password');
+        }
 
-        // Re-render courses to show only teaching ones
-        renderMemberCourses(currentData.courses || []);
+        alert('Password changed successfully');
+    } catch (error) {
+        console.error('Error changing password:', error);
+        alert(error.message);
     }
 }
 
@@ -653,51 +787,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     const memberId = getMemberIdFromUrl();
     if (memberId) {
         await loadMemberData(memberId);
-        
-        // Set up change password form if user is logged in
-        const changePasswordForm = document.getElementById('change-password-form');
-        if (changePasswordForm && isLoggedIn) {
-            document.getElementById('change-password-section').style.display = 'block';
-            changePasswordForm.addEventListener('submit', handlePasswordChange);
-        }
     }
 });
-
-// Handle password change
-async function handlePasswordChange(event) {
-    event.preventDefault();
-    
-    const currentPassword = document.getElementById('current-password').value;
-    const newPassword = document.getElementById('new-password').value;
-    const confirmPassword = document.getElementById('confirm-password').value;
-    
-    if (newPassword !== confirmPassword) {
-        alert('New passwords do not match');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
-            },
-            body: JSON.stringify({
-                currentPassword,
-                newPassword
-            })
-        });
-
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.message || 'Failed to change password');
-        }
-
-        alert('Password changed successfully');
-        document.getElementById('change-password-form').reset();
-    } catch (error) {
-        console.error('Error changing password:', error);
-        alert(error.message);
-    }
-}

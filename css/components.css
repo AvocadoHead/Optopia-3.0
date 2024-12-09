@@ -1651,3 +1651,51 @@ html[lang="en"] .en-only {
     gap: 8px;
     margin-top: 12px;
 }
+
+/* Login Form */
+.login-form {
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.login-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.login-form button {
+    width: auto;
+    min-width: 120px;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Change Password Form */
+.change-password-form {
+    max-width: 300px;
+    margin: 1rem auto;
+}
+
+.change-password-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.change-password-form input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.change-password-form button {
+    width: auto;
+    min-width: 120px;
+    margin: 0 auto;
+    display: block;
+}

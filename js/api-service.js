@@ -1,5 +1,5 @@
 // API base URL - use production URL in production, localhost in development
-export const API_BASE_URL = location.hostname === 'localhost' 
+const API_BASE_URL = location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://optopia-3-0-backend.onrender.com/api';
 

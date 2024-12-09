@@ -1699,3 +1699,27 @@ html[lang="en"] .en-only {
     margin: 0 auto;
     display: block;
 }
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-control {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: var(--font-size-base);
+}
+
+.form-control:invalid {
+    border-color: var(--border-color);
+    box-shadow: none;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
+}

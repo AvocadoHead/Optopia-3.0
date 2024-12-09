@@ -1,5 +1,5 @@
 // API base URL - use production URL in production, localhost in development
-const API_BASE_URL = location.hostname === 'localhost' 
+export const API_BASE_URL = location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://optopia-3-0-backend.onrender.com/api';
 
@@ -75,7 +75,7 @@ export async function getMemberById(id) {
 export async function updateMember(id, data) {
     try {
         const response = await fetch(`${API_BASE_URL}/members/${id}`, {
-            method: 'PUT',
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`

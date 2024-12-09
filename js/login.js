@@ -26,9 +26,12 @@ function updateLanguageDisplay() {
 async function handleLogin(event) {
     event.preventDefault();
     
-    const username = document.getElementById('username').value;
+    let username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('login-error');
+    
+    // Normalize username by removing hyphens
+    username = username.replace(/-/g, '');
     
     try {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -52,7 +55,10 @@ async function handleLogin(event) {
         localStorage.setItem('isLoggedIn', 'true');
         
         // Redirect to member page in edit mode
-        window.location.href = `/member.html?id=${data.member.id}&edit=true`;
+        const baseUrl = location.hostname === 'localhost' 
+            ? '' 
+            : '/Optopia-3.0';
+        window.location.href = `${baseUrl}/member.html?id=${data.member.id}&edit=true`;
     } catch (error) {
         console.error('Login error:', error);
         errorDiv.textContent = error.message;
@@ -70,3 +76,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize language display
     updateLanguageDisplay();
+});

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://optopia-3-0-backend.onrender.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://optopia-3-0-backend.onrender.com/api/* http://localhost:3000/api/*; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;">
     <title>Optopia - Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
@@ -19,15 +19,15 @@
             <div class="nav-buttons">
                 <a href="index.html" class="nav-btn">
                     <span data-lang="he">דף הבית</span>
-                    <span data-lang="en" style="display:none;">Home</span>
+                    <span data-lang="en">Home</span>
                 </a>
                 <a href="gallery.html" class="nav-btn">
                     <span data-lang="he">גלריה</span>
-                    <span data-lang="en" style="display:none;">Gallery</span>
+                    <span data-lang="en">Gallery</span>
                 </a>
                 <a href="courses.html" class="nav-btn">
                     <span data-lang="he">קורסים</span>
-                    <span data-lang="en" style="display:none;">Courses</span>
+                    <span data-lang="en">Courses</span>
                 </a>
                 <button onclick="toggleLanguage()" class="nav-btn" id="language-toggle">EN</button>
             </div>
@@ -36,27 +36,27 @@
         <main>
             <section class="login-section">
                 <h2 data-lang="he" class="section-title">התחברות</h2>
-                <h2 data-lang="en" class="section-title" style="display:none;">Login</h2>
+                <h2 data-lang="en" class="section-title">Login</h2>
                 
                 <form id="login-form" class="login-form">
                     <div class="form-group">
                         <label for="username" data-lang="he">שם משתמש</label>
-                        <label for="username" data-lang="en" style="display:none;">Username</label>
+                        <label for="username" data-lang="en">Username</label>
                         <input type="text" id="username" name="username" required class="form-control">
                     </div>
                     
                     <div class="form-group">
                         <label for="password" data-lang="he">סיסמה</label>
-                        <label for="password" data-lang="en" style="display:none;">Password</label>
+                        <label for="password" data-lang="en">Password</label>
                         <input type="password" id="password" name="password" required class="form-control">
                     </div>
                     
-                    <div id="login-error" class="error-message" style="display:none;"></div>
+                    <div id="login-error" class="error-message"></div>
                     
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">
                             <span data-lang="he">התחבר</span>
-                            <span data-lang="en" style="display:none;">Login</span>
+                            <span data-lang="en">Login</span>
                         </button>
                     </div>
                 </form>

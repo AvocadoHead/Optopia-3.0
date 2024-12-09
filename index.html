@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optopia - AI Artists Collective</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <div class="nav-buttons">
+                <a href="gallery.html" class="nav-btn he-only">גלריה</a>
+                <a href="gallery.html" class="nav-btn en-only">Gallery</a>
+                <a href="courses.html" class="nav-btn he-only">קורסים</a>
+                <a href="courses.html" class="nav-btn en-only">Courses</a>
+                <button onclick="toggleLanguage()" class="nav-btn">EN</button>
+            </div>
+            <div class="logo-title-wrapper">
+                <h1 class="site-title">Optopia</h1>
+                <img src="assets/optopia-logo.png" alt="Optopia Logo" class="logo">
+            </div>
+        </header>
+
+        <main>
+            <section class="featured-members">
+                <h2>
+                    <span data-lang="he">חברי הקולקטיב</span>
+                    <span data-lang="en" style="display:none;">Collective Members</span>
+                </h2>
+                <div id="members-grid" class="members-grid"></div>
+                <button id="toggle-members" class="nav-btn">
+                    <span data-lang="he">הצג עוד</span>
+                    <span data-lang="en" style="display:none;">Show More</span>
+                </button>
+            </section>
+
+            <section class="gallery-preview">
+                <h2>
+                    <span data-lang="he">גלריה</span>
+                    <span data-lang="en" style="display:none;">Gallery</span>
+                </h2>
+                <div id="gallery-preview" class="gallery-grid"></div>
+                <a href="gallery.html" class="see-more-btn">
+                    <span data-lang="he">לגלריה המלאה</span>
+                    <span data-lang="en" style="display:none;">Full Gallery</span>
+                </a>
+            </section>
+
+            <section class="courses-preview">
+                <h2>
+                    <span data-lang="he">קורסים</span>
+                    <span data-lang="en" style="display:none;">Courses</span>
+                </h2>
+                <div id="courses-preview" class="courses-grid"></div>
+                <a href="courses.html" class="see-more-btn">
+                    <span data-lang="he">לכל הקורסים</span>
+                    <span data-lang="en" style="display:none;">All Courses</span>
+                </a>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="js/utils.js"></script>
+    <script type="module" src="js/api-service.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co http://localhost:3000; connect-src 'self' https://*.supabase.co http://localhost:3000; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://* http://*;">
+    <title>Optopia - Member Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <style>
+        .edit-mode .editable {
+            border: 1px dashed #ccc;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .edit-mode .editable:hover {
+            background: #f5f5f5;
+        }
+        .edit-controls {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .edit-mode .edit-controls {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <div class="nav-buttons">
+                    <a href="index.html" class="nav-btn">
+                        <span data-lang="he">דף הבית</span>
+                        <span data-lang="en" style="display:none;">Home</span>
+                    </a>
+                    <a href="gallery.html" class="nav-btn">
+                        <span data-lang="he">גלריה</span>
+                        <span data-lang="en" style="display:none;">Gallery</span>
+                    </a>
+                    <a href="courses.html" class="nav-btn">
+                        <span data-lang="he">קורסים</span>
+                        <span data-lang="en" style="display:none;">Courses</span>
+                    </a>
+                    <button onclick="toggleLanguage()" class="nav-btn" id="language-toggle">EN</button>
+                    <a href="login.html" class="nav-btn">
+                        <span data-lang="he">התחברות</span>
+                        <span data-lang="en" style="display:none;">Login</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="member-profile">
+                <div class="member-header">
+                    <div class="image-container">
+                        <img id="member-image" src="" alt="Member Photo" class="member-profile-image">
+                        <input type="file" id="image-upload" style="display: none;" accept="image/*">
+                    </div>
+                    <div class="member-info">
+                        <h1 id="member-name">
+                            <span class="editable" data-field="name_he" data-lang="he"></span>
+                            <span class="editable" data-field="name_en" data-lang="en" style="display:none;"></span>
+                        </h1>
+                        <p id="member-role" class="member-role">
+                            <span class="editable" data-field="role_he" data-lang="he"></span>
+                            <span class="editable" data-field="role_en" data-lang="en" style="display:none;"></span>
+                        </p>
+                        <button id="edit-button" class="nav-btn" style="display: none;">
+                            <span data-lang="he">ערוך פרופיל</span>
+                            <span data-lang="en" style="display:none;">Edit Profile</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="member-bio">
+                    <p id="member-bio">
+                        <span class="editable" data-field="bio_he" data-lang="he"></span>
+                        <span class="editable" data-field="bio_en" data-lang="en" style="display:none;"></span>
+                    </p>
+                </div>
+
+                <div class="member-gallery-section">
+                    <h2 data-lang="he">גלריית האמן</h2>
+                    <h2 data-lang="en" style="display:none;">Artist Gallery</h2>
+                    <div id="member-gallery-grid" class="grid-gallery"></div>
+                    <button id="add-gallery-item" class="nav-btn" style="display: none;">
+                        <span data-lang="he">הוסף פריט לגלריה</span>
+                        <span data-lang="en" style="display:none;">Add Gallery Item</span>
+                    </button>
+                </div>
+
+                <div class="member-courses-section">
+                    <h2 data-lang="he">קורסים</h2>
+                    <h2 data-lang="en" style="display:none;">Courses</h2>
+                    <div id="member-courses-grid" class="grid-gallery"></div>
+                    <button id="add-course" class="nav-btn" style="display: none;">
+                        <span data-lang="he">הוסף קורס</span>
+                        <span data-lang="en" style="display:none;">Add Course</span>
+                    </button>
+                </div>
+                <div class="edit-controls">
+                    <button id="save-changes" class="nav-btn">
+                        <span data-lang="he">שמור שינויים</span>
+                        <span data-lang="en" style="display:none;">Save Changes</span>
+                    </button>
+                    <button id="cancel-changes" class="nav-btn">
+                        <span data-lang="he">בטל שינויים</span>
+                        <span data-lang="en" style="display:none;">Cancel Changes</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="js/api-service.js"></script>
+    <script type="module" src="js/utils.js"></script>
+    <script type="module" src="js/member-page.js"></script>
+</body>
+</html>

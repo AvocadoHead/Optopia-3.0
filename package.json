@@ -1,0 +1,15 @@
+{
+  "name": "optopia-frontend",
+  "version": "1.0.0",
+  "description": "Optopia - Frontend",
+  "scripts": {
+    "start": "serve -s .",
+    "deploy": "gh-pages -d ."
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.1.0"
+  }
+}

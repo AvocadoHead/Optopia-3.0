@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optopia - Course</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <div class="container">
+        <header class="secondary-header">
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn" data-lang="he">דף הבית</a>
+                <a href="index.html" class="nav-btn" data-lang="en" style="display:none;">Home</a>
+                <a href="gallery.html" class="nav-btn" data-lang="he">גלריה</a>
+                <a href="gallery.html" class="nav-btn" data-lang="en" style="display:none;">Gallery</a>
+                <a href="courses.html" class="nav-btn" data-lang="he">קורסים</a>
+                <a href="courses.html" class="nav-btn" data-lang="en" style="display:none;">Courses</a>
+                <button onclick="toggleLanguage()" class="nav-btn" id="toggle-language">EN</button>
+            </div>
+            <div class="logo-title-wrapper">
+                <img src="https://drive.google.com/thumbnail?id=12iXrVE-B1wleWdjiNW7bC4Hl8plPnZfo" alt="Optopia Logo" class="logo">
+                <h1 class="site-title">Optopia</h1>
+            </div>
+        </header>
+
+        <main>
+            <div class="course-details">
+                <div id="course-header">
+                    <h1 id="course-title"></h1>
+                    <p id="course-description"></p>
+                </div>
+
+                <div id="course-subtopics">
+                    <h2 data-lang="he">נושאי הקורס</h2>
+                    <h2 data-lang="en" style="display:none;">Course Topics</h2>
+                    <ul id="subtopics-list"></ul>
+                </div>
+
+                <div id="course-teachers">
+                    <h2 data-lang="he">מרצים</h2>
+                    <h2 data-lang="en" style="display:none;">Teachers</h2>
+                    <div id="teachers-container"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/utils.js" type="module"></script>
+    <script type="module" src="js/api-service.js"></script>
+    <script type="module" src="js/course-item.js"></script>
+</body>
+</html>

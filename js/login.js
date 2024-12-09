@@ -1,4 +1,5 @@
 import { getCurrentLang, setCurrentLang } from './utils.js';
+import { API_BASE_URL } from './api-service.js';
 
 let currentLang = getCurrentLang();
 
@@ -30,7 +31,7 @@ async function handleLogin(event) {
     const errorDiv = document.getElementById('login-error');
     
     try {
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

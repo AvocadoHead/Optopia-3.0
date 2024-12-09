@@ -653,6 +653,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     const memberId = getMemberIdFromUrl();
     if (memberId) {
         await loadMemberData(memberId);
-        updateLanguageDisplay();
+        
+        // Set up change password form if user is logged in
+        const changePasswordForm = document.getElementById('change-password-form');
+        if (changePasswordForm && isLoggedIn) {
+            document.getElementById('change-password-section').style.display = 'block';
+            changePasswordForm.addEventListener('submit', handlePasswordChange);
+        }
     }
 });
+
+// Handle password change
+async function handlePasswordChange(event) {
+    event.preventDefault();
+    
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    
+    if (newPassword !== confirmPassword) {
+        alert('New passwords do not match');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+            },
+            body: JSON.stringify({
+                currentPassword,
+                newPassword
+            })
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || 'Failed to change password');
+        }
+
+        alert('Password changed successfully');
+        document.getElementById('change-password-form').reset();
+    } catch (error) {
+        console.error('Error changing password:', error);
+        alert(error.message);
+    }
+}

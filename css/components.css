@@ -1523,6 +1523,15 @@
 }
 
 /* Language-specific elements */
+[data-lang] {
+    display: block;
+}
+
+html[lang="he"] [data-lang="en"],
+html[lang="en"] [data-lang="he"] {
+    display: none;
+}
+
 .he-only {
     display: block;
 }

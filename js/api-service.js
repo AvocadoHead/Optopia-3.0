@@ -74,17 +74,25 @@ export async function getMemberById(id) {
 
 export async function updateMember(id, data) {
     try {
+        const token = localStorage.getItem('sessionToken');
+        if (!token) {
+            throw new Error('No session token found');
+        }
+
         const response = await fetch(`${API_BASE_URL}/members/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(data)
         });
+
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to update member');
         }
+
         return await response.json();
     } catch (error) {
         console.error('Error updating member:', error);

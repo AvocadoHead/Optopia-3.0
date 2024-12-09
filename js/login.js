@@ -1,7 +1,8 @@
-import { getCurrentLang, setCurrentLang } from './utils.js';
 import { API_BASE_URL } from './api-service.js';
+import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
 
 let currentLang = getCurrentLang();
+document.documentElement.lang = currentLang;
 
 // Language toggle functionality
 window.toggleLanguage = function() {
@@ -10,6 +11,9 @@ window.toggleLanguage = function() {
     document.documentElement.lang = currentLang;
     document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
     updateLanguageDisplay();
+    
+    const langToggle = document.getElementById('language-toggle');
+    langToggle.textContent = currentLang === 'he' ? 'EN' : 'עב';
 };
 
 function updateLanguageDisplay() {
@@ -22,9 +26,23 @@ function updateLanguageDisplay() {
     });
 }
 
+// Show error message
+function showError(message) {
+    const errorDiv = document.getElementById('login-error');
+    errorDiv.textContent = getLangText(message);
+    errorDiv.classList.add('visible');
+}
+
+// Hide error message
+function hideError() {
+    const errorDiv = document.getElementById('login-error');
+    errorDiv.classList.remove('visible');
+}
+
 // Handle login form submission
 async function handleLogin(event) {
     event.preventDefault();
+    hideError();
     
     let username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
@@ -61,8 +79,10 @@ async function handleLogin(event) {
         window.location.href = `${baseUrl}/member.html?id=${data.member.id}&edit=true`;
     } catch (error) {
         console.error('Login error:', error);
-        errorDiv.textContent = error.message;
-        errorDiv.style.display = 'block';
+        showError({
+            he: 'שם משתמש או סיסמה שגויים',
+            en: 'Invalid username or password'
+        });
     }
 }
 

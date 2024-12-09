@@ -75,7 +75,7 @@ export async function getMemberById(id) {
 export async function updateMember(id, data) {
     try {
         const response = await fetch(`${API_BASE_URL}/members/${id}`, {
-            method: 'PATCH',
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`

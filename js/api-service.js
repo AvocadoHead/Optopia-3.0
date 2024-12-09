@@ -1,7 +1,7 @@
 // API base URL - use production URL in production, localhost in development
 const API_BASE_URL = location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
-    : 'https://optopia-api.onrender.com/api'; // Replace with your actual production API URL
+    : 'https://optopia-3-0-backend.onrender.com/api';
 
 // Courses API
 export async function getAllCourses() {

@@ -19,30 +19,32 @@ async function loadMemberData(memberId) {
     console.log('Loading data for Member ID:', memberId);
 
     try {
-        // 1. Fetch member data
+        // Fetch member data
         const memberData = await getMemberById(memberId);
+        console.log('📋 Full Member Data:', JSON.stringify(memberData, null, 2));
+
         if (!memberData) {
             console.error('❌ No member data received');
             return;
         }
 
-        // 2. Fetch all courses and course_teachers relationships
+        // Fetch all courses
         const allCourses = await getAllCourses();
-        console.log('📚 Courses count:', allCourses?.length || 0);
+        console.log('📚 Full Courses Data:', JSON.stringify(allCourses, null, 2));
 
-        // 3. Filter gallery items by artist_id
+        // Filter gallery items for this member
         const galleryItems = memberData.gallery_items?.filter(item => 
-            item.artist_id === memberId  // Matching exact database column name
+            item.artist_id === memberId
         ) || [];
-        console.log('🖼️ Gallery items found:', galleryItems.length);
+        console.log('🖼️ Gallery Items:', JSON.stringify(galleryItems, null, 2));
 
-        // 4. Filter courses through course_teachers relationship
-        const teachingCourses = allCourses?.filter(course => 
-            course.course_teachers?.some(relation => 
-                relation.teacher_id === memberId  // Matching exact database column name
+        // Filter courses where this member is a teacher
+        const teachingCourses = allCourses.filter(course => 
+            course.course_teachers?.some(
+                relation => relation.teacher_id === memberId
             )
-        ) || [];
-        console.log('👩‍🏫 Teaching courses found:', teachingCourses.length);
+        );
+        console.log('👩‍🏫 Teaching Courses:', JSON.stringify(teachingCourses, null, 2));
 
         // Store data for edit mode
         originalData = {
@@ -54,14 +56,14 @@ async function loadMemberData(memberId) {
 
         currentData = { ...originalData };
 
-        // Update UI
+        // Update page content
         updateMemberDetails(memberData);
         renderMemberGallery(galleryItems);
         renderMemberCourses(teachingCourses);
 
         console.groupEnd();
     } catch (error) {
-        console.error('❌ Error loading member data:', error);
+        console.error('❌ Complete Loading Error:', error);
         console.groupEnd();
     }
 }
@@ -486,65 +488,31 @@ function renderMemberGallery(galleryItems = []) {
     console.groupEnd();
 }
 
-function renderMemberCourses() {
-    console.group('📖 Rendering Courses');
-    console.log('Current Context:', {
-        editMode: isEditMode,
-        loggedIn: isLoggedIn,
-        allCourses: currentData.allCourses.length,
-        teachingRelationships: currentData.teachingRelationships.length
-    });
-
+function renderMemberCourses(teachingCourses = []) {
     const coursesGrid = document.getElementById('member-courses-grid');
-    if (!coursesGrid) {
-        console.error('❌ Courses Grid Not Found');
-        console.groupEnd();
-        return;
-    }
+    coursesGrid.innerHTML = ''; // Clear previous content
 
-    coursesGrid.innerHTML = '';
+    const currentLang = getCurrentLang();
 
-    const teachingCourseIds = new Set(
-        currentData.teachingRelationships.map(rel => rel.course_id)
-    );
-
-    const coursesToShow = isEditMode 
-        ? currentData.allCourses 
-        : currentData.allCourses.filter(course => teachingCourseIds.has(course.id));
-
-    console.log('Courses to Show:', coursesToShow.length);
-
-    if (coursesToShow.length === 0) {
-        console.warn('⚠️ No Courses to Display');
-        coursesGrid.innerHTML = `
-            <p class="no-items-message">
-                <span data-lang="he">אין קורסים להצגה</span>
-                <span data-lang="en">No courses to display</span>
-            </p>`;
-        console.groupEnd();
-        return;
-    }
-
-    coursesToShow.forEach(course => {
-        const isTeaching = teachingCourseIds.has(course.id);
+    teachingCourses.forEach(course => {
+        const courseCard = document.createElement('div');
+        courseCard.classList.add('course-card');
         
-        const card = document.createElement('div');
-        card.className = 'course-card';
+        const courseTitle = document.createElement('h3');
+        courseTitle.textContent = course[`title_${currentLang}`];
         
-        const title = currentLang === 'he' ? course.name_he : course.name_en;
-        const description = currentLang === 'he' ? course.description_he : course.description_en;
+        const courseTeachers = document.createElement('p');
+        courseTeachers.textContent = course.course_teachers
+            .map(relation => relation.teacher[`name_${currentLang}`])
+            .join(', ');
         
-        card.innerHTML = `
-            <div class="course-content">
-                <h3>${title || ''}</h3>
-                <p>${description || ''}</p>
-            </div>
-        `;
+        courseCard.appendChild(courseTitle);
+        courseCard.appendChild(courseTeachers);
         
-        coursesGrid.appendChild(card);
+        coursesGrid.appendChild(courseCard);
     });
 
-    console.groupEnd();
+    console.log(`Rendered ${coursesGrid.children.length} courses for member`);
 }
 
 function updateLanguageDisplay() {
@@ -580,3 +548,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Explicitly set edit mode if requested
         if (editMode && isLoggedIn) {
+            console.log('Attempting to enable edit mode');
+            toggleEditMode();
+        }
+        
+        updateLanguageDisplay();
+    }
+});

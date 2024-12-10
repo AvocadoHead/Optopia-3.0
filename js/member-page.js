@@ -802,63 +802,63 @@ function updateEditButtonVisibility(memberId) {
 // Initialize member page
 async function initMemberPage() {
     try {
+        // Get member ID from URL or localStorage
         const urlParams = new URLSearchParams(window.location.search);
-        const memberId = urlParams.get('id');
-        const editMode = urlParams.get('edit') === 'true';
-
+        const memberId = urlParams.get('id') || localStorage.getItem('memberId');
+        
+        console.log('Initializing member page for ID:', memberId);
+        
         if (!memberId) {
-            throw new Error('Member ID is required');
-        }
-
-        // Update edit button visibility
-        updateEditButtonVisibility(memberId);
-
-        // If in edit mode and has permission, show edit form
-        if (editMode && canEditProfile(memberId)) {
-            toggleEditMode();
+            throw new Error('No member ID provided');
         }
 
         // Load member data
         await loadMemberData(memberId);
+        
+        // Set up language
+        document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
+        const langToggle = document.getElementById('language-toggle');
+        if (langToggle) {
+            langToggle.textContent = currentLang === 'he' ? 'EN' : 'עב';
+        }
+        
+        // Check if we should be in edit mode
+        const editMode = urlParams.get('edit') === 'true';
+        if (editMode && isLoggedIn) {
+            document.body.classList.add('edit-mode');
+            setupEditHandlers();
+        }
     } catch (error) {
         console.error('Error initializing member page:', error);
-        alert(error.message);
-    }
-}
-
-// Language toggle functionality
-window.toggleLanguage = function() {
-    currentLang = currentLang === 'he' ? 'en' : 'he';
-    setCurrentLang(currentLang);
-    document.documentElement.lang = currentLang;
-    document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
-    updateLanguageDisplay();
-    
-    // Re-render content with new language
-    const memberId = getMemberIdFromUrl();
-    if (memberId) {
-        updateMemberDetails(currentData);
-        renderMemberGallery(currentData.gallery_items);
-        renderMemberCourses(currentData.courses);
-    }
-};
-
-function updateLanguageDisplay() {
-    document.querySelectorAll('[data-lang]').forEach(el => {
-        if (el.getAttribute('data-lang') === currentLang) {
-            el.style.display = '';
-        } else {
-            el.style.display = 'none';
+        // Show error message to user
+        const mainContent = document.querySelector('main');
+        if (mainContent) {
+            mainContent.innerHTML = `
+                <div class="error-message">
+                    <h2>${getLangText({
+                        he: 'שגיאה בטעינת הדף',
+                        en: 'Error Loading Page'
+                    })}</h2>
+                    <p>${getLangText({
+                        he: 'לא ניתן לטעון את פרטי החבר. אנא נסה שוב מאוחר יותר.',
+                        en: 'Could not load member details. Please try again later.'
+                    })}</p>
+                </div>
+            `;
         }
-    });
+    }
 }
 
-function getMemberIdFromUrl() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('id');
-}
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', async () => {
-    await initMemberPage();
-});
+// Add this function to properly set up edit handlers
+function setupEditHandlers() {
+    const editableElements = document.querySelectorAll('.editable');
+    editableElements.forEach(element => {
+        element.contentEditable = true;
+        element.addEventListener('blur', async (event) => {
+            if (isEditMode) {
+                const field = event.target.dataset.field;
+                const value = event.target.textContent.trim();
+                currentData[field] = value;
+            }
+        });
+   

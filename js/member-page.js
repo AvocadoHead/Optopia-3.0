@@ -15,48 +15,55 @@ let isLoggedIn = false;
 let currentUserId = null;
 
 async function loadMemberData(memberId) {
-    console.log('Loading member data for ID:', memberId);
+    console.group('🔍 Member Data Loading');
+    console.log('Loading data for Member ID:', memberId);
 
-    // Ensure global data is initialized
-    if (typeof window.initializeAppData === 'function') {
-        await window.initializeAppData();
+    try {
+        // 1. Fetch member data
+        const memberData = await getMemberById(memberId);
+        if (!memberData) {
+            console.error('❌ No member data received');
+            return;
+        }
+
+        // 2. Fetch all courses and course_teachers relationships
+        const allCourses = await getAllCourses();
+        console.log('📚 Courses count:', allCourses?.length || 0);
+
+        // 3. Filter gallery items by artist_id
+        const galleryItems = memberData.gallery_items?.filter(item => 
+            item.artist_id === memberId  // Matching exact database column name
+        ) || [];
+        console.log('🖼️ Gallery items found:', galleryItems.length);
+
+        // 4. Filter courses through course_teachers relationship
+        const teachingCourses = allCourses?.filter(course => 
+            course.course_teachers?.some(relation => 
+                relation.teacher_id === memberId  // Matching exact database column name
+            )
+        ) || [];
+        console.log('👩‍🏫 Teaching courses found:', teachingCourses.length);
+
+        // Store data for edit mode
+        originalData = {
+            memberDetails: memberData,
+            galleryItems: galleryItems,
+            teachingCourses: teachingCourses,
+            allCourses: allCourses
+        };
+
+        currentData = { ...originalData };
+
+        // Update UI
+        updateMemberDetails(memberData);
+        renderMemberGallery(galleryItems);
+        renderMemberCourses(teachingCourses);
+
+        console.groupEnd();
+    } catch (error) {
+        console.error('❌ Error loading member data:', error);
+        console.groupEnd();
     }
-
-    // Get global app data
-    const { galleryData, coursesData, membersData } = window.getGlobalAppData();
-
-    console.log('Global Data:', {
-        galleryDataCount: galleryData.length,
-        coursesDataCount: coursesData.length,
-        membersDataCount: membersData.length
-    });
-
-    // Find specific member
-    const member = membersData.find(m => m.id === memberId);
-    if (!member) {
-        console.error('Member not found:', memberId);
-        return;
-    }
-
-    // Filter gallery items for this member
-    const memberGalleryItems = galleryData.filter(item => 
-        item.artist === memberId || 
-        (item.artistDetails && item.artistDetails.id === memberId)
-    );
-
-    // Filter courses for this member
-    const memberCourses = coursesData.filter(course => 
-        course.teachers.some(teacher => teacher.id === memberId)
-    );
-
-    console.log('Member-Specific Data:', {
-        galleryItemsCount: memberGalleryItems.length,
-        coursesCount: memberCourses.length
-    });
-
-    // Render with filtered data
-    renderMemberGallery(memberGalleryItems);
-    renderMemberCourses(memberCourses);
 }
 
 function setupEditMode(memberId) {
@@ -573,10 +580,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Explicitly set edit mode if requested
         if (editMode && isLoggedIn) {
-            console.log('Attempting to enable edit mode');
-            toggleEditMode();
-        }
-        
-        updateLanguageDisplay();
-    }
-});

@@ -12,7 +12,10 @@ let currentUserId = null;
 async function loadMemberData(memberId) {
     try {
         currentLang = getCurrentLang();
+        console.log('Loading member data for ID:', memberId);
         const memberData = await getMemberById(memberId);
+        console.log('Received member data:', memberData);
+        
         if (memberData) {
             originalData = { ...memberData };
             currentData = { ...memberData };
@@ -21,8 +24,13 @@ async function loadMemberData(memberId) {
             const sessionToken = localStorage.getItem('sessionToken');
             currentUserId = localStorage.getItem('memberId');
             isLoggedIn = sessionToken && currentUserId === memberId;
+            console.log('Login state:', { isLoggedIn, currentUserId, memberId });
             
             // Initialize page
+            console.log('Gallery items:', memberData.gallery_items);
+            console.log('Courses:', memberData.courses);
+            console.log('Course teachers:', memberData.course_teachers);
+            
             updateMemberDetails(memberData);
             renderMemberGallery(memberData.gallery_items || []);
             renderMemberCourses(memberData.courses || []);

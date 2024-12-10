@@ -639,6 +639,24 @@ async function initCourseItemPage() {
     }
 }
 
+async function loadMemberData(memberId) {
+    try {
+        const memberData = await getMemberById(memberId);
+        if (memberData) {
+            updateMemberDisplay(memberData);
+            
+            // Set up edit handlers if this is the logged-in member
+            const sessionToken = localStorage.getItem('sessionToken');
+            const loggedInMemberId = localStorage.getItem('memberId');
+            if (sessionToken && loggedInMemberId === memberId) {
+                setupEditHandlers(memberData);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading member data:', error);
+    }
+}
+
 async function initMemberPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const memberId = urlParams.get('id');
@@ -648,28 +666,13 @@ async function initMemberPage() {
     const member = membersData.find(m => m.id === memberId);
     if (!member) return;
     
-    // Check if this is the logged-in member's page
-    const sessionToken = localStorage.getItem('sessionToken');
-    const loggedInMemberId = localStorage.getItem('memberId');
-    const isOwnProfile = sessionToken && loggedInMemberId === memberId;
-    
-    // Enable edit mode if viewing own profile
-    if (isOwnProfile) {
-        document.body.classList.add('edit-mode');
-        const editControls = document.querySelectorAll('.edit-controls');
-        editControls.forEach(control => {
-            control.style.display = 'block';
-        });
-        setupEditHandlers(member);
-    }
-    
     // Update member info
     document.getElementById('member-image').src = member.image_url || 'assets/default-member.jpg';
     
     const nameElement = document.getElementById('member-name');
     if (nameElement) {
-        nameElement.querySelector('[data-lang="he"]').textContent = member.name.he;
-        nameElement.querySelector('[data-lang="en"]').textContent = member.name.en;
+        nameElement.querySelector('[data-lang="he"]').textContent = member.name_he;
+        nameElement.querySelector('[data-lang="en"]').textContent = member.name_en;
     }
     
     const roleElement = document.getElementById('member-role');
@@ -728,6 +731,82 @@ async function initMemberPage() {
             coursesContainer.appendChild(courseCard);
         });
     }
+}
+
+// Update member display
+function updateMemberDisplay(memberData) {
+    // Update name
+    const nameHe = document.querySelector('[data-field="name_he"]');
+    const nameEn = document.querySelector('[data-field="name_en"]');
+    if (nameHe) nameHe.textContent = memberData.name_he || '';
+    if (nameEn) nameEn.textContent = memberData.name_en || '';
+
+    // Update role
+    const roleHe = document.querySelector('[data-field="role_he"]');
+    const roleEn = document.querySelector('[data-field="role_en"]');
+    if (roleHe) roleHe.textContent = memberData.role_he || '';
+    if (roleEn) roleEn.textContent = memberData.role_en || '';
+
+    // Update bio
+    const bioHe = document.querySelector('[data-field="bio_he"]');
+    const bioEn = document.querySelector('[data-field="bio_en"]');
+    if (bioHe) bioHe.textContent = memberData.bio_he || '';
+    if (bioEn) bioEn.textContent = memberData.bio_en || '';
+
+    // Update image
+    const memberImage = document.getElementById('member-image');
+    if (memberImage && memberData.image_url) {
+        memberImage.src = memberData.image_url;
+    }
+
+    // Update gallery items
+    const galleryGrid = document.getElementById('member-gallery-grid');
+    if (galleryGrid && memberData.gallery_items) {
+        galleryGrid.innerHTML = '';
+        memberData.gallery_items.forEach(item => {
+            const itemElement = renderGalleryItem(item, galleryGrid);
+            if (itemElement) {
+                galleryGrid.appendChild(itemElement);
+            }
+        });
+    }
+
+    // Update courses
+    const coursesGrid = document.getElementById('member-courses-grid');
+    if (coursesGrid && memberData.courses) {
+        coursesGrid.innerHTML = '';
+        memberData.courses.forEach(course => {
+            const courseElement = renderCourseItem(course);
+            if (courseElement) {
+                coursesGrid.appendChild(courseElement);
+            }
+        });
+    }
+}
+
+// Render a course item
+function renderCourseItem(course) {
+    const div = document.createElement('div');
+    div.className = 'course-card';
+    div.innerHTML = `
+        <div class="course-image">
+            <img src="${course.image_url || 'assets/default-course.jpg'}" alt="${course.title_he || course.title_en}">
+        </div>
+        <div class="course-info">
+            <h3>
+                <span data-lang="he">${course.title_he || ''}</span>
+                <span data-lang="en" style="display:none;">${course.title_en || ''}</span>
+            </h3>
+            <p class="course-description">
+                <span data-lang="he">${course.description_he || ''}</span>
+                <span data-lang="en" style="display:none;">${course.description_en || ''}</span>
+            </p>
+        </div>
+    `;
+    div.onclick = () => {
+        window.location.href = `course-item.html?id=${course.id}`;
+    };
+    return div;
 }
 
 async function initGalleryItemPage() {
@@ -920,7 +999,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (path.includes('member.html')) {
             const memberId = getMemberIdFromUrl();
             if (memberId) {
-                await initMemberPage();
+                await loadMemberData(memberId);
                 updateLanguageDisplay();
             }
         }
@@ -934,4 +1013,3 @@ window.toggleLanguage = toggleLanguage;
 window.toggleMembers = toggleMembers;
 window.handleLogout = handleLogout;
 window.handleLogin = handleLogin;
-}); // Add closing brace for DOMContentLoaded event listener

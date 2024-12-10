@@ -920,6 +920,12 @@ async function initLoginPage() {
     if (form) {
         form.addEventListener('submit', handleLogin);
     }
+    
+    // Ensure language toggle works
+    const languageToggle = document.getElementById('toggle-language');
+    if (languageToggle) {
+        languageToggle.addEventListener('click', toggleLanguage);
+    }
 }
 
 // Page Routing
@@ -978,9 +984,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         // First initialize language
         initLanguageToggle();
-        
-        // Then initialize data and page
-        await initializeAppData();
+        updateLanguageDisplay();
+
+        // Page-specific initializations
+        const pagePath = window.location.pathname;
+        if (pagePath.includes('login.html')) {
+            initLoginPage();
+        }
+        // ... rest of existing initialization code
         await initializePage();
         
         // After data is loaded, update the display

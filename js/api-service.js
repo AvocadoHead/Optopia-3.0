@@ -138,8 +138,8 @@ export async function login(identifier, password) {
             method: 'POST',
             headers: defaultHeaders,
             body: JSON.stringify({ 
-                identifier: identifier.trim(),  // can be email, username, or member name
-                password: password              // backend will check both password fields
+                username: identifier.trim(),  // backend expects 'username' field
+                password: password
             }),
             credentials: 'include'
         });

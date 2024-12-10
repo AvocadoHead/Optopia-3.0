@@ -13,9 +13,16 @@ async function loadMemberData(memberId) {
     try {
         currentLang = getCurrentLang();
         const memberData = await getMemberById(memberId);
+        console.log('Full Member Data:', JSON.stringify(memberData, null, 2));
+        
         if (memberData) {
             originalData = { ...memberData };
             currentData = { ...memberData };
+            
+            // Detailed logging for courses and gallery
+            console.log('Course Teachers:', memberData.course_teachers);
+            console.log('Gallery Items:', memberData.gallery_items);
+            console.log('All Courses:', memberData.all_courses);
             
             // Check login state
             const sessionToken = localStorage.getItem('sessionToken');
@@ -23,7 +30,9 @@ async function loadMemberData(memberId) {
             isLoggedIn = sessionToken && currentUserId === memberId;
             
             // Fetch courses taught by the member
-            const coursesTaught = memberData.course_teachers.map(ct => ct.course);
+            const coursesTaught = memberData.course_teachers ? 
+                memberData.course_teachers.map(ct => ct.course) : 
+                (memberData.courses || []);
             console.log('Courses taught by member:', coursesTaught);
 
             // Initialize page

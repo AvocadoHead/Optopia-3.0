@@ -1,92 +1,125 @@
 import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
 import { getMemberById, updateMember, getAllCourses } from './api-service.js';
 
-// Global state
+// Global state with clear structure
 let currentLang = getCurrentLang();
 let isEditMode = false;
 let originalData = null;
-let currentData = null;
+let currentData = {
+    memberDetails: null,
+    allCourses: [],
+    galleryItems: [],
+    teachingRelationships: []
+};
 let isLoggedIn = false;
 let currentUserId = null;
 
 async function loadMemberData(memberId) {
     try {
+        console.log('1. Starting loadMemberData for memberId:', memberId);
         currentLang = getCurrentLang();
         
         // Fetch member data and their gallery items
         const memberData = await getMemberById(memberId);
-        console.log('Full Member Data:', JSON.stringify(memberData, null, 2));
+        console.log('2. Raw Member Data:', memberData);
         
-        if (memberData) {
-            // Fetch all courses (needed for edit mode)
-            const allCourses = await getAllCourses();
-            
-            // Store data
-            originalData = { ...memberData };
-            currentData = { 
-                ...memberData,
-                all_courses: allCourses,
-                // Filter gallery items where artist_id matches member id
-                gallery_items: memberData.gallery_items?.filter(item => item.artist_id === memberId) || [],
-                // Get courses where teacher_id matches member id
-                course_teachers: memberData.course_teachers?.filter(ct => ct.teacher_id === memberId) || []
-            };
-            
-            // Detailed logging
-            console.log('Data Processing:', {
-                galleryItems: currentData.gallery_items,
-                courseTeachers: currentData.course_teachers,
-                allCourses: currentData.all_courses
-            });
-            
-            // Check login state
-            const sessionToken = localStorage.getItem('sessionToken');
-            currentUserId = localStorage.getItem('memberId');
-            isLoggedIn = sessionToken && currentUserId === memberId;
-            
-            console.log('Login State:', {
-                sessionToken: !!sessionToken,
-                currentUserId,
-                memberId,
-                isLoggedIn
-            });
+        if (!memberData) {
+            console.error('No member data received');
+            return;
+        }
 
-            // Initialize page content
-            updateMemberDetails(memberData);
-            renderMemberGallery(currentData.gallery_items);
-            renderMemberCourses(currentData.course_teachers);
+        // Fetch all courses (needed for both modes)
+        const allCourses = await getAllCourses();
+        console.log('3. All Courses:', allCourses);
+        
+        // Store original data for reverting changes
+        originalData = {
+            memberDetails: { ...memberData },
+            galleryItems: memberData.gallery_items?.filter(item => item.artist_id === memberId) || [],
+            teachingRelationships: memberData.course_teachers?.filter(ct => ct.teacher_id === memberId) || [],
+            allCourses: allCourses
+        };
 
-            // Check if edit mode should be enabled
-            const urlParams = new URLSearchParams(window.location.search);
-            const shouldEnableEditMode = urlParams.get('edit') === 'true' && isLoggedIn;
-            
-            // Show edit controls only if logged in as this member
-            const editControls = document.querySelectorAll('.edit-controls');
-            editControls.forEach(control => {
-                control.style.display = isLoggedIn ? 'block' : 'none';
-            });
+        // Set current data
+        currentData = {
+            memberDetails: { ...memberData },
+            allCourses: allCourses,
+            galleryItems: memberData.gallery_items?.filter(item => item.artist_id === memberId) || [],
+            teachingRelationships: memberData.course_teachers?.filter(ct => ct.teacher_id === memberId) || []
+        };
 
-            // Show edit button only if logged in as this member
-            const editButton = document.getElementById('edit-button');
-            if (editButton) {
-                editButton.style.display = isLoggedIn ? 'block' : 'none';
-                editButton.addEventListener('click', toggleEditMode);
-            }
+        console.log('4. Processed Data:', {
+            galleryItems: currentData.galleryItems.length,
+            teachingRelationships: currentData.teachingRelationships.length,
+            allCourses: currentData.allCourses.length
+        });
+        
+        // Check login state
+        const sessionToken = localStorage.getItem('sessionToken');
+        currentUserId = localStorage.getItem('memberId');
+        isLoggedIn = sessionToken && currentUserId === memberId;
+        
+        console.log('5. Authentication State:', {
+            hasToken: !!sessionToken,
+            currentUserId,
+            memberId,
+            isLoggedIn
+        });
 
-            // Show add buttons only if logged in as this member
-            const addButtons = document.querySelectorAll('#add-gallery-item, #add-course');
-            addButtons.forEach(button => {
-                if (button) button.style.display = isLoggedIn ? 'block' : 'none';
-            });
+        // Initialize page content
+        updateMemberDetails(currentData.memberDetails);
+        renderMemberGallery(currentData.galleryItems);
+        renderMemberCourses();
 
-            // Automatically enable edit mode if requested and logged in
-            if (shouldEnableEditMode) {
-                console.log('Enabling edit mode');
-                toggleEditMode();
+        // Setup edit mode if needed
+        setupEditMode(memberId);
+        
+    } catch (error) {
+        console.error('Error in loadMemberData:', error);
+    }
+}
+
+function setupEditMode(memberId) {
+    // Check if edit mode should be enabled
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldEnableEditMode = urlParams.get('edit') === 'true' && isLoggedIn;
+    
+    console.log('6. Edit Mode Setup:', {
+        shouldEnableEditMode,
+        isLoggedIn
+    });
+
+    // Show/hide edit controls based on login state
+    const editControls = document.querySelectorAll('.edit-controls');
+    editControls.forEach(control => {
+        control.style.display = isLoggedIn ? 'block' : 'none';
+    });
+
+    // Setup edit button
+    const editButton = document.getElementById('edit-button');
+    if (editButton) {
+        editButton.style.display = isLoggedIn ? 'block' : 'none';
+        editButton.addEventListener('click', toggleEditMode);
+    }
+
+    // Setup add buttons
+    const addButtons = document.querySelectorAll('#add-gallery-item, #add-course');
+    addButtons.forEach(button => {
+        if (button) {
+            button.style.display = isLoggedIn ? 'block' : 'none';
+            // Add click handlers
+            if (button.id === 'add-gallery-item') {
+                button.addEventListener('click', () => showAddGalleryItemForm());
+            } else if (button.id === 'add-course') {
+                button.addEventListener('click', () => showAddCourseForm());
             }
         }
-    } catch (error) {
-        console.error('Error loading member data:', error);
+    });
+
+    // Enable edit mode if requested and logged in
+    if (shouldEnableEditMode) {
+        console.log('7. Auto-enabling edit mode');
+        toggleEditMode();
     }
 }
 
@@ -128,7 +161,7 @@ function toggleEditMode() {
         });
 
         // Re-render courses to show all available ones
-        renderMemberCourses(currentData.course_teachers);
+        renderMemberCourses();
     } else {
         // Save changes
         saveChanges();
@@ -141,7 +174,7 @@ function toggleEditMode() {
         });
 
         // Re-render courses to show only teaching ones
-        renderMemberCourses(currentData.course_teachers);
+        renderMemberCourses();
     }
 }
 
@@ -242,14 +275,14 @@ function showAddGalleryItemForm(item, index) {
         };
         
         if (item) {
-            currentData.gallery_items[index] = newItem;
+            currentData.galleryItems[index] = newItem;
         } else {
-            if (!currentData.gallery_items) {
-                currentData.gallery_items = [];
+            if (!currentData.galleryItems) {
+                currentData.galleryItems = [];
             }
-            currentData.gallery_items.push(newItem);
+            currentData.galleryItems.push(newItem);
         }
-        renderMemberGallery(currentData.gallery_items);
+        renderMemberGallery(currentData.galleryItems);
         dialog.close();
     });
     
@@ -379,17 +412,17 @@ function addToCourse(courseId) {
 }
 
 function deleteGalleryItem(index) {
-    if (currentData.gallery_items) {
-        currentData.gallery_items.splice(index, 1);
+    if (currentData.galleryItems) {
+        currentData.galleryItems.splice(index, 1);
         saveChanges();
-        renderMemberGallery(currentData.gallery_items);
+        renderMemberGallery(currentData.galleryItems);
     }
 }
 
 function cancelChanges() {
     currentData = { ...originalData };
     updateMemberDetails(originalData);
-    renderMemberGallery(originalData.gallery_items || []);
+    renderMemberGallery(originalData.galleryItems || []);
     renderMemberCourses(originalData.courses || []);
 }
 
@@ -421,7 +454,10 @@ function updateMemberDetails(memberData) {
 
 function renderMemberGallery(galleryItems = []) {
     const galleryGrid = document.getElementById('member-gallery-grid');
-    if (!galleryGrid) return;
+    if (!galleryGrid) {
+        console.error('Gallery grid element not found');
+        return;
+    }
 
     console.log('Rendering Gallery:', {
         itemCount: galleryItems.length,
@@ -431,7 +467,18 @@ function renderMemberGallery(galleryItems = []) {
 
     galleryGrid.innerHTML = '';
     
+    if (galleryItems.length === 0) {
+        galleryGrid.innerHTML = `
+            <p class="no-items-message">
+                <span data-lang="he">אין פריטים בגלריה</span>
+                <span data-lang="en" style="display:none;">No items in gallery</span>
+            </p>`;
+        return;
+    }
+
     galleryItems.forEach((item, index) => {
+        if (!item) return;
+        
         const card = document.createElement('div');
         card.className = 'gallery-card';
         
@@ -440,70 +487,87 @@ function renderMemberGallery(galleryItems = []) {
         
         card.innerHTML = `
             <div class="gallery-image">
-                <img src="${item.image_url}" alt="${title}">
+                <img src="${item.image_url || 'placeholder.jpg'}" alt="${title || 'Gallery Item'}">
             </div>
             <div class="gallery-info">
-                <h3>${title}</h3>
-                <p>${description}</p>
+                <h3>${title || ''}</h3>
+                <p>${description || ''}</p>
             </div>
             ${isLoggedIn && isEditMode ? `
                 <div class="edit-controls">
-                    <button onclick="editGalleryItem(${index})" class="nav-btn">
+                    <button class="edit-item-btn nav-btn">
                         <span data-lang="he">ערוך</span>
                         <span data-lang="en" style="display:none;">Edit</span>
                     </button>
-                    <button onclick="deleteGalleryItem(${index})" class="nav-btn">
+                    <button class="delete-item-btn nav-btn">
                         <span data-lang="he">מחק</span>
                         <span data-lang="en" style="display:none;">Delete</span>
                     </button>
                 </div>
             ` : ''}
         `;
+
+        // Add event listeners for edit/delete buttons
+        if (isLoggedIn && isEditMode) {
+            const editBtn = card.querySelector('.edit-item-btn');
+            const deleteBtn = card.querySelector('.delete-item-btn');
+            
+            editBtn?.addEventListener('click', () => showAddGalleryItemForm(item, index));
+            deleteBtn?.addEventListener('click', () => deleteGalleryItem(index));
+        }
         
         galleryGrid.appendChild(card);
     });
 }
 
-function renderMemberCourses(courseTeachers = []) {
+function renderMemberCourses() {
     const coursesGrid = document.getElementById('member-courses-grid');
-    if (!coursesGrid) return;
+    if (!coursesGrid) {
+        console.error('Courses grid element not found');
+        return;
+    }
 
     console.log('Rendering Courses:', {
-        courseTeachersCount: courseTeachers.length,
-        isEditMode,
-        isLoggedIn
+        mode: isEditMode ? 'edit' : 'view',
+        teachingCount: currentData.teachingRelationships.length,
+        totalCourses: currentData.allCourses.length
     });
 
     coursesGrid.innerHTML = '';
     
-    if (isEditMode && isLoggedIn) {
-        // In edit mode, show all courses with teaching status
-        const allCourses = currentData.all_courses || [];
-        const teachingCourseIds = new Set(courseTeachers.map(ct => ct.course_id));
-        
-        console.log('Edit Mode Courses:', {
-            allCoursesCount: allCourses.length,
-            teachingCourseIds: Array.from(teachingCourseIds)
-        });
-        
-        allCourses.forEach(course => {
-            const isTeaching = teachingCourseIds.has(course.id);
-            renderCourseCard(coursesGrid, course, isTeaching);
-        });
-    } else {
-        // In view mode, show only courses the member teaches
-        courseTeachers.forEach(ct => {
-            const course = currentData.all_courses?.find(c => c.id === ct.course_id);
-            if (course) {
-                renderCourseCard(coursesGrid, course, true);
-            }
-        });
+    // Determine which courses to display based on mode
+    const coursesToShow = isEditMode ? 
+        currentData.allCourses : 
+        currentData.allCourses.filter(course => 
+            currentData.teachingRelationships.some(rel => rel.course_id === course.id)
+        );
+
+    if (coursesToShow.length === 0) {
+        coursesGrid.innerHTML = `
+            <p class="no-items-message">
+                <span data-lang="he">אין קורסים להצגה</span>
+                <span data-lang="en" style="display:none;">No courses to display</span>
+            </p>`;
+        return;
     }
+
+    // Create Set of teaching course IDs for quick lookup
+    const teachingCourseIds = new Set(
+        currentData.teachingRelationships.map(rel => rel.course_id)
+    );
+
+    coursesToShow.forEach(course => {
+        const isTeaching = teachingCourseIds.has(course.id);
+        renderCourseCard(coursesGrid, course, isTeaching);
+    });
 }
 
 function renderCourseCard(container, course, isTeaching) {
+    if (!course) return;
+
     const card = document.createElement('div');
     card.className = 'course-card';
+    card.dataset.courseId = course.id;
     
     const title = currentLang === 'he' ? course.name_he : course.name_en;
     const description = currentLang === 'he' ? course.description_he : course.description_en;
@@ -511,18 +575,17 @@ function renderCourseCard(container, course, isTeaching) {
     const duration = currentLang === 'he' ? course.duration_he : course.duration_en;
     
     card.innerHTML = `
-        <a href="course-item.html?id=${course.id}" class="course-link">
+        <div class="course-content">
             <h3>${title || ''}</h3>
             <p>${description || ''}</p>
             <div class="course-details">
                 <span class="difficulty">${difficulty || ''}</span>
                 <span class="duration">${duration || ''}</span>
             </div>
-        </a>
+        </div>
         ${isLoggedIn && isEditMode ? `
             <div class="course-actions">
-                <button onclick="${isTeaching ? 'removeFromCourse' : 'addToCourse'}(${course.id})" 
-                        class="nav-btn ${isTeaching ? 'teaching' : ''}">
+                <button class="toggle-teaching-btn nav-btn ${isTeaching ? 'teaching' : ''}">
                     ${isTeaching ? `
                         <span data-lang="he">מלמד/ת קורס זה</span>
                         <span data-lang="en" style="display:none;">Teaching this course</span>
@@ -534,8 +597,48 @@ function renderCourseCard(container, course, isTeaching) {
             </div>
         ` : ''}
     `;
+
+    // Add event listeners
+    if (isLoggedIn && isEditMode) {
+        const toggleBtn = card.querySelector('.toggle-teaching-btn');
+        toggleBtn?.addEventListener('click', () => toggleTeachingStatus(course.id, !isTeaching));
+    }
+
+    // Add click handler for course details
+    const courseContent = card.querySelector('.course-content');
+    courseContent?.addEventListener('click', () => {
+        window.location.href = `course-item.html?id=${course.id}`;
+    });
     
     container.appendChild(card);
+}
+
+async function toggleTeachingStatus(courseId, shouldTeach) {
+    try {
+        if (shouldTeach) {
+            // Add teaching relationship
+            currentData.teachingRelationships.push({
+                course_id: courseId,
+                teacher_id: currentUserId
+            });
+        } else {
+            // Remove teaching relationship
+            currentData.teachingRelationships = currentData.teachingRelationships.filter(
+                rel => rel.course_id !== courseId
+            );
+        }
+        
+        // Update the display
+        renderMemberCourses();
+        
+        // Save changes if not in edit mode
+        if (!isEditMode) {
+            await saveChanges();
+        }
+    } catch (error) {
+        console.error('Error toggling teaching status:', error);
+        alert('Failed to update teaching status. Please try again.');
+    }
 }
 
 function updateLanguageDisplay() {

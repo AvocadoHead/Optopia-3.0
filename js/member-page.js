@@ -15,82 +15,48 @@ let isLoggedIn = false;
 let currentUserId = null;
 
 async function loadMemberData(memberId) {
-    try {
-        console.group('🔍 Member Data Loading');
-        console.log('Loading data for Member ID:', memberId);
-        
-        // Diagnostic logging for input parameters
-        console.log('Current Language:', currentLang);
-        console.log('Session Token:', localStorage.getItem('sessionToken'));
-        console.log('Current User ID:', localStorage.getItem('memberId'));
+    console.log('Loading member data for ID:', memberId);
 
-        // Fetch member data
-        const memberData = await getMemberById(memberId);
-        console.log('🏠 Raw Member Data:', JSON.stringify(memberData, null, 2));
-
-        // Diagnostic checks
-        if (!memberData) {
-            console.error('❌ No member data received');
-            return;
-        }
-
-        // Fetch all courses
-        const allCourses = await getAllCourses();
-        console.log('📚 All Courses:', JSON.stringify(allCourses, null, 2));
-
-        // Detailed data validation
-        console.group('📊 Data Validation');
-        console.log('Gallery Items Count:', memberData.gallery_items?.length || 0);
-        console.log('Course Teachers Count:', memberData.course_teachers?.length || 0);
-        console.log('Member ID:', memberId);
-        console.groupEnd();
-
-        // Enhanced filtering with detailed logging
-        const galleryItems = memberData.gallery_items?.filter(item => {
-            const isMatch = item.artist_id === memberId;
-            console.log(`Gallery Item ${item.id}: artist_id ${item.artist_id} === ${memberId} = ${isMatch}`);
-            return isMatch;
-        }) || [];
-
-        const teachingRelationships = memberData.course_teachers?.filter(ct => {
-            const isMatch = ct.teacher_id === memberId;
-            console.log(`Course Teacher Relationship: teacher_id ${ct.teacher_id} === ${memberId} = ${isMatch}`);
-            return isMatch;
-        }) || [];
-
-        // Check login state
-        const sessionToken = localStorage.getItem('sessionToken');
-        currentUserId = localStorage.getItem('memberId');
-        isLoggedIn = sessionToken && currentUserId === memberId;
-        
-        // Comprehensive state setup
-        originalData = {
-            memberDetails: { ...memberData },
-            allCourses: allCourses,
-            galleryItems: galleryItems,
-            teachingRelationships: teachingRelationships
-        };
-
-        currentData = { ...originalData };
-
-        console.group('🔢 Processed Data');
-        console.log('Gallery Items:', JSON.stringify(currentData.galleryItems, null, 2));
-        console.log('Teaching Relationships:', JSON.stringify(currentData.teachingRelationships, null, 2));
-        console.groupEnd();
-
-        console.groupEnd(); // Close initial group
-
-        // Initialize page content
-        updateMemberDetails(currentData.memberDetails);
-        renderMemberGallery(currentData.galleryItems);
-        renderMemberCourses();
-
-        // Setup edit mode
-        setupEditMode(memberId);
-
-    } catch (error) {
-        console.error('❌ Complete Loading Error:', error);
+    // Ensure global data is initialized
+    if (typeof window.initializeAppData === 'function') {
+        await window.initializeAppData();
     }
+
+    // Get global app data
+    const { galleryData, coursesData, membersData } = window.getGlobalAppData();
+
+    console.log('Global Data:', {
+        galleryDataCount: galleryData.length,
+        coursesDataCount: coursesData.length,
+        membersDataCount: membersData.length
+    });
+
+    // Find specific member
+    const member = membersData.find(m => m.id === memberId);
+    if (!member) {
+        console.error('Member not found:', memberId);
+        return;
+    }
+
+    // Filter gallery items for this member
+    const memberGalleryItems = galleryData.filter(item => 
+        item.artist === memberId || 
+        (item.artistDetails && item.artistDetails.id === memberId)
+    );
+
+    // Filter courses for this member
+    const memberCourses = coursesData.filter(course => 
+        course.teachers.some(teacher => teacher.id === memberId)
+    );
+
+    console.log('Member-Specific Data:', {
+        galleryItemsCount: memberGalleryItems.length,
+        coursesCount: memberCourses.length
+    });
+
+    // Render with filtered data
+    renderMemberGallery(memberGalleryItems);
+    renderMemberCourses(memberCourses);
 }
 
 function setupEditMode(memberId) {

@@ -914,3 +914,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (coursesPreview) {
             renderCoursesPreview(coursesPreview);
         }
+
+        // Check if we're on member page
+        const path = window.location.pathname;
+        if (path.includes('member.html')) {
+            const memberId = getMemberIdFromUrl();
+            if (memberId) {
+                await initMemberPage();
+                updateLanguageDisplay();
+            }
+        }
+    } catch (error) {
+        console.error('Error during initialization:', error);
+    }
+});
+
+// Expose necessary global functions
+window.toggleLanguage = toggleLanguage;
+window.toggleMembers = toggleMembers;
+window.handleLogout = handleLogout;
+window.handleLogin = handleLogin;
+}); // Add closing brace for DOMContentLoaded event listener

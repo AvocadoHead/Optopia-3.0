@@ -134,26 +134,33 @@ export async function getGalleryItemById(id) {
 // Authentication API
 export async function login(identifier, password) {
     try {
+        const requestBody = {
+            username: identifier.trim(),
+            password: password
+        };
+        
+        console.log('Login request:', requestBody);
+        
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: defaultHeaders,
-            body: JSON.stringify({ 
-                username: identifier.trim(),  // backend expects 'username' field
-                password: password
-            }),
+            body: JSON.stringify(requestBody),
             credentials: 'include'
         });
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
+            console.error('Server error response:', errorData);
             throw new Error(errorData?.message || `Authentication failed with status: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('Server response:', data);
         
-        // The backend should return either user.id or member.id as token
-        const token = data.token || data.id;
-        const memberId = data.memberId || data.member_id || data.id;
+        // Determine the correct token and member ID
+        const token = data.sessionToken;
+        const memberId = data.member?.id || data.member?.memberId || data.memberId;
+        const userId = data.userId;
 
         if (!token || !memberId) {
             console.error('Server response:', data);
@@ -163,11 +170,12 @@ export async function login(identifier, password) {
         // Store auth data
         localStorage.setItem('sessionToken', token);
         localStorage.setItem('memberId', memberId);
+        if (userId) localStorage.setItem('userId', userId);
 
         // Set the token for future API calls
         setAuthToken(token);
 
-        return { token, memberId };
+        return { token, memberId, userId };
     } catch (error) {
         console.error('Login error:', error);
         throw error;

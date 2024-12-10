@@ -1,5 +1,5 @@
 import { getCurrentLang, setCurrentLang } from './utils.js';
-import { API_BASE_URL } from './api-service.js';
+import { API_BASE_URL, login } from './api-service.js';
 
 let currentLang = getCurrentLang();
 
@@ -31,28 +31,10 @@ async function handleLogin(event) {
     const errorDiv = document.getElementById('login-error');
     
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, password })
-        });
-
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.message || 'Login failed');
-        }
-
-        const data = await response.json();
-        
-        // Store the session token and member ID
-        localStorage.setItem('sessionToken', data.sessionToken);
-        localStorage.setItem('memberId', data.member.id);
-        localStorage.setItem('isLoggedIn', 'true');
+        const { memberId } = await login(username, password);
         
         // Redirect to member page in edit mode
-        window.location.href = `/member.html?id=${data.member.id}&edit=true`;
+        window.location.href = `/member.html?id=${memberId}&edit=true`;
     } catch (error) {
         console.error('Login error:', error);
         errorDiv.textContent = error.message;

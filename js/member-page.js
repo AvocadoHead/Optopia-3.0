@@ -1,5 +1,5 @@
 import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
-import { getMemberById, updateMember, API_BASE_URL } from './api-service.js';
+import { getMemberById, updateMember } from './api-service.js';
 
 // Global state
 let currentLang = getCurrentLang();
@@ -17,32 +17,43 @@ async function loadMemberData(memberId) {
             originalData = { ...memberData };
             currentData = { ...memberData };
             
-            // Check login state and edit mode
+            // Check login state
             const sessionToken = localStorage.getItem('sessionToken');
             currentUserId = localStorage.getItem('memberId');
             isLoggedIn = sessionToken && currentUserId === memberId;
-            
-            // Check if we should enter edit mode
-            const urlParams = new URLSearchParams(window.location.search);
-            if (isLoggedIn && urlParams.get('edit') === 'true') {
-                isEditMode = true;
-                document.body.classList.add('edit-mode');
-            }
             
             // Initialize page
             updateMemberDetails(memberData);
             renderMemberGallery(memberData.gallery_items || []);
             renderMemberCourses(memberData.courses || []);
             
-            // Show edit controls if logged in
-            const editControls = document.querySelector('.edit-controls');
-            if (editControls) {
-                editControls.style.display = isLoggedIn ? 'block' : 'none';
-            }
+            // Show edit controls only if logged in as this member
+            const editControls = document.querySelectorAll('.edit-controls');
+            editControls.forEach(control => {
+                control.style.display = isLoggedIn ? 'block' : 'none';
+            });
             
-            // Setup edit mode handlers
-            if (isLoggedIn) {
-                setupEditHandlers();
+            // Show edit button only if logged in as this member
+            const editButton = document.getElementById('edit-button');
+            if (editButton) {
+                editButton.style.display = isLoggedIn ? 'block' : 'none';
+                editButton.addEventListener('click', toggleEditMode);
+            }
+
+            // Show add buttons only if logged in as this member
+            const addButtons = document.querySelectorAll('#add-gallery-item, #add-course');
+            addButtons.forEach(button => {
+                if (button) button.style.display = isLoggedIn ? 'block' : 'none';
+            });
+
+            // Set up event listeners
+            const addGalleryBtn = document.getElementById('add-gallery-item');
+            const addCourseBtn = document.getElementById('add-course');
+            if (addGalleryBtn) {
+                addGalleryBtn.addEventListener('click', showAddGalleryItemForm);
+            }
+            if (addCourseBtn) {
+                addCourseBtn.addEventListener('click', showAddCourseForm);
             }
         }
     } catch (error) {
@@ -50,249 +61,49 @@ async function loadMemberData(memberId) {
     }
 }
 
-function setupEditHandlers() {
-    // Setup save button
-    const saveButton = document.getElementById('save-button');
-    if (saveButton) {
-        saveButton.addEventListener('click', saveChanges);
-    }
-    
-    // Setup cancel button
-    const cancelButton = document.getElementById('cancel-button');
-    if (cancelButton) {
-        cancelButton.addEventListener('click', cancelChanges);
-    }
-    
-    // Make elements editable
-    document.querySelectorAll('.editable').forEach(element => {
-        element.addEventListener('click', handleFieldEdit);
-    });
-}
-
-async function saveChanges() {
-    try {
-        const saveButton = document.getElementById('save-button');
-        const cancelButton = document.getElementById('cancel-button');
-        
-        if (saveButton) saveButton.disabled = true;
-        if (cancelButton) cancelButton.disabled = true;
-        
-        // Get all editable fields
-        const editableFields = document.querySelectorAll('.editable');
-        editableFields.forEach(field => {
-            const fieldName = field.dataset.field;
-            if (fieldName) {
-                currentData[fieldName] = field.textContent.trim();
-            }
-        });
-        
-        // Save to backend
-        await updateMember(currentUserId, currentData);
-        
-        // Update original data
-        originalData = { ...currentData };
-        
-        // Exit edit mode
-        isEditMode = false;
-        document.body.classList.remove('edit-mode');
-        
-        // Show success message
-        alert(getLangText({
-            he: 'השינויים נשמרו בהצלחה',
-            en: 'Changes saved successfully'
-        }));
-        
-        // Refresh page without edit mode
-        window.location.href = `member.html?id=${currentUserId}`;
-    } catch (error) {
-        console.error('Error saving changes:', error);
-        alert(getLangText({
-            he: 'אירעה שגיאה בשמירת השינויים',
-            en: 'Error saving changes'
-        }));
-    } finally {
-        if (saveButton) saveButton.disabled = false;
-        if (cancelButton) cancelButton.disabled = false;
-    }
-}
-
 function toggleEditMode() {
+    const editButton = document.getElementById('edit-button');
+    if (!editButton) return;
+
     isEditMode = !isEditMode;
     document.body.classList.toggle('edit-mode', isEditMode);
+    
+    // Update button text
+    if (currentLang === 'he') {
+        editButton.querySelector('[data-lang="he"]').textContent = isEditMode ? 'שמור שינויים' : 'ערוך פרופיל';
+    } else {
+        editButton.querySelector('[data-lang="en"]').textContent = isEditMode ? 'Save Changes' : 'Edit Profile';
+    }
 
-    // Show/hide add buttons based on edit mode
+    // Show/hide add buttons
     const addButtons = document.querySelectorAll('#add-gallery-item, #add-course');
     addButtons.forEach(button => {
         if (button) button.style.display = isEditMode ? 'block' : 'none';
     });
 
-    // Toggle edit button text
-    const editButton = document.getElementById('edit-button');
-    if (editButton) {
-        const heSpan = editButton.querySelector('[data-lang="he"]');
-        const enSpan = editButton.querySelector('[data-lang="en"]');
-        if (isEditMode) {
-            heSpan.textContent = 'צא ממצב עריכה';
-            enSpan.textContent = 'Exit Edit Mode';
-
-            // Create edit controls
-            const editControls = document.createElement('div');
-            editControls.className = 'edit-controls';
-            editControls.style.display = 'block';
-            editControls.innerHTML = `
-                <button id="save-button" class="nav-btn">
-                    <span data-lang="he">שמור שינויים</span>
-                    <span data-lang="en" style="display:none;">Save Changes</span>
-                </button>
-                <button id="cancel-button" class="nav-btn">
-                    <span data-lang="he">בטל שינויים</span>
-                    <span data-lang="en" style="display:none;">Cancel Changes</span>
-                </button>
-            `;
-            
-            // Add event listeners to the new buttons
-            const saveBtn = editControls.querySelector('#save-button');
-            const cancelBtn = editControls.querySelector('#cancel-button');
-            saveBtn.addEventListener('click', saveChanges);
-            cancelBtn.addEventListener('click', cancelChanges);
-
-            // Add the controls to the page
-            const memberProfile = document.querySelector('.member-profile');
-            memberProfile.appendChild(editControls);
-
-            // Create password change button
-            const changePasswordBtn = document.createElement('button');
-            changePasswordBtn.id = 'change-password-button';
-            changePasswordBtn.className = 'nav-btn';
-            changePasswordBtn.innerHTML = `
-                <span data-lang="he">שנה סיסמה</span>
-                <span data-lang="en" style="display:none;">Change Password</span>
-            `;
-            changePasswordBtn.addEventListener('click', showChangePasswordDialog);
-            editControls.appendChild(changePasswordBtn);
-        } else {
-            heSpan.textContent = 'ערוך פרופיל';
-            enSpan.textContent = 'Edit Profile';
-
-            // Remove edit controls (which includes password change button)
-            const editControls = document.querySelector('.edit-controls');
-            if (editControls) {
-                editControls.remove();
-            }
-        }
-    }
-
-    // Make fields editable
-    const editableFields = document.querySelectorAll('.editable');
-    editableFields.forEach(field => {
-        field.contentEditable = isEditMode;
-        if (isEditMode) {
-            field.addEventListener('input', handleFieldEdit);
-        } else {
-            field.removeEventListener('input', handleFieldEdit);
-        }
-    });
-
-    // Reset to original data if canceling edit mode
-    if (!isEditMode) {
-        currentData = { ...originalData };
-        updateMemberDetails(currentData);
-        renderMemberGallery(currentData.gallery_items || []);
-        renderMemberCourses(currentData.courses || []);
-    }
-}
-
-function showChangePasswordDialog() {
-    const dialog = document.createElement('dialog');
-    dialog.className = 'edit-dialog';
-    dialog.innerHTML = `
-        <h3>
-            <span data-lang="he">שינוי סיסמה</span>
-            <span data-lang="en" style="display:none;">Change Password</span>
-        </h3>
-        <form id="change-password-form" class="change-password-form">
-            <div class="form-group">
-                <label for="current-password">
-                    <span data-lang="he">סיסמה נוכחית</span>
-                    <span data-lang="en" style="display:none;">Current Password</span>
-                </label>
-                <input type="password" id="current-password" required>
-            </div>
-            <div class="form-group">
-                <label for="new-password">
-                    <span data-lang="he">סיסמה חדשה</span>
-                    <span data-lang="en" style="display:none;">New Password</span>
-                </label>
-                <input type="password" id="new-password" required>
-            </div>
-            <div class="form-group">
-                <label for="confirm-password">
-                    <span data-lang="he">אימות סיסמה חדשה</span>
-                    <span data-lang="en" style="display:none;">Confirm New Password</span>
-                </label>
-                <input type="password" id="confirm-password" required>
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    <span data-lang="he">עדכן סיסמה</span>
-                    <span data-lang="en" style="display:none;">Update Password</span>
-                </button>
-                <button type="button" class="btn" onclick="this.closest('dialog').close()">
-                    <span data-lang="he">ביטול</span>
-                    <span data-lang="en" style="display:none;">Cancel</span>
-                </button>
-            </div>
-        </form>
-    `;
-
-    // Add to document and show
-    document.body.appendChild(dialog);
-    dialog.showModal();
-
-    // Handle form submission
-    const form = dialog.querySelector('#change-password-form');
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        await handlePasswordChange(event);
-        dialog.close();
-    });
-
-    // Update language display
-    updateLanguageDisplay();
-}
-
-async function handlePasswordChange(event) {
-    const currentPassword = document.getElementById('current-password').value;
-    const newPassword = document.getElementById('new-password').value;
-    const confirmPassword = document.getElementById('confirm-password').value;
-    
-    if (newPassword !== confirmPassword) {
-        alert('New passwords do not match');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
-            },
-            body: JSON.stringify({
-                currentPassword,
-                newPassword
-            })
+    if (isEditMode) {
+        // Make fields editable
+        const editables = document.querySelectorAll('.editable');
+        editables.forEach(field => {
+            field.contentEditable = true;
+            field.addEventListener('blur', handleFieldEdit);
         });
 
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.message || 'Failed to change password');
-        }
+        // Re-render courses to show all available ones
+        renderMemberCourses(currentData.courses || []);
+    } else {
+        // Save changes
+        saveChanges();
+        
+        // Make fields non-editable
+        const editables = document.querySelectorAll('.editable');
+        editables.forEach(field => {
+            field.contentEditable = false;
+            field.removeEventListener('blur', handleFieldEdit);
+        });
 
-        alert('Password changed successfully');
-    } catch (error) {
-        console.error('Error changing password:', error);
-        alert(error.message);
+        // Re-render courses to show only teaching ones
+        renderMemberCourses(currentData.courses || []);
     }
 }
 
@@ -303,7 +114,28 @@ async function handleFieldEdit(event) {
     currentData[field] = value;
 }
 
-async function showAddGalleryItemForm(item, index) {
+async function saveChanges() {
+    try {
+        const memberId = getMemberIdFromUrl();
+        const token = localStorage.getItem('sessionToken');
+        if (!token) {
+            throw new Error('No session token found');
+        }
+
+        // Update member details
+        await updateMember(memberId, currentData);
+        originalData = { ...currentData };
+        alert('Changes saved successfully!');
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        alert('Failed to save changes. Please try again.');
+        // Revert changes on error
+        currentData = { ...originalData };
+        updateMemberDetails(originalData);
+    }
+}
+
+function showAddGalleryItemForm(item, index) {
     const dialog = document.createElement('dialog');
     dialog.className = 'edit-dialog';
     dialog.innerHTML = `
@@ -497,62 +329,22 @@ function showAddCourseForm(course, index) {
     updateLanguageDisplay();
 }
 
-async function deleteGalleryItem(index) {
-    try {
-        if (!currentData.gallery_items) return;
-        
-        const item = currentData.gallery_items[index];
-        const memberId = getMemberIdFromUrl();
-        const token = localStorage.getItem('sessionToken');
-        
-        const response = await fetch(`${API_BASE_URL}/gallery/${item.id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to delete gallery item');
-        }
-
-        // Update local state
-        currentData.gallery_items.splice(index, 1);
-        renderMemberGallery(currentData.gallery_items);
-        alert('Gallery item deleted successfully!');
-    } catch (error) {
-        console.error('Error deleting gallery item:', error);
-        alert('Failed to delete gallery item. Please try again.');
+function addToCourse(courseId) {
+    if (!currentData.courses) {
+        currentData.courses = [];
+    }
+    if (!currentData.courses.includes(courseId)) {
+        currentData.courses.push(courseId);
+        saveChanges();
+        renderMemberCourses(currentData.courses);
     }
 }
 
-async function addToCourse(courseId) {
-    try {
-        const memberId = getMemberIdFromUrl();
-        const token = localStorage.getItem('sessionToken');
-        
-        const response = await fetch(`${API_BASE_URL}/courses/${courseId}/teachers`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ memberId })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to add teacher to course');
-        }
-
-        // Update local state
-        if (!currentData.courses) currentData.courses = [];
-        const courseData = await response.json();
-        currentData.courses.push(courseData);
-        renderMemberCourses(currentData.courses);
-        alert('Successfully added to course!');
-    } catch (error) {
-        console.error('Error adding to course:', error);
-        alert('Failed to add to course. Please try again.');
+function deleteGalleryItem(index) {
+    if (currentData.gallery_items) {
+        currentData.gallery_items.splice(index, 1);
+        saveChanges();
+        renderMemberGallery(currentData.gallery_items);
     }
 }
 
@@ -640,7 +432,7 @@ function renderMemberCourses(courses = []) {
     // If in edit mode and logged in, show all available courses
     if (isEditMode && isLoggedIn && currentData.all_courses) {
         const allCourses = currentData.all_courses;
-        const teachingCourseIds = new Set((currentData.courses || []).map(c => c.id));
+        const teachingCourseIds = new Set((currentData.course_teachers || []).map(ct => ct.course_id));
         
         allCourses.forEach(course => {
             const courseCard = document.createElement('div');
@@ -680,7 +472,11 @@ function renderMemberCourses(courses = []) {
         });
     } else {
         // Show only teaching courses in non-edit mode
-        courses.forEach(course => {
+        const teachingCourses = currentData.course_teachers 
+            ? currentData.course_teachers.map(ct => ct.courses) 
+            : [];
+        
+        teachingCourses.forEach(course => {
             const courseCard = document.createElement('div');
             courseCard.className = 'course-card';
             
@@ -705,160 +501,26 @@ function renderMemberCourses(courses = []) {
     }
 }
 
-window.addToCourse = async function(courseId) {
-    try {
-        const memberId = getMemberIdFromUrl();
-        const token = localStorage.getItem('sessionToken');
-        
-        const response = await fetch(`${API_BASE_URL}/courses/${courseId}/teachers`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ memberId })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to add teacher to course');
+function updateLanguageDisplay() {
+    document.querySelectorAll('[data-lang]').forEach(el => {
+        if (el.getAttribute('data-lang') === currentLang) {
+            el.style.display = '';
+        } else {
+            el.style.display = 'none';
         }
-
-        // Update local state
-        if (!currentData.courses) currentData.courses = [];
-        const courseData = await response.json();
-        currentData.courses.push(courseData);
-        renderMemberCourses(currentData.courses);
-        alert('Successfully added to course!');
-    } catch (error) {
-        console.error('Error adding to course:', error);
-        alert('Failed to add to course. Please try again.');
-    }
-};
-
-window.removeFromCourse = async function(courseId) {
-    try {
-        const memberId = getMemberIdFromUrl();
-        const token = localStorage.getItem('sessionToken');
-        
-        const response = await fetch(`${API_BASE_URL}/courses/${courseId}/teachers`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to remove teacher from course');
-        }
-
-        // Update local state
-        currentData.courses = currentData.courses.filter(c => c.id !== courseId);
-        renderMemberCourses(currentData.courses);
-        alert('Successfully removed from course!');
-    } catch (error) {
-        console.error('Error removing from course:', error);
-        alert('Failed to remove from course. Please try again.');
-    }
-};
-
-window.editGalleryItem = function(index) {
-    const item = currentData.gallery_items[index];
-    showAddGalleryItemForm(item, index);
-};
-
-window.deleteGalleryItem = function(index) {
-    if (confirm(currentLang === 'he' ? 'האם אתה בטוח שברצונך למחוק פריט זה?' : 'Are you sure you want to delete this item?')) {
-        deleteGalleryItem(index);
-    }
-};
-
-window.editCourse = function(index) {
-    const course = currentData.courses[index];
-    showAddCourseForm(course, index);
-};
-
-window.deleteCourse = function(index) {
-    if (confirm(currentLang === 'he' ? 'האם אתה בטוח שברצונך למחוק קורס זה?' : 'Are you sure you want to delete this course?')) {
-        currentData.courses.splice(index, 1);
-        renderMemberCourses(currentData.courses);
-    }
-};
-
-// Check if user is logged in and has permission to edit
-function canEditProfile(memberId) {
-    const sessionToken = localStorage.getItem('sessionToken');
-    const loggedInMemberId = localStorage.getItem('memberId');
-    return sessionToken && loggedInMemberId === memberId;
+    });
 }
 
-// Show or hide edit button based on permissions
-function updateEditButtonVisibility(memberId) {
-    const editButton = document.getElementById('edit-button');
-    if (editButton) {
-        editButton.style.display = canEditProfile(memberId) ? 'block' : 'none';
-    }
+function getMemberIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('id');
 }
 
-// Initialize member page
-async function initMemberPage() {
-    try {
-        // Get member ID from URL or localStorage
-        const urlParams = new URLSearchParams(window.location.search);
-        const memberId = urlParams.get('id') || localStorage.getItem('memberId');
-        
-        console.log('Initializing member page for ID:', memberId);
-        
-        if (!memberId) {
-            throw new Error('No member ID provided');
-        }
-
-        // Load member data
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
+    const memberId = getMemberIdFromUrl();
+    if (memberId) {
         await loadMemberData(memberId);
-        
-        // Set up language
-        document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
-        const langToggle = document.getElementById('language-toggle');
-        if (langToggle) {
-            langToggle.textContent = currentLang === 'he' ? 'EN' : 'עב';
-        }
-        
-        // Check if we should be in edit mode
-        const editMode = urlParams.get('edit') === 'true';
-        if (editMode && isLoggedIn) {
-            document.body.classList.add('edit-mode');
-            setupEditHandlers();
-        }
-    } catch (error) {
-        console.error('Error initializing member page:', error);
-        // Show error message to user
-        const mainContent = document.querySelector('main');
-        if (mainContent) {
-            mainContent.innerHTML = `
-                <div class="error-message">
-                    <h2>${getLangText({
-                        he: 'שגיאה בטעינת הדף',
-                        en: 'Error Loading Page'
-                    })}</h2>
-                    <p>${getLangText({
-                        he: 'לא ניתן לטעון את פרטי החבר. אנא נסה שוב מאוחר יותר.',
-                        en: 'Could not load member details. Please try again later.'
-                    })}</p>
-                </div>
-            `;
-        }
+        updateLanguageDisplay();
     }
-}
-
-// Add this function to properly set up edit handlers
-function setupEditHandlers() {
-    const editableElements = document.querySelectorAll('.editable');
-    editableElements.forEach(element => {
-        element.contentEditable = true;
-        element.addEventListener('blur', async (event) => {
-            if (isEditMode) {
-                const field = event.target.dataset.field;
-                const value = event.target.textContent.trim();
-                currentData[field] = value;
-            }
-        });
-   
+});

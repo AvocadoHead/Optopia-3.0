@@ -3,6 +3,7 @@ import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
 
 let currentLang = getCurrentLang();
 document.documentElement.lang = currentLang;
+document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
 
 // Language toggle functionality
 window.toggleLanguage = function() {
@@ -33,17 +34,19 @@ async function handleLogin(event) {
     event.preventDefault();
     hideError();
     
-    let username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    const form = event.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
     
-    // Normalize username by removing hyphens
-    username = username.replace(/-/g, '');
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
     
     try {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({ username, password })
         });
@@ -58,10 +61,11 @@ async function handleLogin(event) {
         localStorage.setItem('sessionToken', data.token);
         localStorage.setItem('memberId', data.memberId);
 
-        // Redirect to member page
-        window.location.href = `member.html?id=${data.memberId}`;
+        // Redirect to member page in edit mode
+        window.location.href = `member.html?id=${data.memberId}&edit=true`;
     } catch (error) {
         console.error('Login error:', error);
+        submitButton.disabled = false;
         showError({
             he: 'שם משתמש או סיסמה שגויים',
             en: 'Invalid username or password'
@@ -71,9 +75,15 @@ async function handleLogin(event) {
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
-    // Set up form submission
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
+    }
+
+    // Set initial language
+    document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
+    const langToggle = document.getElementById('language-toggle');
+    if (langToggle) {
+        langToggle.textContent = currentLang === 'he' ? 'EN' : 'עב';
     }
 });

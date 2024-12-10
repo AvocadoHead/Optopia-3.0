@@ -984,36 +984,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         // First initialize language
         initLanguageToggle();
-        updateLanguageDisplay();
-
-        // Page-specific initializations
-        const pagePath = window.location.pathname;
-        if (pagePath.includes('login.html')) {
-            initLoginPage();
-        }
-        // ... rest of existing initialization code
+        
+        // Then initialize the page based on the current route
         await initializePage();
         
-        // After data is loaded, update the display
-        const galleryPreview = document.getElementById('gallery-preview');
-        const coursesPreview = document.getElementById('courses-preview');
-        
-        if (galleryPreview) {
-            renderGalleryPreview(galleryPreview);
-        }
-        if (coursesPreview) {
-            renderCoursesPreview(coursesPreview);
-        }
-
-        // Check if we're on member page
-        const path = window.location.pathname;
-        if (path.includes('member.html')) {
-            const memberId = getMemberIdFromUrl();
-            if (memberId) {
-                await loadMemberData(memberId);
-                updateLanguageDisplay();
-            }
-        }
     } catch (error) {
         console.error('Error during initialization:', error);
     }

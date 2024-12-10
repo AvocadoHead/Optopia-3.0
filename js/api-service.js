@@ -74,12 +74,17 @@ export async function getMemberById(id) {
 
 export async function updateMember(id, data) {
     try {
+        console.log('Updating member:', { id, data }); // Debug log
+        
         const token = localStorage.getItem('sessionToken');
         if (!token) {
             throw new Error('No session token found');
         }
 
-        const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+        const url = `${API_BASE_URL}/members/${id}`;
+        console.log('Update URL:', url); // Debug log
+
+        const response = await fetch(url, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -88,12 +93,17 @@ export async function updateMember(id, data) {
             body: JSON.stringify(data)
         });
 
+        console.log('Update response status:', response.status); // Debug log
+
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to update member');
+            console.error('Update error response:', errorData); // Debug log
+            throw new Error(errorData.message || `Failed to update member: ${response.status}`);
         }
 
-        return await response.json();
+        const updatedData = await response.json();
+        console.log('Update successful:', updatedData); // Debug log
+        return updatedData;
     } catch (error) {
         console.error('Error updating member:', error);
         throw error;
@@ -116,13 +126,3 @@ export async function getAllGalleryItems() {
 
 export async function getGalleryItemById(id) {
     try {
-        const response = await fetch(`${API_BASE_URL}/gallery/${id}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching gallery item:', error);
-        throw error;
-    }
-}

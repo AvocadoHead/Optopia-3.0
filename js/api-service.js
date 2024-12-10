@@ -138,10 +138,10 @@ export async function login(username, password) {
             method: 'POST',
             headers: defaultHeaders,
             body: JSON.stringify({ 
-                username: username.trim(),
-                password: password
+                username: username.trim(),  // using username from members table
+                password: password          // using password from members table
             }),
-            credentials: 'include' // This enables sending cookies if needed
+            credentials: 'include'
         });
 
         if (!response.ok) {
@@ -151,19 +151,23 @@ export async function login(username, password) {
 
         const data = await response.json();
         
-        // Validate the response has the required fields
-        if (!data.token || !data.memberId) {
+        // Check for member_id from the members table response
+        const token = data.token || response.headers.get('Authorization')?.replace('Bearer ', '');
+        const memberId = data.id; // The member's ID from the members table
+
+        if (!token || !memberId) {
+            console.error('Server response:', data);
             throw new Error('Invalid server response: missing token or memberId');
         }
 
         // Store auth data
-        localStorage.setItem('sessionToken', data.token);
-        localStorage.setItem('memberId', data.memberId);
+        localStorage.setItem('sessionToken', token);
+        localStorage.setItem('memberId', memberId);
 
         // Set the token for future API calls
-        setAuthToken(data.token);
+        setAuthToken(token);
 
-        return data;
+        return { token, memberId };
     } catch (error) {
         console.error('Login error:', error);
         throw error;

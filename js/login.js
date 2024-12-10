@@ -48,7 +48,8 @@ async function handleLogin(event) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password }),
+            credentials: 'include'  // Important for cookie handling
         });
 
         const data = await response.json();

@@ -46,32 +46,28 @@
                 <h2 data-lang="he" class="section-title">התחברות</h2>
                 <h2 data-lang="en" class="section-title" style="display:none;">Login</h2>
                 
-                <form id="login-form" class="login-form">
-                    <div class="form-group">
-                        <label for="username" data-lang="he">דוא״ל או שם משתמש</label>
-                        <label for="username" data-lang="en" style="display:none;">Email or Username</label>
-                        <input type="text" id="username" name="username" required class="form-control" 
-                               placeholder="email@example.com / username">
+                <div class="login-box">
+                    <div class="input-group">
+                        <label for="username" data-lang="he">שם משתמש או אימייל</label>
+                        <label for="username" data-lang="en" style="display:none;">Username or Email</label>
+                        <input type="text" id="username" name="username" placeholder="אימייל או שם משתמש">
                     </div>
                     
-                    <div class="form-group">
+                    <div class="input-group">
                         <label for="password" data-lang="he">סיסמה</label>
                         <label for="password" data-lang="en" style="display:none;">Password</label>
-                        <input type="password" id="password" name="password" required class="form-control">
+                        <input type="password" id="password" name="password" placeholder="סיסמה">
                     </div>
-                    
-                    <div id="login-error" class="error-message" style="display:none;"></div>
-                    
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary">
-                            <span data-lang="he">התחבר</span>
-                            <span data-lang="en" style="display:none;">Login</span>
-                        </button>
-                    </div>
-                </form>
+
+                    <button type="button" id="login-btn" class="primary-btn">
+                        <span data-lang="he">התחבר</span>
+                        <span data-lang="en" style="display:none;">Login</span>
+                    </button>
+                </div>
             </section>
         </main>
     </div>
 
     <script type="module" src="js/main.js"></script>
 </body>
+</html>

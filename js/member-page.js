@@ -1,5 +1,5 @@
 import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
-import { getMemberById, updateMember } from './api-service.js';
+import { getMemberById, updateMember, API_BASE_URL } from './api-service.js';
 
 // Global state
 let currentLang = getCurrentLang();
@@ -750,6 +750,48 @@ window.deleteCourse = function(index) {
     }
 };
 
+// Check if user is logged in and has permission to edit
+function canEditProfile(memberId) {
+    const sessionToken = localStorage.getItem('sessionToken');
+    const loggedInMemberId = localStorage.getItem('memberId');
+    return sessionToken && loggedInMemberId === memberId;
+}
+
+// Show or hide edit button based on permissions
+function updateEditButtonVisibility(memberId) {
+    const editButton = document.getElementById('edit-button');
+    if (editButton) {
+        editButton.style.display = canEditProfile(memberId) ? 'block' : 'none';
+    }
+}
+
+// Initialize member page
+async function initMemberPage() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const memberId = urlParams.get('id');
+        const editMode = urlParams.get('edit') === 'true';
+
+        if (!memberId) {
+            throw new Error('Member ID is required');
+        }
+
+        // Update edit button visibility
+        updateEditButtonVisibility(memberId);
+
+        // If in edit mode and has permission, show edit form
+        if (editMode && canEditProfile(memberId)) {
+            toggleEditMode();
+        }
+
+        // Load member data
+        await loadMemberData(memberId);
+    } catch (error) {
+        console.error('Error initializing member page:', error);
+        alert(error.message);
+    }
+}
+
 // Language toggle functionality
 window.toggleLanguage = function() {
     currentLang = currentLang === 'he' ? 'en' : 'he';
@@ -784,8 +826,5 @@ function getMemberIdFromUrl() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-    const memberId = getMemberIdFromUrl();
-    if (memberId) {
-        await loadMemberData(memberId);
-    }
+    await initMemberPage();
 });

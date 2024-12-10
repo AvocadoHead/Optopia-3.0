@@ -639,7 +639,7 @@ async function initCourseItemPage() {
     }
 }
 
-function initMemberPage() {
+async function initMemberPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const memberId = urlParams.get('id');
     
@@ -823,7 +823,7 @@ async function initializePage() {
         } else if (path.includes('courses.html')) {
             await initCoursesPage();
         } else if (path.includes('member.html')) {
-            await initMemberPage();
+            await initMemberPageEditMode();
         } else if (path.includes('gallery-item.html')) {
             await initGalleryItemPage();
         } else if (path.includes('course-item.html')) {
@@ -837,7 +837,7 @@ async function initializePage() {
 }
 
 // Initialize member page with edit mode
-async function initMemberPage() {
+async function initMemberPageEditMode() {
     const memberId = getMemberIdFromUrl();
     const sessionToken = localStorage.getItem('sessionToken');
     const loggedInMemberId = localStorage.getItem('memberId');

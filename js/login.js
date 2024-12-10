@@ -34,7 +34,7 @@ async function handleLogin(event) {
         const { memberId } = await login(username, password);
         
         // Redirect to member page in edit mode
-        window.location.href = `${window.location.origin}/member.html?id=${memberId}&edit=true`;
+        window.location.href = `https://avocadohead.github.io/Optopia-3.0/member.html?id=${memberId}&edit=true`;
     } catch (error) {
         console.error('Login error:', error);
         errorDiv.textContent = error.message;

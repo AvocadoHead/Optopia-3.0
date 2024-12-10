@@ -786,27 +786,46 @@ async function initGalleryItemPage() {
 // Login handling
 async function handleLogin(event) {
     event.preventDefault();
-    const username = document.getElementById('username').value;
+    
+    const loginForm = document.getElementById('login-form');
+    const errorMsg = document.getElementById('login-error');
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    
+    // Get form inputs
+    const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
+    
+    // Basic validation
+    if (!username || !password) {
+        if (errorMsg) {
+            errorMsg.textContent = currentLang === 'he' ? 
+                'נא למלא את כל השדות' : 
+                'Please fill in all fields';
+            errorMsg.style.display = 'block';
+        }
+        return;
+    }
+    
+    // Disable form while processing
+    if (submitBtn) submitBtn.disabled = true;
+    if (errorMsg) errorMsg.style.display = 'none';
     
     try {
         const data = await login(username, password);
-        if (data.token && data.memberId) {
-            localStorage.setItem('sessionToken', data.token);
-            localStorage.setItem('memberId', data.memberId);
-            window.location.href = `member.html?id=${data.memberId}`;
-        } else {
-            throw new Error('Invalid login response');
-        }
+        // Redirect to member page on success
+        window.location.href = `member.html?id=${data.memberId}`;
     } catch (error) {
         console.error('Login failed:', error);
-        const errorMsg = document.getElementById('login-error');
         if (errorMsg) {
+            // Show specific error message if available
             errorMsg.textContent = currentLang === 'he' ? 
                 'שם משתמש או סיסמה שגויים' : 
                 'Invalid username or password';
             errorMsg.style.display = 'block';
         }
+    } finally {
+        // Re-enable form
+        if (submitBtn) submitBtn.disabled = false;
     }
 }
 
@@ -895,22 +914,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (coursesPreview) {
             renderCoursesPreview(coursesPreview);
         }
-
-        // Check if we're on member page
-        const path = window.location.pathname;
-        if (path.includes('member.html')) {
-            const memberId = getMemberIdFromUrl();
-            if (memberId) {
-                await initMemberPage();
-                updateLanguageDisplay();
-            }
-        }
-    } catch (error) {
-        console.error('Error during initialization:', error);
-    }
-});
-
-// Expose necessary global functions
-window.toggleLanguage = toggleLanguage;
-window.toggleMembers = toggleMembers;
-window.handleLogout = handleLogout;

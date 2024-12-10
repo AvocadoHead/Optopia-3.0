@@ -687,29 +687,29 @@ async function initMemberPage() {
         bioElement.querySelector('[data-lang="en"]').textContent = member.bio?.en || '';
     }
     
-    // Render member's gallery
-    const galleryContainer = document.getElementById('member-gallery');
-    if (galleryContainer) {
-        const memberGallery = galleryData.filter(item => item.artist === memberId);
-        memberGallery.forEach(item => {
-            const galleryItem = document.createElement('div');
-            galleryItem.className = 'gallery-item';
+    // // Render member's gallery
+    // const galleryContainer = document.getElementById('member-gallery');
+    // if (galleryContainer) {
+    //     const memberGallery = galleryData.filter(item => item.artist === memberId);
+    //     memberGallery.forEach(item => {
+    //         const galleryItem = document.createElement('div');
+    //         galleryItem.className = 'gallery-item';
             
-            galleryItem.innerHTML = `
-                <img src="${item.imageUrl}" alt="${getLangText(item.title, currentLang)}" onerror="this.src='assets/placeholder.jpg'">
-                <div class="overlay">
-                    <h3>${getLangText(item.title, currentLang)}</h3>
-                    <p>${getLangText(item.description, currentLang)}</p>
-                </div>
-            `;
+    //         galleryItem.innerHTML = `
+    //             <img src="${item.imageUrl}" alt="${getLangText(item.title, currentLang)}" onerror="this.src='assets/placeholder.jpg'">
+    //             <div class="overlay">
+    //                 <h3>${getLangText(item.title, currentLang)}</h3>
+    //                 <p>${getLangText(item.description, currentLang)}</p>
+    //             </div>
+    //         `;
             
-            galleryItem.addEventListener('click', () => {
-                window.location.href = `gallery-item.html?id=${item.id}`;
-            });
+    //         galleryItem.addEventListener('click', () => {
+    //             window.location.href = `gallery-item.html?id=${item.id}`;
+    //         });
             
-            galleryContainer.appendChild(galleryItem);
-        });
-    }
+    //         galleryContainer.appendChild(galleryItem);
+    //     });
+    // }
     
     // Render member's courses
     const coursesContainer = document.getElementById('member-courses');

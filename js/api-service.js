@@ -74,36 +74,18 @@ export async function getMemberById(id) {
 
 export async function updateMember(id, data) {
     try {
-        console.log('Updating member:', { id, data }); // Debug log
-        
-        const token = localStorage.getItem('sessionToken');
-        if (!token) {
-            throw new Error('No session token found');
-        }
-
-        const url = `${API_BASE_URL}/members/${id}`;
-        console.log('Update URL:', url); // Debug log
-
-        const response = await fetch(url, {
+        const response = await fetch(`${API_BASE_URL}/members/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
             },
             body: JSON.stringify(data)
         });
-
-        console.log('Update response status:', response.status); // Debug log
-
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Update error response:', errorData); // Debug log
-            throw new Error(errorData.message || `Failed to update member: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const updatedData = await response.json();
-        console.log('Update successful:', updatedData); // Debug log
-        return updatedData;
+        return await response.json();
     } catch (error) {
         console.error('Error updating member:', error);
         throw error;
@@ -126,3 +108,87 @@ export async function getAllGalleryItems() {
 
 export async function getGalleryItemById(id) {
     try {
+        const response = await fetch(`${API_BASE_URL}/gallery/${id}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching gallery item:', error);
+        throw error;
+    }
+}
+
+// Authentication API
+export async function login(username, password) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.token) {
+            localStorage.setItem('sessionToken', data.token);
+        }
+        return data;
+    } catch (error) {
+        console.error('Error during login:', error);
+        throw error;
+    }
+}
+
+export async function logout() {
+    localStorage.removeItem('sessionToken');
+}
+
+// Update functions
+export async function updateGalleryItem(id, data) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/gallery/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating gallery item:', error);
+        throw error;
+    }
+}
+
+export async function updateCourse(id, data) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating course:', error);
+        throw error;
+    }
+}
+
+// Helper function to check if user is logged in
+export function isLoggedIn() {
+    return !!localStorage.getItem('sessionToken');
+}

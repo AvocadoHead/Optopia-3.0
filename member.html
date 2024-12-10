@@ -31,37 +31,30 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <div class="header-top">
-                <div class="nav-buttons">
-                    <a href="index.html" class="nav-btn">
-                        <span data-lang="he">דף הבית</span>
-                        <span data-lang="en" style="display:none;">Home</span>
-                    </a>
-                    <a href="gallery.html" class="nav-btn">
-                        <span data-lang="he">גלריה</span>
-                        <span data-lang="en" style="display:none;">Gallery</span>
-                    </a>
-                    <a href="courses.html" class="nav-btn">
-                        <span data-lang="he">קורסים</span>
-                        <span data-lang="en" style="display:none;">Courses</span>
-                    </a>
-                    <button onclick="toggleLanguage()" class="nav-btn" id="language-toggle">EN</button>
-                    <a href="login.html" class="nav-btn">
-                        <span data-lang="he">התחברות</span>
-                        <span data-lang="en" style="display:none;">Login</span>
-                    </a>
-                </div>
+        <header class="main-header">
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <span data-lang="he">דף הבית</span>
+                    <span data-lang="en" style="display:none;">Home</span>
+                </a>
+                <a href="gallery.html" class="nav-btn">
+                    <span data-lang="he">גלריה</span>
+                    <span data-lang="en" style="display:none;">Gallery</span>
+                </a>
+                <a href="courses.html" class="nav-btn">
+                    <span data-lang="he">קורסים</span>
+                    <span data-lang="en" style="display:none;">Courses</span>
+                </a>
+                <button onclick="toggleLanguage()" class="nav-btn" id="language-toggle">EN</button>
             </div>
-        </div>
-        <div class="logo-title-wrapper">
-            <h1 class="site-title">Optopia</h1>
-            <img src="https://drive.google.com/thumbnail?id=12iXrVE-B1wleWdjiNW7bC4Hl8plPnZfo" alt="Optopia Logo" class="logo">
-        </div>
+            <div class="logo-title-wrapper">
+                <h1 class="site-title">Optopia</h1>
+                <img src="https://drive.google.com/thumbnail?id=12iXrVE-B1wleWdjiNW7bC4Hl8plPnZfo" alt="Optopia Logo" class="logo">
+            </div>
         </header>
 
-        <main>
-            <div class="member-profile">
+        <main class="member-profile">
+            <div id="member-content">
                 <div class="member-header">
                     <div class="image-container">
                         <img id="member-image" src="" alt="Member Photo" class="member-profile-image">
@@ -76,10 +69,6 @@
                             <span class="editable" data-field="role_he" data-lang="he"></span>
                             <span class="editable" data-field="role_en" data-lang="en" style="display:none;"></span>
                         </p>
-                        <button id="edit-button" class="nav-btn" style="display: none;">
-                            <span data-lang="he">ערוך פרופיל</span>
-                            <span data-lang="en" style="display:none;">Edit Profile</span>
-                        </button>
                     </div>
                 </div>
                 
@@ -109,6 +98,16 @@
                         <span data-lang="en" style="display:none;">Add Course</span>
                     </button>
                 </div>
+            </div>
+            <div class="edit-controls" style="display: none;">
+                <button id="save-button" class="nav-btn primary">
+                    <span data-lang="he">שמור שינויים</span>
+                    <span data-lang="en">Save Changes</span>
+                </button>
+                <button id="cancel-button" class="nav-btn">
+                    <span data-lang="he">בטל</span>
+                    <span data-lang="en">Cancel</span>
+                </button>
             </div>
         </main>
     </div>

@@ -41,11 +41,11 @@ async function handleLogin(event) {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     
-    console.log('Attempting login with:', { username }); // Debug log
+    console.log('Attempting login with:', { username });
     
     try {
         const url = `${API_BASE_URL}/auth/login`;
-        console.log('Login URL:', url); // Debug log
+        console.log('Login URL:', url);
         
         const response = await fetch(url, {
             method: 'POST',
@@ -53,26 +53,30 @@ async function handleLogin(event) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ username, password }),
-            credentials: 'include'  // Important for cookie handling
+            body: JSON.stringify({ username, password })
         });
 
-        console.log('Response status:', response.status); // Debug log
+        console.log('Response status:', response.status);
         const data = await response.json();
-        console.log('Response data:', data); // Debug log
+        console.log('Response data:', data);
 
         if (!response.ok) {
             throw new Error(data.message || 'Login failed');
         }
 
+        // Make sure we have a member ID
+        if (!data.id) {
+            throw new Error('No member ID received from server');
+        }
+
         // Store the session token and member ID
         localStorage.setItem('sessionToken', data.token);
-        localStorage.setItem('memberId', data.memberId);
+        localStorage.setItem('memberId', data.id); // Changed from data.memberId to data.id
         
-        console.log('Login successful, redirecting...'); // Debug log
+        console.log('Login successful, redirecting to member ID:', data.id);
 
         // Redirect to member page in edit mode
-        window.location.href = `member.html?id=${data.memberId}&edit=true`;
+        window.location.href = `member.html?id=${data.id}&edit=true`;
     } catch (error) {
         console.error('Login error:', error);
         submitButton.disabled = false;

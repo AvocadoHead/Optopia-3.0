@@ -58,3 +58,9 @@ export function getCurrentLang() {
 export function setCurrentLang(lang) {
     localStorage.setItem('language', lang);
 }
+
+// Get member ID from URL
+export function getMemberIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('id');
+}

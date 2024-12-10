@@ -12,10 +12,7 @@ let currentUserId = null;
 async function loadMemberData(memberId) {
     try {
         currentLang = getCurrentLang();
-        console.log('Loading member data for ID:', memberId);
         const memberData = await getMemberById(memberId);
-        console.log('Received member data:', memberData);
-        
         if (memberData) {
             originalData = { ...memberData };
             currentData = { ...memberData };
@@ -24,23 +21,22 @@ async function loadMemberData(memberId) {
             const sessionToken = localStorage.getItem('sessionToken');
             currentUserId = localStorage.getItem('memberId');
             isLoggedIn = sessionToken && currentUserId === memberId;
-            console.log('Login state:', { isLoggedIn, currentUserId, memberId });
             
+            // Fetch courses taught by the member
+            const coursesTaught = memberData.course_teachers.map(ct => ct.course);
+            console.log('Courses taught by member:', coursesTaught);
+
             // Initialize page
-            console.log('Gallery items:', memberData.gallery_items);
-            console.log('Courses:', memberData.courses);
-            console.log('Course teachers:', memberData.course_teachers);
-            
             updateMemberDetails(memberData);
             renderMemberGallery(memberData.gallery_items || []);
-            renderMemberCourses(memberData.courses || []);
-            
+            renderMemberCourses(coursesTaught);
+
             // Show edit controls only if logged in as this member
             const editControls = document.querySelectorAll('.edit-controls');
             editControls.forEach(control => {
                 control.style.display = isLoggedIn ? 'block' : 'none';
             });
-            
+
             // Show edit button only if logged in as this member
             const editButton = document.getElementById('edit-button');
             if (editButton) {
@@ -480,9 +476,7 @@ function renderMemberCourses(courses = []) {
         });
     } else {
         // Show only teaching courses in non-edit mode
-        const teachingCourses = currentData.course_teachers 
-            ? currentData.course_teachers.map(ct => ct.courses) 
-            : [];
+        const teachingCourses = currentData.course_teachers || [];
         
         teachingCourses.forEach(course => {
             const courseCard = document.createElement('div');

@@ -129,10 +129,13 @@ export async function login(username, password) {
             },
             body: JSON.stringify({ username, password })
         });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+
         const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        }
+
         if (data.token) {
             localStorage.setItem('sessionToken', data.token);
             if (data.memberId) {
@@ -193,6 +196,3 @@ export async function updateCourse(id, data) {
 }
 
 // Helper function to check if user is logged in
-export function isLoggedIn() {
-    return !!localStorage.getItem('sessionToken');
-}

@@ -1,6 +1,6 @@
 // Optopia Core Functionality
-import { getAllCourses, getAllGalleryItems, getAllMembers } from './api-service.js';
-import { handleError, getLangText, getCurrentLang, setCurrentLang } from './utils.js';
+import { getAllCourses, getAllGalleryItems, getAllMembers, getMemberById, updateMember, login, logout } from './api-service.js';
+import { handleError, getLangText, getCurrentLang, setCurrentLang, getMemberIdFromUrl } from './utils.js';
 
 // Global state
 let currentLang = getCurrentLang();
@@ -768,6 +768,47 @@ async function initGalleryItemPage() {
     }
 }
 
+// Login handling
+async function handleLogin(event) {
+    event.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        const data = await login(username, password);
+        if (data.token && data.memberId) {
+            localStorage.setItem('sessionToken', data.token);
+            localStorage.setItem('memberId', data.memberId);
+            window.location.href = `member.html?id=${data.memberId}`;
+        } else {
+            throw new Error('Invalid login response');
+        }
+    } catch (error) {
+        console.error('Login failed:', error);
+        const errorMsg = document.getElementById('login-error');
+        if (errorMsg) {
+            errorMsg.textContent = currentLang === 'he' ? 
+                'שם משתמש או סיסמה שגויים' : 
+                'Invalid username or password';
+            errorMsg.style.display = 'block';
+        }
+    }
+}
+
+// Logout handling
+function handleLogout() {
+    logout();
+    window.location.href = 'index.html';
+}
+
+// Initialize login page
+async function initLoginPage() {
+    const form = document.getElementById('login-form');
+    if (form) {
+        form.addEventListener('submit', handleLogin);
+    }
+}
+
 // Page Routing
 async function initializePage() {
     const path = window.location.pathname;
@@ -787,14 +828,152 @@ async function initializePage() {
             await initGalleryItemPage();
         } else if (path.includes('course-item.html')) {
             await initCourseItemPage();
+        } else if (path.includes('login.html')) {
+            await initLoginPage();
         }
     } catch (error) {
         console.error('Error initializing page:', error);
     }
 }
 
-// Initialize when DOM is loaded - only once
-const init = async () => {
+// Initialize member page with edit mode
+async function initMemberPage() {
+    const memberId = getMemberIdFromUrl();
+    const sessionToken = localStorage.getItem('sessionToken');
+    const loggedInMemberId = localStorage.getItem('memberId');
+    
+    if (memberId) {
+        try {
+            const memberData = await getMemberById(memberId);
+            if (memberData) {
+                // Check if logged in as this member
+                const isOwnProfile = sessionToken && loggedInMemberId === memberId;
+                
+                // Update UI based on login state
+                document.body.classList.toggle('edit-mode', isOwnProfile);
+                
+                // Show/hide edit controls
+                const editControls = document.querySelectorAll('.edit-controls');
+                editControls.forEach(control => {
+                    control.style.display = isOwnProfile ? 'block' : 'none';
+                });
+                
+                // Initialize edit handlers if logged in
+                if (isOwnProfile) {
+                    setupEditHandlers(memberData);
+                }
+                
+                // Render member data
+                updateMemberDisplay(memberData);
+            }
+        } catch (error) {
+            console.error('Error loading member data:', error);
+        }
+    }
+}
+
+// Set up edit handlers for member page
+function setupEditHandlers(memberData) {
+    const editables = document.querySelectorAll('.editable');
+    editables.forEach(field => {
+        field.contentEditable = true;
+        field.addEventListener('blur', async (event) => {
+            const fieldName = event.target.dataset.field;
+            const value = event.target.textContent;
+            
+            try {
+                const updatedData = { ...memberData };
+                updatedData[fieldName] = value;
+                
+                await updateMember(memberData.id, updatedData);
+                console.log('Successfully updated:', fieldName);
+            } catch (error) {
+                console.error('Failed to update:', error);
+                // Revert changes on error
+                event.target.textContent = memberData[fieldName];
+            }
+        });
+    });
+}
+
+// Update member display
+function updateMemberDisplay(memberData) {
+    // Update name
+    const nameHe = document.querySelector('[data-field="name_he"]');
+    const nameEn = document.querySelector('[data-field="name_en"]');
+    if (nameHe) nameHe.textContent = memberData.name_he || '';
+    if (nameEn) nameEn.textContent = memberData.name_en || '';
+
+    // Update role
+    const roleHe = document.querySelector('[data-field="role_he"]');
+    const roleEn = document.querySelector('[data-field="role_en"]');
+    if (roleHe) roleHe.textContent = memberData.role_he || '';
+    if (roleEn) roleEn.textContent = memberData.role_en || '';
+
+    // Update bio
+    const bioHe = document.querySelector('[data-field="bio_he"]');
+    const bioEn = document.querySelector('[data-field="bio_en"]');
+    if (bioHe) bioHe.textContent = memberData.bio_he || '';
+    if (bioEn) bioEn.textContent = memberData.bio_en || '';
+
+    // Update image
+    const memberImage = document.getElementById('member-image');
+    if (memberImage && memberData.image_url) {
+        memberImage.src = memberData.image_url;
+    }
+
+    // Update gallery items
+    const galleryGrid = document.getElementById('member-gallery-grid');
+    if (galleryGrid && memberData.gallery_items) {
+        galleryGrid.innerHTML = '';
+        memberData.gallery_items.forEach(item => {
+            const itemElement = renderGalleryItem(item, galleryGrid);
+            if (itemElement) {
+                galleryGrid.appendChild(itemElement);
+            }
+        });
+    }
+
+    // Update courses
+    const coursesGrid = document.getElementById('member-courses-grid');
+    if (coursesGrid && memberData.courses) {
+        coursesGrid.innerHTML = '';
+        memberData.courses.forEach(course => {
+            const courseElement = renderCourseItem(course);
+            if (courseElement) {
+                coursesGrid.appendChild(courseElement);
+            }
+        });
+    }
+}
+
+// Render a course item
+function renderCourseItem(course) {
+    const div = document.createElement('div');
+    div.className = 'course-card';
+    div.innerHTML = `
+        <div class="course-image">
+            <img src="${course.image_url || 'assets/default-course.jpg'}" alt="${course.title_he || course.title_en}">
+        </div>
+        <div class="course-info">
+            <h3>
+                <span data-lang="he">${course.title_he || ''}</span>
+                <span data-lang="en" style="display:none;">${course.title_en || ''}</span>
+            </h3>
+            <p class="course-description">
+                <span data-lang="he">${course.description_he || ''}</span>
+                <span data-lang="en" style="display:none;">${course.description_en || ''}</span>
+            </p>
+        </div>
+    `;
+    div.onclick = () => {
+        window.location.href = `course-item.html?id=${course.id}`;
+    };
+    return div;
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
     try {
         // First initialize language
         initLanguageToggle();
@@ -813,17 +992,22 @@ const init = async () => {
         if (coursesPreview) {
             renderCoursesPreview(coursesPreview);
         }
+
+        // Check if we're on member page
+        const path = window.location.pathname;
+        if (path.includes('member.html')) {
+            const memberId = getMemberIdFromUrl();
+            if (memberId) {
+                await loadMemberData(memberId);
+                updateLanguageDisplay();
+            }
+        }
     } catch (error) {
         console.error('Error during initialization:', error);
     }
-};
-
-// Remove any existing event listeners
-document.removeEventListener('DOMContentLoaded', init);
-document.addEventListener('DOMContentLoaded', init, { once: true });
+});
 
 // Expose necessary global functions
 window.toggleLanguage = toggleLanguage;
 window.toggleMembers = toggleMembers;
-
-export { initCoursesPage, initGalleryPage, initGalleryItemPage, initMemberPage, initCourseItemPage };
+window.handleLogout = handleLogout;

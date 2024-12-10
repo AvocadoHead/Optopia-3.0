@@ -29,6 +29,12 @@ async function loadMemberData(memberId) {
             currentUserId = localStorage.getItem('memberId');
             isLoggedIn = sessionToken && currentUserId === memberId;
             
+            console.log('Login State:', {
+                sessionToken: !!sessionToken,
+                currentUserId,
+                isLoggedIn
+            });
+            
             // Fetch courses taught by the member
             const coursesTaught = memberData.course_teachers ? 
                 memberData.course_teachers.map(ct => ct.course) : 
@@ -39,6 +45,16 @@ async function loadMemberData(memberId) {
             updateMemberDetails(memberData);
             renderMemberGallery(memberData.gallery_items || []);
             renderMemberCourses(coursesTaught);
+
+            // Check if edit mode should be enabled
+            const urlParams = new URLSearchParams(window.location.search);
+            const shouldEnableEditMode = urlParams.get('edit') === 'true' && isLoggedIn;
+            
+            console.log('Edit Mode Initialization:', {
+                urlEditParam: urlParams.get('edit'),
+                isLoggedIn,
+                shouldEnableEditMode
+            });
 
             // Show edit controls only if logged in as this member
             const editControls = document.querySelectorAll('.edit-controls');
@@ -59,6 +75,12 @@ async function loadMemberData(memberId) {
                 if (button) button.style.display = isLoggedIn ? 'block' : 'none';
             });
 
+            // Automatically enable edit mode if requested and logged in
+            if (shouldEnableEditMode) {
+                console.log('Automatically enabling edit mode');
+                toggleEditMode();
+            }
+
             // Set up event listeners
             const addGalleryBtn = document.getElementById('add-gallery-item');
             const addCourseBtn = document.getElementById('add-course');
@@ -76,7 +98,16 @@ async function loadMemberData(memberId) {
 
 function toggleEditMode() {
     const editButton = document.getElementById('edit-button');
-    if (!editButton) return;
+    if (!editButton) {
+        console.error('Edit button not found');
+        return;
+    }
+
+    console.log('Toggle Edit Mode - Current State:', {
+        isEditMode, 
+        isLoggedIn, 
+        currentUserId: localStorage.getItem('memberId')
+    });
 
     isEditMode = !isEditMode;
     document.body.classList.toggle('edit-mode', isEditMode);
@@ -529,9 +560,26 @@ function getMemberIdFromUrl() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-    const memberId = getMemberIdFromUrl();
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberId = urlParams.get('id');
+    const editMode = urlParams.get('edit') === 'true';
+    
+    console.log('Initialization Parameters:', {
+        memberId, 
+        editMode, 
+        isLoggedIn, 
+        currentUserId: localStorage.getItem('memberId')
+    });
+    
     if (memberId) {
         await loadMemberData(memberId);
+        
+        // Explicitly set edit mode if requested
+        if (editMode && isLoggedIn) {
+            console.log('Attempting to enable edit mode');
+            toggleEditMode();
+        }
+        
         updateLanguageDisplay();
     }
 });

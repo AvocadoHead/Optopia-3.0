@@ -402,10 +402,10 @@ function renderCourses(courses) {
                         return `
                             <div class="teacher-avatar">
                                 <img src="${teacher.image_url || 'assets/default-profile.jpg'}" 
-                                     alt="${teacherName || ''}" 
-                                     title="${teacherName || ''}"
-                                     onerror="this.src='assets/default-profile.jpg'"
-                                     style="border-radius: 50%; width: 40px; height: 40px;">
+                                 alt="${teacherName || ''}" 
+                                 title="${teacherName || ''}"
+                                 onerror="this.src='assets/default-profile.jpg'"
+                                 style="border-radius: 50%; width: 40px; height: 40px;">
                             </div>
                         `;
                     }).join('')}
@@ -648,6 +648,21 @@ async function initMemberPage() {
     const member = membersData.find(m => m.id === memberId);
     if (!member) return;
     
+    // Check if this is the logged-in member's page
+    const sessionToken = localStorage.getItem('sessionToken');
+    const loggedInMemberId = localStorage.getItem('memberId');
+    const isOwnProfile = sessionToken && loggedInMemberId === memberId;
+    
+    // Enable edit mode if viewing own profile
+    if (isOwnProfile) {
+        document.body.classList.add('edit-mode');
+        const editControls = document.querySelectorAll('.edit-controls');
+        editControls.forEach(control => {
+            control.style.display = 'block';
+        });
+        setupEditHandlers(member);
+    }
+    
     // Update member info
     document.getElementById('member-image').src = member.image_url || 'assets/default-member.jpg';
     
@@ -823,7 +838,7 @@ async function initializePage() {
         } else if (path.includes('courses.html')) {
             await initCoursesPage();
         } else if (path.includes('member.html')) {
-            await initMemberPageEditMode();
+            await initMemberPage();
         } else if (path.includes('gallery-item.html')) {
             await initGalleryItemPage();
         } else if (path.includes('course-item.html')) {
@@ -833,42 +848,6 @@ async function initializePage() {
         }
     } catch (error) {
         console.error('Error initializing page:', error);
-    }
-}
-
-// Initialize member page with edit mode
-async function initMemberPageEditMode() {
-    const memberId = getMemberIdFromUrl();
-    const sessionToken = localStorage.getItem('sessionToken');
-    const loggedInMemberId = localStorage.getItem('memberId');
-    
-    if (memberId) {
-        try {
-            const memberData = await getMemberById(memberId);
-            if (memberData) {
-                // Check if logged in as this member
-                const isOwnProfile = sessionToken && loggedInMemberId === memberId;
-                
-                // Update UI based on login state
-                document.body.classList.toggle('edit-mode', isOwnProfile);
-                
-                // Show/hide edit controls
-                const editControls = document.querySelectorAll('.edit-controls');
-                editControls.forEach(control => {
-                    control.style.display = isOwnProfile ? 'block' : 'none';
-                });
-                
-                // Initialize edit handlers if logged in
-                if (isOwnProfile) {
-                    setupEditHandlers(memberData);
-                }
-                
-                // Render member data
-                updateMemberDisplay(memberData);
-            }
-        } catch (error) {
-            console.error('Error loading member data:', error);
-        }
     }
 }
 
@@ -894,82 +873,6 @@ function setupEditHandlers(memberData) {
             }
         });
     });
-}
-
-// Update member display
-function updateMemberDisplay(memberData) {
-    // Update name
-    const nameHe = document.querySelector('[data-field="name_he"]');
-    const nameEn = document.querySelector('[data-field="name_en"]');
-    if (nameHe) nameHe.textContent = memberData.name_he || '';
-    if (nameEn) nameEn.textContent = memberData.name_en || '';
-
-    // Update role
-    const roleHe = document.querySelector('[data-field="role_he"]');
-    const roleEn = document.querySelector('[data-field="role_en"]');
-    if (roleHe) roleHe.textContent = memberData.role_he || '';
-    if (roleEn) roleEn.textContent = memberData.role_en || '';
-
-    // Update bio
-    const bioHe = document.querySelector('[data-field="bio_he"]');
-    const bioEn = document.querySelector('[data-field="bio_en"]');
-    if (bioHe) bioHe.textContent = memberData.bio_he || '';
-    if (bioEn) bioEn.textContent = memberData.bio_en || '';
-
-    // Update image
-    const memberImage = document.getElementById('member-image');
-    if (memberImage && memberData.image_url) {
-        memberImage.src = memberData.image_url;
-    }
-
-    // Update gallery items
-    const galleryGrid = document.getElementById('member-gallery-grid');
-    if (galleryGrid && memberData.gallery_items) {
-        galleryGrid.innerHTML = '';
-        memberData.gallery_items.forEach(item => {
-            const itemElement = renderGalleryItem(item, galleryGrid);
-            if (itemElement) {
-                galleryGrid.appendChild(itemElement);
-            }
-        });
-    }
-
-    // Update courses
-    const coursesGrid = document.getElementById('member-courses-grid');
-    if (coursesGrid && memberData.courses) {
-        coursesGrid.innerHTML = '';
-        memberData.courses.forEach(course => {
-            const courseElement = renderCourseItem(course);
-            if (courseElement) {
-                coursesGrid.appendChild(courseElement);
-            }
-        });
-    }
-}
-
-// Render a course item
-function renderCourseItem(course) {
-    const div = document.createElement('div');
-    div.className = 'course-card';
-    div.innerHTML = `
-        <div class="course-image">
-            <img src="${course.image_url || 'assets/default-course.jpg'}" alt="${course.title_he || course.title_en}">
-        </div>
-        <div class="course-info">
-            <h3>
-                <span data-lang="he">${course.title_he || ''}</span>
-                <span data-lang="en" style="display:none;">${course.title_en || ''}</span>
-            </h3>
-            <p class="course-description">
-                <span data-lang="he">${course.description_he || ''}</span>
-                <span data-lang="en" style="display:none;">${course.description_en || ''}</span>
-            </p>
-        </div>
-    `;
-    div.onclick = () => {
-        window.location.href = `course-item.html?id=${course.id}`;
-    };
-    return div;
 }
 
 // Initialize when DOM is loaded
@@ -998,7 +901,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (path.includes('member.html')) {
             const memberId = getMemberIdFromUrl();
             if (memberId) {
-                await loadMemberData(memberId);
+                await initMemberPage();
                 updateLanguageDisplay();
             }
         }

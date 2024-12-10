@@ -17,47 +17,102 @@ async function loadMemberData(memberId) {
             originalData = { ...memberData };
             currentData = { ...memberData };
             
-            // Check login state
+            // Check login state and edit mode
             const sessionToken = localStorage.getItem('sessionToken');
             currentUserId = localStorage.getItem('memberId');
             isLoggedIn = sessionToken && currentUserId === memberId;
+            
+            // Check if we should enter edit mode
+            const urlParams = new URLSearchParams(window.location.search);
+            if (isLoggedIn && urlParams.get('edit') === 'true') {
+                isEditMode = true;
+                document.body.classList.add('edit-mode');
+            }
             
             // Initialize page
             updateMemberDetails(memberData);
             renderMemberGallery(memberData.gallery_items || []);
             renderMemberCourses(memberData.courses || []);
             
-            // Show edit controls only if logged in as this member
-            const editControls = document.querySelectorAll('.edit-controls');
-            editControls.forEach(control => {
-                control.style.display = isLoggedIn ? 'block' : 'none';
-            });
+            // Show edit controls if logged in
+            const editControls = document.querySelector('.edit-controls');
+            if (editControls) {
+                editControls.style.display = isLoggedIn ? 'block' : 'none';
+            }
             
-            // Show edit button only if logged in as this member
-            const editButton = document.getElementById('edit-button');
-            if (editButton) {
-                editButton.style.display = isLoggedIn ? 'block' : 'none';
-                editButton.addEventListener('click', toggleEditMode);
-            }
-
-            // Show add buttons only if logged in as this member
-            const addButtons = document.querySelectorAll('#add-gallery-item, #add-course');
-            addButtons.forEach(button => {
-                if (button) button.style.display = isLoggedIn ? 'block' : 'none';
-            });
-
-            // Set up event listeners
-            const addGalleryBtn = document.getElementById('add-gallery-item');
-            const addCourseBtn = document.getElementById('add-course');
-            if (addGalleryBtn) {
-                addGalleryBtn.addEventListener('click', showAddGalleryItemForm);
-            }
-            if (addCourseBtn) {
-                addCourseBtn.addEventListener('click', showAddCourseForm);
+            // Setup edit mode handlers
+            if (isLoggedIn) {
+                setupEditHandlers();
             }
         }
     } catch (error) {
         console.error('Error loading member data:', error);
+    }
+}
+
+function setupEditHandlers() {
+    // Setup save button
+    const saveButton = document.getElementById('save-button');
+    if (saveButton) {
+        saveButton.addEventListener('click', saveChanges);
+    }
+    
+    // Setup cancel button
+    const cancelButton = document.getElementById('cancel-button');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', cancelChanges);
+    }
+    
+    // Make elements editable
+    document.querySelectorAll('.editable').forEach(element => {
+        element.addEventListener('click', handleFieldEdit);
+    });
+}
+
+async function saveChanges() {
+    try {
+        const saveButton = document.getElementById('save-button');
+        const cancelButton = document.getElementById('cancel-button');
+        
+        if (saveButton) saveButton.disabled = true;
+        if (cancelButton) cancelButton.disabled = true;
+        
+        // Get all editable fields
+        const editableFields = document.querySelectorAll('.editable');
+        editableFields.forEach(field => {
+            const fieldName = field.dataset.field;
+            if (fieldName) {
+                currentData[fieldName] = field.textContent.trim();
+            }
+        });
+        
+        // Save to backend
+        await updateMember(currentUserId, currentData);
+        
+        // Update original data
+        originalData = { ...currentData };
+        
+        // Exit edit mode
+        isEditMode = false;
+        document.body.classList.remove('edit-mode');
+        
+        // Show success message
+        alert(getLangText({
+            he: 'השינויים נשמרו בהצלחה',
+            en: 'Changes saved successfully'
+        }));
+        
+        // Refresh page without edit mode
+        window.location.href = `member.html?id=${currentUserId}`;
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        alert(getLangText({
+            he: 'אירעה שגיאה בשמירת השינויים',
+            en: 'Error saving changes'
+        }));
+    } finally {
+        if (saveButton) saveButton.disabled = false;
+        if (cancelButton) cancelButton.disabled = false;
     }
 }
 
@@ -85,19 +140,19 @@ function toggleEditMode() {
             editControls.className = 'edit-controls';
             editControls.style.display = 'block';
             editControls.innerHTML = `
-                <button id="save-changes" class="nav-btn">
+                <button id="save-button" class="nav-btn">
                     <span data-lang="he">שמור שינויים</span>
                     <span data-lang="en" style="display:none;">Save Changes</span>
                 </button>
-                <button id="cancel-changes" class="nav-btn">
+                <button id="cancel-button" class="nav-btn">
                     <span data-lang="he">בטל שינויים</span>
                     <span data-lang="en" style="display:none;">Cancel Changes</span>
                 </button>
             `;
             
             // Add event listeners to the new buttons
-            const saveBtn = editControls.querySelector('#save-changes');
-            const cancelBtn = editControls.querySelector('#cancel-changes');
+            const saveBtn = editControls.querySelector('#save-button');
+            const cancelBtn = editControls.querySelector('#cancel-button');
             saveBtn.addEventListener('click', saveChanges);
             cancelBtn.addEventListener('click', cancelChanges);
 
@@ -248,28 +303,7 @@ async function handleFieldEdit(event) {
     currentData[field] = value;
 }
 
-async function saveChanges() {
-    try {
-        const memberId = getMemberIdFromUrl();
-        const token = localStorage.getItem('sessionToken');
-        if (!token) {
-            throw new Error('No session token found');
-        }
-
-        // Update member details
-        await updateMember(memberId, currentData);
-        originalData = { ...currentData };
-        alert('Changes saved successfully!');
-    } catch (error) {
-        console.error('Error saving changes:', error);
-        alert('Failed to save changes. Please try again.');
-        // Revert changes on error
-        currentData = { ...originalData };
-        updateMemberDetails(originalData);
-    }
-}
-
-function showAddGalleryItemForm(item, index) {
+async function showAddGalleryItemForm(item, index) {
     const dialog = document.createElement('dialog');
     dialog.className = 'edit-dialog';
     dialog.innerHTML = `

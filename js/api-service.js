@@ -132,14 +132,14 @@ export async function getGalleryItemById(id) {
 }
 
 // Authentication API
-export async function login(username, password) {
+export async function login(identifier, password) {
     try {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: defaultHeaders,
             body: JSON.stringify({ 
-                username: username.trim(),  // using username from members table
-                password: password          // using password from members table
+                identifier: identifier.trim(),  // can be email, username, or member name
+                password: password              // backend will check both password fields
             }),
             credentials: 'include'
         });
@@ -151,9 +151,9 @@ export async function login(username, password) {
 
         const data = await response.json();
         
-        // Check for member_id from the members table response
-        const token = data.token || response.headers.get('Authorization')?.replace('Bearer ', '');
-        const memberId = data.id; // The member's ID from the members table
+        // The backend should return either user.id or member.id as token
+        const token = data.token || data.id;
+        const memberId = data.memberId || data.member_id || data.id;
 
         if (!token || !memberId) {
             console.error('Server response:', data);

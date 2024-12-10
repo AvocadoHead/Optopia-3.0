@@ -1523,15 +1523,6 @@
 }
 
 /* Language-specific elements */
-[data-lang] {
-    display: block;
-}
-
-html[lang="he"] [data-lang="en"],
-html[lang="en"] [data-lang="he"] {
-    display: none;
-}
-
 .he-only {
     display: block;
 }
@@ -1546,167 +1537,6 @@ html[lang="en"] .he-only {
 
 html[lang="en"] .en-only {
     display: block;
-}
-
-/* Login Form */
-.login-form {
-    max-width: 300px;
-    margin: 0 auto;
-}
-
-.login-form .form-group {
-    margin-bottom: 1rem;
-}
-
-.login-form input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-}
-
-.login-form button {
-    width: auto;
-    min-width: 120px;
-    margin: 0 auto;
-    display: block;
-}
-
-/* Change Password Form */
-.change-password-form {
-    max-width: 300px;
-    margin: 1rem auto;
-}
-
-.change-password-form .form-group {
-    margin-bottom: 1rem;
-}
-
-.change-password-form input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-}
-
-.change-password-form button {
-    width: auto;
-    min-width: 120px;
-    margin: 0 auto;
-    display: block;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.form-control {
-    padding: 8px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: var(--font-size-base);
-}
-
-.form-control:invalid {
-    border-color: var(--border-color);
-    box-shadow: none;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
-}
-
-/* Login form styles */
-.login-section {
-    max-width: 400px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background-color: var(--background-secondary);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.login-form .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.login-form .form-control {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 1rem;
-    transition: border-color 0.2s ease;
-}
-
-.login-form .form-control:focus {
-    border-color: var(--accent);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
-}
-
-.login-form .form-control:invalid {
-    border-color: var(--border-color);
-    box-shadow: none;
-}
-
-.login-form .btn-primary {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.login-form .btn-primary:hover {
-    background-color: var(--accent-dark);
-}
-
-.login-form .error-message {
-    color: var(--error);
-    font-size: 0.875rem;
-    margin-top: 0.5rem;
-    display: none;
-}
-
-.login-form .error-message.visible {
-    display: block;
-}
-
-/* Logo and title styles for login page */
-.logo-title-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.logo-title-wrapper .logo {
-    width: 60px;
-    height: 60px;
-}
-
-.logo-title-wrapper .site-title {
-    font-size: 2rem;
-    margin: 0;
-    color: var(--text-primary);
 }
 
 /* Edit mode styles */
@@ -1801,4 +1631,104 @@ html[lang="en"] .en-only {
     justify-content: center;
     gap: 12px;
     margin-top: 16px;
+}
+
+/* Gallery and course item edit controls */
+.gallery-card .edit-controls,
+.course-item .edit-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* Login Form Styles */
+.login-form {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.login-form .form-group {
+    margin-bottom: 20px;
+}
+
+.login-form .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.login-form .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-form .btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.login-form .error-message {
+    color: #dc3545;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+/* Login Section Styles */
+.login-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+}
+
+.login-box {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 400px;
+    margin-top: 2rem;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.input-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+#login-btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 1rem;
 }

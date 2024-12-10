@@ -979,6 +979,16 @@ function setupEditHandlers(memberData) {
     });
 }
 
+// Expose global data initialization
+window.initializeAppData = initializeAppData;
+
+// Ensure global data is always accessible
+window.getGlobalAppData = () => ({
+    galleryData,
+    coursesData,
+    membersData
+});
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
     try {

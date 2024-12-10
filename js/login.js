@@ -41,8 +41,13 @@ async function handleLogin(event) {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     
+    console.log('Attempting login with:', { username }); // Debug log
+    
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        const url = `${API_BASE_URL}/auth/login`;
+        console.log('Login URL:', url); // Debug log
+        
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -52,7 +57,9 @@ async function handleLogin(event) {
             credentials: 'include'  // Important for cookie handling
         });
 
+        console.log('Response status:', response.status); // Debug log
         const data = await response.json();
+        console.log('Response data:', data); // Debug log
 
         if (!response.ok) {
             throw new Error(data.message || 'Login failed');
@@ -61,6 +68,8 @@ async function handleLogin(event) {
         // Store the session token and member ID
         localStorage.setItem('sessionToken', data.token);
         localStorage.setItem('memberId', data.memberId);
+        
+        console.log('Login successful, redirecting...'); // Debug log
 
         // Redirect to member page in edit mode
         window.location.href = `member.html?id=${data.memberId}&edit=true`;

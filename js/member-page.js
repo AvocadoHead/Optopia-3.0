@@ -1,5 +1,5 @@
 import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
-import { getMemberById, updateMember } from './api-service.js';
+import { getMemberById, updateMember, getAllCourses } from './api-service.js';
 
 // Global state
 let currentLang = getCurrentLang();
@@ -12,17 +12,32 @@ let currentUserId = null;
 async function loadMemberData(memberId) {
     try {
         currentLang = getCurrentLang();
+        
+        // Fetch member data and their gallery items
         const memberData = await getMemberById(memberId);
         console.log('Full Member Data:', JSON.stringify(memberData, null, 2));
         
         if (memberData) {
-            originalData = { ...memberData };
-            currentData = { ...memberData };
+            // Fetch all courses (needed for edit mode)
+            const allCourses = await getAllCourses();
             
-            // Detailed logging for courses and gallery
-            console.log('Course Teachers:', memberData.course_teachers);
-            console.log('Gallery Items:', memberData.gallery_items);
-            console.log('All Courses:', memberData.all_courses);
+            // Store data
+            originalData = { ...memberData };
+            currentData = { 
+                ...memberData,
+                all_courses: allCourses,
+                // Filter gallery items where artist_id matches member id
+                gallery_items: memberData.gallery_items?.filter(item => item.artist_id === memberId) || [],
+                // Get courses where teacher_id matches member id
+                course_teachers: memberData.course_teachers?.filter(ct => ct.teacher_id === memberId) || []
+            };
+            
+            // Detailed logging
+            console.log('Data Processing:', {
+                galleryItems: currentData.gallery_items,
+                courseTeachers: currentData.course_teachers,
+                allCourses: currentData.all_courses
+            });
             
             // Check login state
             const sessionToken = localStorage.getItem('sessionToken');
@@ -32,30 +47,19 @@ async function loadMemberData(memberId) {
             console.log('Login State:', {
                 sessionToken: !!sessionToken,
                 currentUserId,
+                memberId,
                 isLoggedIn
             });
-            
-            // Fetch courses taught by the member
-            const coursesTaught = memberData.course_teachers ? 
-                memberData.course_teachers.map(ct => ct.course) : 
-                (memberData.courses || []);
-            console.log('Courses taught by member:', coursesTaught);
 
-            // Initialize page
+            // Initialize page content
             updateMemberDetails(memberData);
-            renderMemberGallery(memberData.gallery_items || []);
-            renderMemberCourses(coursesTaught);
+            renderMemberGallery(currentData.gallery_items);
+            renderMemberCourses(currentData.course_teachers);
 
             // Check if edit mode should be enabled
             const urlParams = new URLSearchParams(window.location.search);
             const shouldEnableEditMode = urlParams.get('edit') === 'true' && isLoggedIn;
             
-            console.log('Edit Mode Initialization:', {
-                urlEditParam: urlParams.get('edit'),
-                isLoggedIn,
-                shouldEnableEditMode
-            });
-
             // Show edit controls only if logged in as this member
             const editControls = document.querySelectorAll('.edit-controls');
             editControls.forEach(control => {
@@ -77,18 +81,8 @@ async function loadMemberData(memberId) {
 
             // Automatically enable edit mode if requested and logged in
             if (shouldEnableEditMode) {
-                console.log('Automatically enabling edit mode');
+                console.log('Enabling edit mode');
                 toggleEditMode();
-            }
-
-            // Set up event listeners
-            const addGalleryBtn = document.getElementById('add-gallery-item');
-            const addCourseBtn = document.getElementById('add-course');
-            if (addGalleryBtn) {
-                addGalleryBtn.addEventListener('click', showAddGalleryItemForm);
-            }
-            if (addCourseBtn) {
-                addCourseBtn.addEventListener('click', showAddCourseForm);
             }
         }
     } catch (error) {
@@ -134,7 +128,7 @@ function toggleEditMode() {
         });
 
         // Re-render courses to show all available ones
-        renderMemberCourses(currentData.courses || []);
+        renderMemberCourses(currentData.course_teachers);
     } else {
         // Save changes
         saveChanges();
@@ -147,7 +141,7 @@ function toggleEditMode() {
         });
 
         // Re-render courses to show only teaching ones
-        renderMemberCourses(currentData.courses || []);
+        renderMemberCourses(currentData.course_teachers);
     }
 }
 
@@ -429,6 +423,12 @@ function renderMemberGallery(galleryItems = []) {
     const galleryGrid = document.getElementById('member-gallery-grid');
     if (!galleryGrid) return;
 
+    console.log('Rendering Gallery:', {
+        itemCount: galleryItems.length,
+        isEditMode,
+        isLoggedIn
+    });
+
     galleryGrid.innerHTML = '';
     
     galleryItems.forEach((item, index) => {
@@ -438,17 +438,14 @@ function renderMemberGallery(galleryItems = []) {
         const title = currentLang === 'he' ? item.title_he : item.title_en;
         const description = currentLang === 'he' ? item.description_he : item.description_en;
         
-        // Make the card clickable except for edit controls
         card.innerHTML = `
-            <a href="gallery-item.html?id=${item.id}" class="gallery-link">
-                <div class="gallery-image">
-                    <img src="${item.image_url}" alt="${title}">
-                </div>
-                <div class="gallery-info">
-                    <h3>${title}</h3>
-                    <p>${description}</p>
-                </div>
-            </a>
+            <div class="gallery-image">
+                <img src="${item.image_url}" alt="${title}">
+            </div>
+            <div class="gallery-info">
+                <h3>${title}</h3>
+                <p>${description}</p>
+            </div>
             ${isLoggedIn && isEditMode ? `
                 <div class="edit-controls">
                     <button onclick="editGalleryItem(${index})" class="nav-btn">
@@ -467,80 +464,78 @@ function renderMemberGallery(galleryItems = []) {
     });
 }
 
-function renderMemberCourses(courses = []) {
+function renderMemberCourses(courseTeachers = []) {
     const coursesGrid = document.getElementById('member-courses-grid');
     if (!coursesGrid) return;
 
+    console.log('Rendering Courses:', {
+        courseTeachersCount: courseTeachers.length,
+        isEditMode,
+        isLoggedIn
+    });
+
     coursesGrid.innerHTML = '';
     
-    // If in edit mode and logged in, show all available courses
-    if (isEditMode && isLoggedIn && currentData.all_courses) {
-        const allCourses = currentData.all_courses;
-        const teachingCourseIds = new Set((currentData.course_teachers || []).map(ct => ct.course_id));
+    if (isEditMode && isLoggedIn) {
+        // In edit mode, show all courses with teaching status
+        const allCourses = currentData.all_courses || [];
+        const teachingCourseIds = new Set(courseTeachers.map(ct => ct.course_id));
+        
+        console.log('Edit Mode Courses:', {
+            allCoursesCount: allCourses.length,
+            teachingCourseIds: Array.from(teachingCourseIds)
+        });
         
         allCourses.forEach(course => {
-            const courseCard = document.createElement('div');
-            courseCard.className = 'course-card';
             const isTeaching = teachingCourseIds.has(course.id);
-            
-            const title = currentLang === 'he' ? course.name_he : course.name_en;
-            const description = currentLang === 'he' ? course.description_he : course.description_en;
-            const difficulty = currentLang === 'he' ? course.difficulty_he : course.difficulty_en;
-            const duration = currentLang === 'he' ? course.duration_he : course.duration_en;
-            
-            courseCard.innerHTML = `
-                <a href="course-item.html?id=${course.id}" class="course-link">
-                    <h3>${title || ''}</h3>
-                    <p>${description || ''}</p>
-                    <div class="course-details">
-                        <span class="difficulty">${difficulty || ''}</span>
-                        <span class="duration">${duration || ''}</span>
-                    </div>
-                </a>
-                ${isLoggedIn ? `
-                    <div class="course-actions">
-                        <button onclick="${isTeaching ? 'removeFromCourse' : 'addToCourse'}(${course.id})" class="nav-btn ${isTeaching ? 'teaching' : ''}">
-                            ${isTeaching ? `
-                                <span data-lang="he">מלמד/ת קורס זה</span>
-                                <span data-lang="en" style="display:none;">Teaching this course</span>
-                            ` : `
-                                <span data-lang="he">הצטרף/י כמורה</span>
-                                <span data-lang="en" style="display:none;">Join as teacher</span>
-                            `}
-                        </button>
-                    </div>
-                ` : ''}
-            `;
-            
-            coursesGrid.appendChild(courseCard);
+            renderCourseCard(coursesGrid, course, isTeaching);
         });
     } else {
-        // Show only teaching courses in non-edit mode
-        const teachingCourses = currentData.course_teachers || [];
-        
-        teachingCourses.forEach(course => {
-            const courseCard = document.createElement('div');
-            courseCard.className = 'course-card';
-            
-            const title = currentLang === 'he' ? course.name_he : course.name_en;
-            const description = currentLang === 'he' ? course.description_he : course.description_en;
-            const difficulty = currentLang === 'he' ? course.difficulty_he : course.difficulty_en;
-            const duration = currentLang === 'he' ? course.duration_he : course.duration_en;
-            
-            courseCard.innerHTML = `
-                <a href="course-item.html?id=${course.id}" class="course-link">
-                    <h3>${title || ''}</h3>
-                    <p>${description || ''}</p>
-                    <div class="course-details">
-                        <span class="difficulty">${difficulty || ''}</span>
-                        <span class="duration">${duration || ''}</span>
-                    </div>
-                </a>
-            `;
-            
-            coursesGrid.appendChild(courseCard);
+        // In view mode, show only courses the member teaches
+        courseTeachers.forEach(ct => {
+            const course = currentData.all_courses?.find(c => c.id === ct.course_id);
+            if (course) {
+                renderCourseCard(coursesGrid, course, true);
+            }
         });
     }
+}
+
+function renderCourseCard(container, course, isTeaching) {
+    const card = document.createElement('div');
+    card.className = 'course-card';
+    
+    const title = currentLang === 'he' ? course.name_he : course.name_en;
+    const description = currentLang === 'he' ? course.description_he : course.description_en;
+    const difficulty = currentLang === 'he' ? course.difficulty_he : course.difficulty_en;
+    const duration = currentLang === 'he' ? course.duration_he : course.duration_en;
+    
+    card.innerHTML = `
+        <a href="course-item.html?id=${course.id}" class="course-link">
+            <h3>${title || ''}</h3>
+            <p>${description || ''}</p>
+            <div class="course-details">
+                <span class="difficulty">${difficulty || ''}</span>
+                <span class="duration">${duration || ''}</span>
+            </div>
+        </a>
+        ${isLoggedIn && isEditMode ? `
+            <div class="course-actions">
+                <button onclick="${isTeaching ? 'removeFromCourse' : 'addToCourse'}(${course.id})" 
+                        class="nav-btn ${isTeaching ? 'teaching' : ''}">
+                    ${isTeaching ? `
+                        <span data-lang="he">מלמד/ת קורס זה</span>
+                        <span data-lang="en" style="display:none;">Teaching this course</span>
+                    ` : `
+                        <span data-lang="he">הצטרף/י כמורה</span>
+                        <span data-lang="en" style="display:none;">Join as teacher</span>
+                    `}
+                </button>
+            </div>
+        ` : ''}
+    `;
+    
+    container.appendChild(card);
 }
 
 function updateLanguageDisplay() {

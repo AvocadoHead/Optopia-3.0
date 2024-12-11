@@ -11,7 +11,7 @@ let currentData = {
     galleryItems: [],
     teachingRelationships: []
 };
-let isLoggedIn = false;
+let isLoggedIn = localStorage.getItem('memberId') !== null;
 let currentUserId = null;
 
 async function loadMemberData(memberId) {
@@ -157,8 +157,8 @@ function toggleEditMode() {
             field.removeEventListener('blur', handleFieldEdit);
         });
 
-        // Re-render courses to show only teaching ones - I Think this broke the section
-        // renderMemberCourses();
+        // Re-render courses to show only teaching ones
+        renderMemberCourses();
     }
 }
 

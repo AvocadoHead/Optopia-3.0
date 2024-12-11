@@ -707,9 +707,9 @@ async function initMemberPage() {
                 window.location.href = `gallery-item.html?id=${item.id}`;
             });
             
-    //         galleryContainer.appendChild(galleryItem);
-    //     });
-    // }
+            galleryContainer.appendChild(galleryItem);
+        });
+    }
     
     // Render member's courses
     const coursesContainer = document.getElementById('member-courses');

@@ -157,8 +157,8 @@ function toggleEditMode() {
             field.removeEventListener('blur', handleFieldEdit);
         });
 
-        // Re-render courses to show only teaching ones
-        renderMemberCourses();
+        // Re-render courses to show only teaching ones - I Think this broke the section
+        // renderMemberCourses();
     }
 }
 

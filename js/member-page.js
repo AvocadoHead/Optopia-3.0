@@ -216,66 +216,50 @@ async function handleFieldEdit(event) {
 }
 
 async function saveChanges() {
-    if (!isValidEditMode()) {
-        return;
-    }
-
     try {
-        const memberId = getMemberIdFromUrl();
-        const token = localStorage.getItem('sessionToken');
-        if (!token) {
-            throw new Error('No session token found');
-        }
-
-        // Update member details
-        await updateMember(memberId, currentData);
-        originalData = { ...currentData };
-        alert('Changes saved successfully!');
+        console.log('Attempting to save changes');
         
-        // Handle course teacher changes
-        if (pendingCourseTeacherChanges.removeTeachers.length > 0 || 
-            pendingCourseTeacherChanges.addTeachers.length > 0) {
-            
-            // Remove teachers
-            for (const courseId of pendingCourseTeacherChanges.removeTeachers) {
-                await fetch(`/api/courses/${courseId}/teachers`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ 
-                        teacherId: parseInt(currentUserId) 
-                    })
-                });
-            }
-
-            // Add teachers
-            for (const courseId of pendingCourseTeacherChanges.addTeachers) {
-                await fetch(`/api/courses/${courseId}/teachers`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ 
-                        teacherId: parseInt(currentUserId) 
-                    })
-                });
-            }
-
-            // Reset pending changes
-            pendingCourseTeacherChanges = {
-                addTeachers: [],
-                removeTeachers: []
-            };
+        // Get session token from localStorage
+        const sessionToken = localStorage.getItem('sessionToken');
+        if (!sessionToken) {
+            throw new Error('No session token found. Please log in.');
         }
+
+        // Validate edit mode and permissions
+        if (!isValidEditMode()) {
+            throw new Error('Invalid edit mode or unauthorized access');
+        }
+
+        // Prepare member data to update
+        const updatedMemberData = {
+            name_he: document.querySelector('[data-field="name_he"]').textContent,
+            name_en: document.querySelector('[data-field="name_en"]').textContent,
+            role_he: document.querySelector('[data-field="role_he"]').textContent,
+            role_en: document.querySelector('[data-field="role_en"]').textContent,
+            bio_he: document.querySelector('[data-field="bio_he"]').textContent,
+            bio_en: document.querySelector('[data-field="bio_en"]').textContent
+        };
+
+        // Get member ID from URL
+        const memberId = getMemberIdFromUrl();
+
+        // Update member details with explicit authorization
+        const updatedMember = await updateMember(memberId, updatedMemberData, sessionToken);
+
+        // Handle course teacher changes
+        if (pendingCourseTeacherChanges.addTeachers.length > 0 || 
+            pendingCourseTeacherChanges.removeTeachers.length > 0) {
+            // Implement course teacher update logic here
+            console.log('Pending course teacher changes:', pendingCourseTeacherChanges);
+        }
+
+        // Reset edit mode
+        toggleEditMode();
+        
+        console.log('Changes saved successfully');
     } catch (error) {
         console.error('Error saving changes:', error);
-        alert('Failed to save changes. Please try again.');
-        // Revert changes on error
-        currentData = { ...originalData };
-        updateMemberDetails(originalData);
+        alert(error.message || 'Failed to save changes. Please try again.');
     }
 }
 

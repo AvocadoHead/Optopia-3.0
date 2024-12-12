@@ -488,26 +488,38 @@ function renderMemberGallery(galleryItems = []) {
     console.groupEnd();
 }
 
-function renderMemberCourses(teachingCourses = []) {
+function renderMemberCourses(courses = []) {
     const coursesGrid = document.getElementById('member-courses-grid');
     coursesGrid.innerHTML = ''; // Clear previous content
 
     const currentLang = getCurrentLang();
+    const memberId = getMemberIdFromUrl();
 
-    teachingCourses.forEach(course => {
+    // Determine which courses to show based on login and edit state
+    let coursesToRender = courses;
+    if (!isLoggedIn || !isEditMode) {
+        // Unlogged or non-edit mode: show only courses taught by this member
+        coursesToRender = courses.filter(course => 
+            course.course_teachers?.some(relation => relation.teacher_id === parseInt(memberId))
+        );
+    }
+
+    coursesToRender.forEach(course => {
         const courseCard = document.createElement('div');
         courseCard.classList.add('course-card');
         
         const courseTitle = document.createElement('h3');
-        courseTitle.textContent = course[`title_${currentLang}`];
-        
-        const courseTeachers = document.createElement('p');
-        courseTeachers.textContent = course.course_teachers
-            .map(relation => relation.teacher[`name_${currentLang}`])
-            .join(', ');
-        
+        courseTitle.textContent = course[`name_${currentLang}`];
         courseCard.appendChild(courseTitle);
-        courseCard.appendChild(courseTeachers);
+        
+        // Only show teachers in edit mode or when logged in
+        if (isLoggedIn && isEditMode) {
+            const courseTeachers = document.createElement('p');
+            courseTeachers.textContent = course.course_teachers
+                .map(relation => relation.teacher[`name_${currentLang}`])
+                .join(', ');
+            courseCard.appendChild(courseTeachers);
+        }
         
         coursesGrid.appendChild(courseCard);
     });

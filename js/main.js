@@ -629,13 +629,6 @@ async function loadMemberData(memberId) {
         const memberData = await getMemberById(memberId);
         if (memberData) {
             updateMemberDisplay(memberData);
-            
-            // Set up edit handlers if this is the logged-in member
-            const sessionToken = localStorage.getItem('sessionToken');
-            const loggedInMemberId = localStorage.getItem('memberId');
-            if (sessionToken && loggedInMemberId === memberId) {
-                setupEditHandlers(memberData);
-            }
         }
     } catch (error) {
         console.error('Error loading member data:', error);
@@ -847,72 +840,6 @@ async function initGalleryItemPage() {
     }
 }
 
-// Login handling
-async function handleLogin(event) {
-    event.preventDefault();
-    
-    const loginForm = document.getElementById('login-form');
-    const errorMsg = document.getElementById('login-error');
-    const submitBtn = loginForm.querySelector('button[type="submit"]');
-    
-    // Get form inputs
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    
-    // Basic validation
-    if (!username || !password) {
-        if (errorMsg) {
-            errorMsg.textContent = currentLang === 'he' ? 
-                'נא למלא את כל השדות' : 
-                'Please fill in all fields';
-            errorMsg.style.display = 'block';
-        }
-        return;
-    }
-    
-    // Disable form while processing
-    if (submitBtn) submitBtn.disabled = true;
-    if (errorMsg) errorMsg.style.display = 'none';
-    
-    try {
-        const data = await login(username, password);
-        // Redirect to member page on success
-        window.location.href = `member.html?id=${data.memberId}`;
-    } catch (error) {
-        console.error('Login failed:', error);
-        if (errorMsg) {
-            // Show specific error message if available
-            errorMsg.textContent = currentLang === 'he' ? 
-                'שם משתמש או סיסמה שגויים' : 
-                'Invalid username or password';
-            errorMsg.style.display = 'block';
-        }
-    } finally {
-        // Re-enable form
-        if (submitBtn) submitBtn.disabled = false;
-    }
-}
-
-// Logout handling
-function handleLogout() {
-    logout();
-    window.location.href = 'index.html';
-}
-
-// Initialize login page
-async function initLoginPage() {
-    const form = document.getElementById('login-form');
-    if (form) {
-        form.addEventListener('submit', handleLogin);
-    }
-    
-    // Ensure language toggle works
-    const languageToggle = document.getElementById('toggle-language');
-    if (languageToggle) {
-        languageToggle.addEventListener('click', toggleLanguage);
-    }
-}
-
 // Page Routing
 async function initializePage() {
     const path = window.location.pathname;
@@ -920,7 +847,7 @@ async function initializePage() {
     try {
         await initializeAppData();
         
-        if (path.endsWith('index.html') || path === '/') {
+        if (path.includes('index.html') || path === '/') {
             await initHomePage();
         } else if (path.includes('gallery.html')) {
             await initGalleryPage();
@@ -933,35 +860,10 @@ async function initializePage() {
         } else if (path.includes('course-item.html')) {
             await initCourseItemPage();
         } else if (path.includes('login.html')) {
-            await initLoginPage();
         }
     } catch (error) {
         console.error('Error initializing page:', error);
     }
-}
-
-// Set up edit handlers for member page
-function setupEditHandlers(memberData) {
-    const editables = document.querySelectorAll('.editable');
-    editables.forEach(field => {
-        field.contentEditable = true;
-        field.addEventListener('blur', async (event) => {
-            const fieldName = event.target.dataset.field;
-            const value = event.target.textContent;
-            
-            try {
-                const updatedData = { ...memberData };
-                updatedData[fieldName] = value;
-                
-                await updateMember(memberData.id, updatedData);
-                console.log('Successfully updated:', fieldName);
-            } catch (error) {
-                console.error('Failed to update:', error);
-                // Revert changes on error
-                event.target.textContent = memberData[fieldName];
-            }
-        });
-    });
 }
 
 // Expose global data initialization
@@ -991,5 +893,3 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Expose necessary global functions
 window.toggleLanguage = toggleLanguage;
 window.toggleMembers = toggleMembers;
-window.handleLogout = handleLogout;
-window.handleLogin = handleLogin;

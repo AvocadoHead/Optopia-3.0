@@ -21,52 +21,23 @@ let pendingCourseTeacherChanges = {
 };
 
 async function loadMemberData(memberId) {
-    console.group('🔍 Member Data Loading');
-    console.log('Loading data for Member ID:', memberId);
-
     try {
-        // Fetch member data
         const memberData = await getMemberById(memberId);
-        console.log('📋 Full Member Data:', JSON.stringify(memberData, null, 2));
+        currentData = memberData;
 
-        if (!memberData) {
-            console.error('❌ No member data received');
-            return;
-        }
-
-        // Fetch all courses
-        const allCourses = await getAllCourses();
-        console.log('📚 Full Courses Data:', JSON.stringify(allCourses, null, 2));
-
-        // Filter gallery items for this member
-        const galleryItems = memberData.gallery_items?.filter(item => 
-            item.artist_id === memberId
-        ) || [];
-        console.log('🖼️ Gallery Items:', JSON.stringify(galleryItems, null, 2));
-
-        // Filter courses where this member is a teacher
-        const teachingCourses = filterCoursesForMember(allCourses, memberId, isEditMode);
-        console.log('👩‍🏫 Teaching Courses:', JSON.stringify(teachingCourses, null, 2));
-
-        // Store data for edit mode
-        originalData = {
-            memberDetails: memberData,
-            galleryItems: galleryItems,
-            teachingCourses: teachingCourses,
-            allCourses: allCourses
-        };
-
-        currentData = { ...originalData };
-
-        // Update page content
+        // Update member details
         updateMemberDetails(memberData);
-        renderMemberGallery(galleryItems);
-        renderMemberCourses(teachingCourses);
 
-        console.groupEnd();
+        // Fetch and render gallery items
+        const galleryItems = await getAllGalleryItems();
+        const memberGalleryItems = galleryItems.filter(item => item.artist_id === memberId);
+        renderMemberGallery(memberGalleryItems);
+
+        // Fetch and render courses
+        const courses = await getAllCourses();
+        renderMemberCourses(courses);
     } catch (error) {
-        console.error('❌ Complete Loading Error:', error);
-        console.groupEnd();
+        console.error('Error loading member data:', error);
     }
 }
 
@@ -563,18 +534,9 @@ function updateMemberDetails(memberData) {
 }
 
 function renderMemberGallery(galleryItems = []) {
-    console.group('🖼️ Rendering Gallery');
-    console.log('Gallery Items:', JSON.stringify(galleryItems, null, 2));
-    console.log('Current Context:', {
-        language: currentLang,
-        editMode: isEditMode,
-        loggedIn: isLoggedIn
-    });
-
     const galleryGrid = document.getElementById('member-gallery-grid');
     if (!galleryGrid) {
         console.error('❌ Gallery Grid Not Found');
-        console.groupEnd();
         return;
     }
 
@@ -586,7 +548,6 @@ function renderMemberGallery(galleryItems = []) {
                 <span data-lang="he">אין פריטים בגלריה</span>
                 <span data-lang="en">No items in gallery</span>
             </p>`;
-        console.groupEnd();
         return;
     }
 
@@ -660,9 +621,6 @@ function renderMemberGallery(galleryItems = []) {
         
         galleryGrid.appendChild(card);
     });
-
-    console.log(`Rendered ${galleryGrid.children.length} gallery items`);
-    console.groupEnd();
 }
 
 function renderMemberCourses(courses = []) {
@@ -793,34 +751,16 @@ function getMemberIdFromUrl() {
 }
 
 function filterCoursesForMember(courses, memberId, isEditMode = false) {
-    console.log('Filter Courses Debug:', { 
-        coursesCount: courses.length, 
-        memberId, 
-        isEditMode 
-    });
-
-    // In edit mode, show all courses
     if (isEditMode) {
-        console.log('Edit Mode: Returning ALL courses');
         return courses;
     }
 
-    // In non-edit mode, show only courses taught by this member
     const filteredCourses = courses.filter(course => {
-        // Check if the course has teachers
         if (!course.teachers || course.teachers.length === 0) return false;
 
-        // Find if any teacher matches the member ID
-        const isMemberTeacher = course.teachers.some(teacher => 
+        return course.teachers.some(teacher => 
             teacher.id === memberId
         );
-        
-        return isMemberTeacher;
-    });
-
-    console.log('Non-Edit Mode: Filtered Courses', {
-        totalCourses: courses.length,
-        filteredCoursesCount: filteredCourses.length
     });
 
     return filteredCourses;

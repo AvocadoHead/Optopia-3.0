@@ -651,10 +651,10 @@ function renderMemberGallery(galleryItems = []) {
                 }
             });
         } else {
-            // Add click event listener to redirect to gallery item page
+            // Add click event listener to redirect to gallery item page with full repository path
             card.style.cursor = 'pointer';
             card.addEventListener('click', () => {
-                window.location.href = `/gallery-item.html?id=${item.id}`;
+                window.location.href = `https://avocadohead.github.io/Optopia-3.0/gallery-item.html?id=${item.id}`;
             });
         }
         
@@ -696,18 +696,24 @@ function renderMemberCourses(courses = []) {
         courseCard.classList.add('course-card');
         
         // Course title
-        const courseTitle = document.createElement('h3');
+        const courseTitle = document.createElement('h2');
+        courseTitle.classList.add('course-title');
         courseTitle.textContent = course[`name_${currentLang}`];
         courseCard.appendChild(courseTitle);
         
         // Course description
         const courseDescription = document.createElement('p');
-        courseDescription.textContent = course[`description_${currentLang}`] || '';
         courseDescription.classList.add('course-description');
+        courseDescription.textContent = course[`description_${currentLang}`] || '';
         courseCard.appendChild(courseDescription);
-        
-        // Render teachers based on mode
-        if (isEditMode && isLoggedIn && currentMemberId === memberId) {
+
+        // Redirect logic for non-edit mode
+        if (!isEditMode) {
+            courseCard.style.cursor = 'pointer';
+            courseCard.addEventListener('click', () => {
+                window.location.href = `https://avocadohead.github.io/Optopia-3.0/course-item.html?id=${course.id}`;
+            });
+        } else {
             // Edit mode: Show full teacher management
             const teachersContainer = document.createElement('div');
             teachersContainer.classList.add('course-teachers');
@@ -765,12 +771,6 @@ function renderMemberCourses(courses = []) {
             }
 
             courseCard.appendChild(teachersContainer);
-        } else {
-            // Add click event listener to redirect to course item page
-            courseCard.style.cursor = 'pointer';
-            courseCard.addEventListener('click', () => {
-                window.location.href = `/course-item.html?id=${course.id}`;
-            });
         }
         
         coursesGrid.appendChild(courseCard);

@@ -75,31 +75,36 @@ function setupEditMode(memberId) {
     
     // Check if edit mode should be enabled
     const urlParams = new URLSearchParams(window.location.search);
+    const currentMemberId = localStorage.getItem('memberId');
     const shouldEnableEditMode = urlParams.get('edit') === 'true' && isLoggedIn;
     
     console.log('Edit Mode Parameters:', {
-        urlEditParam: urlParams.get('edit'),
+        urlMemberId: memberId,
+        currentMemberId,
         isLoggedIn,
         shouldEnableEditMode
     });
 
-    // Show/hide edit controls based on login state
-    const editControls = document.querySelectorAll('.edit-controls');
-    const addButtons = document.querySelectorAll('#add-gallery-item, #add-course');
-    const editButton = document.getElementById('edit-button');
+    // Only create edit button if viewing own profile
+    if (isLoggedIn && memberId === currentMemberId) {
+        // Create edit button dynamically
+        const editButton = document.createElement('button');
+        editButton.id = 'edit-button';
+        editButton.classList.add('nav-btn');
+        editButton.innerHTML = `
+            <span data-lang="he">ערוך פרופיל</span>
+            <span data-lang="en">Edit Profile</span>
+        `;
+        editButton.addEventListener('click', toggleEditMode);
+        
+        // Find a suitable location to insert the edit button (e.g., near other navigation buttons)
+        const navContainer = document.querySelector('.member-nav-container') || 
+                             document.querySelector('nav') || 
+                             document.body;
+        
+        navContainer.appendChild(editButton);
 
-    // Reset all controls to hidden
-    editControls.forEach(control => control.style.display = 'none');
-    addButtons.forEach(button => button.style.display = 'none');
-    
-    if (isLoggedIn) {
-        // Show edit button
-        if (editButton) {
-            editButton.style.display = 'block';
-            editButton.addEventListener('click', toggleEditMode);
-        }
-
-        // Conditionally show edit controls and add buttons
+        // Conditionally show edit mode if requested
         if (shouldEnableEditMode) {
             console.log('🔓 Automatically enabling edit mode');
             toggleEditMode();
@@ -110,9 +115,7 @@ function setupEditMode(memberId) {
 }
 
 function toggleEditMode() {
-    // Ensure only logged-in users can toggle edit mode
-    if (!isLoggedIn) {
-        console.warn('Unauthorized: Cannot enter edit mode');
+    if (!isValidEditMode()) {
         return;
     }
 
@@ -145,6 +148,9 @@ function toggleEditMode() {
         `;
         saveButton.addEventListener('click', saveChanges);
         editButton.parentNode.insertBefore(saveButton, editButton.nextSibling);
+        
+        // Initially hide the save button
+        saveButton.style.display = 'none';
     }
 
     if (!discardButton) {
@@ -157,17 +163,20 @@ function toggleEditMode() {
         `;
         discardButton.addEventListener('click', cancelChanges);
         editButton.parentNode.insertBefore(discardButton, saveButton.nextSibling);
+        
+        // Initially hide the discard button
+        discardButton.style.display = 'none';
     }
 
-    // Toggle visibility of save/discard buttons
+    // Toggle visibility of save/discard buttons only when in edit mode
     saveButton.style.display = isEditMode ? 'block' : 'none';
     discardButton.style.display = isEditMode ? 'block' : 'none';
     
     // Update edit button text
     if (currentLang === 'he') {
-        editButton.querySelector('[data-lang="he"]').textContent = isEditMode ? 'ערוך פרופיל' : 'ערוך פרופיל';
+        editButton.querySelector('[data-lang="he"]').textContent = isEditMode ? 'סיים עריכה' : 'ערוך פרופיל';
     } else {
-        editButton.querySelector('[data-lang="en"]').textContent = isEditMode ? 'Edit Profile' : 'Edit Profile';
+        editButton.querySelector('[data-lang="en"]').textContent = isEditMode ? 'Finish Editing' : 'Edit Profile';
     }
 
     // Show/hide add buttons
@@ -207,6 +216,10 @@ async function handleFieldEdit(event) {
 }
 
 async function saveChanges() {
+    if (!isValidEditMode()) {
+        return;
+    }
+
     try {
         const memberId = getMemberIdFromUrl();
         const token = localStorage.getItem('sessionToken');
@@ -267,9 +280,7 @@ async function saveChanges() {
 }
 
 function showAddGalleryItemForm(item, index) {
-    // Check authentication and edit mode
-    if (!isLoggedIn || !isEditMode) {
-        console.warn('Unauthorized: Cannot add/edit gallery item');
+    if (!isValidEditMode()) {
         return;
     }
 
@@ -391,6 +402,10 @@ function showAddGalleryItemForm(item, index) {
 }
 
 function showAddCourseForm(course, index) {
+    if (!isValidEditMode()) {
+        return;
+    }
+
     const dialog = document.createElement('dialog');
     dialog.className = 'edit-dialog';
     dialog.innerHTML = `
@@ -519,6 +534,10 @@ function deleteGalleryItem(index) {
 }
 
 function cancelChanges() {
+    if (!isValidEditMode()) {
+        return;
+    }
+
     currentData = { ...originalData };
     updateMemberDetails(originalData);
     renderMemberGallery(originalData.galleryItems || []);
@@ -698,19 +717,19 @@ function renderMemberCourses(courses = []) {
         teachersContainer.classList.add('course-teachers');
         
         // Render existing teachers only in edit mode or for logged-in users
-        if ((isEditMode || isLoggedIn) && course.course_teachers) {
-            course.course_teachers.forEach(relation => {
+        if ((isEditMode || isLoggedIn) && course.teachers) {
+            course.teachers.forEach(relation => {
                 const teacherAvatar = document.createElement('div');
                 teacherAvatar.classList.add('teacher-avatar');
                 
                 const teacherImg = document.createElement('img');
-                teacherImg.src = relation.teacher.image_url || 'assets/default-profile.jpg';
-                teacherImg.alt = relation.teacher[`name_${currentLang}`];
-                teacherImg.title = relation.teacher[`name_${currentLang}`];
+                teacherImg.src = relation.image_url || 'assets/default-profile.jpg';
+                teacherImg.alt = relation[`name_${currentLang}`];
+                teacherImg.title = relation[`name_${currentLang}`];
                 
                 // In edit mode, add remove option for current user
                 if (isEditMode && isLoggedIn && currentMemberId) {
-                    const isCurrentUser = relation.teacher_id === parseInt(currentMemberId);
+                    const isCurrentUser = relation.id === parseInt(currentMemberId);
                     if (isCurrentUser) {
                         const removeIcon = document.createElement('span');
                         removeIcon.textContent = '×';
@@ -736,8 +755,8 @@ function renderMemberCourses(courses = []) {
         
         // In edit mode, add "+" for courses not taught by current user
         if (isEditMode && isLoggedIn && currentMemberId) {
-            const isCurrentUserTeacher = course.course_teachers?.some(
-                relation => relation.teacher_id === parseInt(currentMemberId)
+            const isCurrentUserTeacher = course.teachers?.some(
+                relation => relation.id === parseInt(currentMemberId)
             );
             
             if (!isCurrentUserTeacher) {
@@ -797,28 +816,61 @@ function getMemberIdFromUrl() {
 }
 
 function filterCoursesForMember(courses, memberId, isEditMode = false) {
-    const memberIdNum = parseInt(memberId);
-    
+    console.log('Filter Courses Debug:', { 
+        coursesCount: courses.length, 
+        memberId, 
+        isEditMode 
+    });
+
     // In edit mode, show all courses
-    if (isEditMode) return courses;
+    if (isEditMode) {
+        console.log('Edit Mode: Returning ALL courses');
+        return courses;
+    }
 
     // In non-edit mode, show only courses taught by this member
-    return courses.filter(course => 
-        course.course_teachers?.some(relation => {
-            const teacherId = relation.teacher_id;
-            
-            console.log('Course Teacher Relation:', {
-                courseId: course.id,
-                teacherId: teacherId,
-                teacherIdType: typeof teacherId,
-                memberId: memberIdNum,
-                memberIdType: typeof memberIdNum,
-                isMatch: teacherId === memberIdNum || teacherId == memberIdNum
-            });
-            
-            return teacherId === memberIdNum || teacherId == memberIdNum;
-        })
-    );
+    const filteredCourses = courses.filter(course => {
+        // Check if the course has teachers
+        if (!course.teachers || course.teachers.length === 0) return false;
+
+        // Find if any teacher matches the member ID
+        const isMemberTeacher = course.teachers.some(teacher => 
+            teacher.id === memberId
+        );
+        
+        return isMemberTeacher;
+    });
+
+    console.log('Non-Edit Mode: Filtered Courses', {
+        totalCourses: courses.length,
+        filteredCoursesCount: filteredCourses.length
+    });
+
+    return filteredCourses;
+}
+
+function isValidEditMode() {
+    // Check if user is logged in
+    if (!isLoggedIn) {
+        console.warn('Edit mode not allowed: User not logged in');
+        return false;
+    }
+
+    // Get current member ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberId = urlParams.get('id');
+    const currentMemberId = localStorage.getItem('memberId');
+
+    // Validate that the user is editing their own profile
+    if (!memberId || !currentMemberId || memberId !== currentMemberId) {
+        console.warn('Edit mode not allowed: Unauthorized profile access', {
+            urlMemberId: memberId,
+            currentMemberId: currentMemberId
+        });
+        return false;
+    }
+
+    return true;
 }
 
 // Initialize when DOM is loaded
@@ -827,22 +879,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const memberId = urlParams.get('id');
     const editMode = urlParams.get('edit') === 'true';
     
-    console.log('Initialization Parameters:', {
-        memberId, 
-        editMode, 
-        isLoggedIn, 
-        currentUserId: localStorage.getItem('memberId')
+    console.log('Page Initialization Debug:', {
+        memberId,
+        editMode,
+        isLoggedIn,
+        currentMemberId: localStorage.getItem('memberId')
     });
-    
+
     if (memberId) {
-        await loadMemberData(memberId);
-        
-        // Explicitly set edit mode if requested
-        if (editMode && isLoggedIn) {
-            console.log('Attempting to enable edit mode');
-            toggleEditMode();
+        try {
+            await loadMemberData(memberId);
+            
+            // Explicitly set edit mode if requested and user is logged in
+            if (editMode && isLoggedIn && memberId === localStorage.getItem('memberId')) {
+                console.log('Enabling Edit Mode');
+                toggleEditMode();
+            }
+            
+            updateLanguageDisplay();
+        } catch (error) {
+            console.error('Error loading member data:', error);
         }
-        
-        updateLanguageDisplay();
     }
 });

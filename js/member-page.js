@@ -45,11 +45,7 @@ async function loadMemberData(memberId) {
         console.log('🖼️ Gallery Items:', JSON.stringify(galleryItems, null, 2));
 
         // Filter courses where this member is a teacher
-        const teachingCourses = allCourses.filter(course => 
-            course.course_teachers?.some(
-                relation => relation.teacher_id === memberId
-            )
-        );
+        const teachingCourses = filterCoursesForMember(allCourses, memberId, isEditMode);
         console.log('👩‍🏫 Teaching Courses:', JSON.stringify(teachingCourses, null, 2));
 
         // Store data for edit mode
@@ -675,15 +671,7 @@ function renderMemberCourses(courses = []) {
     };
 
     // Determine which courses to show
-    let coursesToRender = courses;
-    if (!isEditMode) {
-        // Non-edit mode: show only courses taught by this member
-        coursesToRender = courses.filter(course => 
-            course.course_teachers?.some(relation => 
-                relation.teacher_id === parseInt(memberId)
-            )
-        );
-    }
+    let coursesToRender = filterCoursesForMember(courses, memberId, isEditMode);
 
     console.log('Courses to Render:', JSON.stringify(coursesToRender, null, 2));
 
@@ -806,6 +794,31 @@ function updateLanguageDisplay() {
 function getMemberIdFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('id');
+}
+
+function filterCoursesForMember(courses, memberId, isEditMode = false) {
+    const memberIdNum = parseInt(memberId);
+    
+    // In edit mode, show all courses
+    if (isEditMode) return courses;
+
+    // In non-edit mode, show only courses taught by this member
+    return courses.filter(course => 
+        course.course_teachers?.some(relation => {
+            const teacherId = relation.teacher_id;
+            
+            console.log('Course Teacher Relation:', {
+                courseId: course.id,
+                teacherId: teacherId,
+                teacherIdType: typeof teacherId,
+                memberId: memberIdNum,
+                memberIdType: typeof memberIdNum,
+                isMatch: teacherId === memberIdNum || teacherId == memberIdNum
+            });
+            
+            return teacherId === memberIdNum || teacherId == memberIdNum;
+        })
+    );
 }
 
 // Initialize when DOM is loaded

@@ -469,6 +469,132 @@ function showAddCourseForm(course, index) {
     updateLanguageDisplay();
 }
 
+function showEditGalleryItemForm(item, index) {
+    const dialogContent = `
+        <div class="add-gallery-item-dialog">
+            <h2>${getLangText({
+                he: 'ערוך פריט גלריה',
+                en: 'Edit Gallery Item'
+            }, currentLang)}</h2>
+            
+            <label for="gallery-item-title">${getLangText({
+                he: 'כותרת',
+                en: 'Title'
+            }, currentLang)}</label>
+            <input type="text" id="gallery-item-title" value="${item.title || ''}" required>
+            
+            <label for="gallery-item-description">${getLangText({
+                he: 'תיאור',
+                en: 'Description'
+            }, currentLang)}</label>
+            <textarea id="gallery-item-description" rows="4">${item.description || ''}</textarea>
+            
+            <label for="gallery-item-image">${getLangText({
+                he: 'תמונה',
+                en: 'Image'
+            }, currentLang)}</label>
+            <input type="file" id="gallery-item-image" accept="image/*">
+            
+            <div class="dialog-buttons">
+                <button id="save-gallery-item">${getLangText({
+                    he: 'שמור',
+                    en: 'Save'
+                }, currentLang)}</button>
+                <button id="cancel-gallery-item">${getLangText({
+                    he: 'בטל',
+                    en: 'Cancel'
+                }, currentLang)}</button>
+            </div>
+        </div>
+    `;
+
+    // Create dialog
+    const dialog = createDialog(dialogContent);
+    
+    // Reference elements
+    const titleInput = dialog.querySelector('#gallery-item-title');
+    const descriptionInput = dialog.querySelector('#gallery-item-description');
+    const imageInput = dialog.querySelector('#gallery-item-image');
+    const saveButton = dialog.querySelector('#save-gallery-item');
+    const cancelButton = dialog.querySelector('#cancel-gallery-item');
+
+    // Cancel button
+    cancelButton.addEventListener('click', () => {
+        dialog.close();
+    });
+
+    // Save button
+    saveButton.addEventListener('click', async () => {
+        try {
+            // Get member ID from URL
+            const memberId = getMemberIdFromUrl();
+            
+            // Prepare authorization token
+            const token = localStorage.getItem('sessionToken');
+            if (!token) {
+                throw new Error(
+                    getLangText({
+                        he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
+                        en: 'No session token found. Please log in again.'
+                    }, currentLang)
+                );
+            }
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('title', titleInput.value);
+            formData.append('description', descriptionInput.value);
+
+            // Add image if selected
+            if (imageInput.files.length > 0) {
+                formData.append('image', imageInput.files[0]);
+            }
+
+            // Send request to backend to update gallery item
+            const response = await fetch(`${API_BASE_URL}/members/${memberId}/gallery/${item.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 
+                    getLangText({
+                        he: 'שגיאה בעדכון פריט הגלריה',
+                        en: 'Failed to update gallery item'
+                    }, currentLang)
+                );
+            }
+
+            // Parse updated item
+            const updatedItem = await response.json();
+
+            // Update local state
+            currentData.galleryItems[index] = updatedItem;
+            
+            // Re-render gallery
+            renderMemberGallery(currentData.galleryItems);
+
+            // Close dialog
+            dialog.close();
+
+            // Show success message
+            alert(
+                getLangText({
+                    he: 'פריט הגלריה עודכן בהצלחה',
+                    en: 'Gallery item updated successfully'
+                }, currentLang)
+            );
+        } catch (error) {
+            console.error('Error updating gallery item:', error);
+            alert(error.message);
+        }
+    });
+}
+
 function addToCourse(courseId) {
     // This function is now handled directly in renderMemberCourses
     console.warn('addToCourse is deprecated. Use the "+" button in edit mode.');
@@ -548,7 +674,10 @@ function renderMemberGallery(galleryItems = []) {
             <div class="gallery-image">
                 <img src="${item.image_url || 'placeholder.jpg'}" alt="${title || 'Gallery Item'}">
                 ${isEditMode ? `
-                    <span class="delete-gallery-item" data-index="${index}">×</span>
+                    <div class="gallery-edit-controls">
+                        <span class="edit-gallery-item" data-index="${index}">✎</span>
+                        <span class="delete-gallery-item" data-index="${index}">×</span>
+                    </div>
                 ` : ''}
             </div>
             <div class="gallery-info">
@@ -557,9 +686,15 @@ function renderMemberGallery(galleryItems = []) {
             </div>
         `;
         
-        // Add delete functionality if in edit mode
+        // Add edit and delete functionality if in edit mode
         if (isEditMode) {
+            const editButton = card.querySelector('.edit-gallery-item');
             const deleteButton = card.querySelector('.delete-gallery-item');
+
+            editButton.addEventListener('click', () => {
+                showEditGalleryItemForm(item, index);
+            });
+
             deleteButton.addEventListener('click', async () => {
                 try {
                     // Get member ID from URL

@@ -95,12 +95,17 @@ export async function getMemberById(id) {
 export async function updateMember(id, data) {
     try {
         const response = await fetch(`${API_BASE_URL}/members/${id}`, {
-            method: 'PUT',
-            headers: defaultHeaders,
+            method: 'PATCH',
+            headers: {
+                ...defaultHeaders,
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(data)
         });
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
         }
         return await response.json();
     } catch (error) {

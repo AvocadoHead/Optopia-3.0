@@ -92,13 +92,14 @@ export async function getMemberById(id) {
     }
 }
 
-export async function updateMember(id, data) {
+export async function updateMember(id, data, token) {
     try {
         const response = await fetch(`${API_BASE_URL}/members/${id}`, {
             method: 'PATCH',
             headers: {
                 ...defaultHeaders,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(data)
         });

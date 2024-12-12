@@ -701,6 +701,7 @@ function renderMemberCourses(courses = []) {
                 <span data-lang="he">אין קורסים</span>
                 <span data-lang="en">No courses</span>
             </p>`;
+        return;
     }
 
     coursesToRender.forEach(course => {
@@ -712,49 +713,49 @@ function renderMemberCourses(courses = []) {
         courseTitle.textContent = course[`name_${currentLang}`];
         courseCard.appendChild(courseTitle);
         
-        // Course teachers section
+        // Course description
+        const courseDescription = document.createElement('p');
+        courseDescription.textContent = course[`description_${currentLang}`] || '';
+        courseDescription.classList.add('course-description');
+        courseCard.appendChild(courseDescription);
+        
+        // Teachers container
         const teachersContainer = document.createElement('div');
         teachersContainer.classList.add('course-teachers');
-        
-        // Render existing teachers only in edit mode or for logged-in users
-        if ((isEditMode || isLoggedIn) && course.teachers) {
-            course.teachers.forEach(relation => {
-                const teacherAvatar = document.createElement('div');
-                teacherAvatar.classList.add('teacher-avatar');
-                
-                const teacherImg = document.createElement('img');
-                teacherImg.src = relation.image_url || 'assets/default-profile.jpg';
-                teacherImg.alt = relation[`name_${currentLang}`];
-                teacherImg.title = relation[`name_${currentLang}`];
-                
-                // In edit mode, add remove option for current user
-                if (isEditMode && isLoggedIn && currentMemberId) {
-                    const isCurrentUser = relation.id === parseInt(currentMemberId);
-                    if (isCurrentUser) {
+
+        // Render teachers based on login and edit mode
+        if (isEditMode && isLoggedIn && currentMemberId === memberId) {
+            // In edit mode, show all teachers with management options
+            if (course.teachers && course.teachers.length > 0) {
+                course.teachers.forEach(teacher => {
+                    const teacherAvatar = document.createElement('div');
+                    teacherAvatar.classList.add('teacher-avatar');
+                    
+                    const teacherImg = document.createElement('img');
+                    teacherImg.src = teacher.image_url || 'assets/default-profile.jpg';
+                    teacherImg.alt = teacher[`name_${currentLang}`];
+                    teacherImg.title = teacher[`name_${currentLang}`];
+                    
+                    // Add remove option if it's the current user
+                    if (teacher.id === parseInt(currentMemberId)) {
                         const removeIcon = document.createElement('span');
                         removeIcon.textContent = '×';
                         removeIcon.classList.add('remove-teacher-icon');
                         removeIcon.addEventListener('click', () => {
-                            // Track removal of current user from course
                             if (!pendingCourseTeacherChanges.removeTeachers.includes(course.id)) {
                                 pendingCourseTeacherChanges.removeTeachers.push(course.id);
-                                // Optionally, remove from addTeachers if previously added
-                                pendingCourseTeacherChanges.addTeachers = 
-                                    pendingCourseTeacherChanges.addTeachers.filter(id => id !== course.id);
                             }
                             teacherAvatar.style.display = 'none';
                         });
                         teacherAvatar.appendChild(removeIcon);
                     }
-                }
-                
-                teacherAvatar.appendChild(teacherImg);
-                teachersContainer.appendChild(teacherAvatar);
-            });
-        }
-        
-        // In edit mode, add "+" for courses not taught by current user
-        if (isEditMode && isLoggedIn && currentMemberId) {
+                    
+                    teacherAvatar.appendChild(teacherImg);
+                    teachersContainer.appendChild(teacherAvatar);
+                });
+            }
+
+            // Add "+" button to add teacher if not already a teacher
             const isCurrentUserTeacher = course.teachers?.some(
                 relation => relation.id === parseInt(currentMemberId)
             );
@@ -764,12 +765,8 @@ function renderMemberCourses(courses = []) {
                 addTeacherIcon.classList.add('add-teacher-icon');
                 addTeacherIcon.textContent = '+';
                 addTeacherIcon.addEventListener('click', () => {
-                    // Track addition of current user to course
                     if (!pendingCourseTeacherChanges.addTeachers.includes(course.id)) {
                         pendingCourseTeacherChanges.addTeachers.push(course.id);
-                        // Optionally, remove from removeTeachers if previously removed
-                        pendingCourseTeacherChanges.removeTeachers = 
-                            pendingCourseTeacherChanges.removeTeachers.filter(id => id !== course.id);
                     }
                     
                     // Create a temporary avatar for the current user
@@ -790,9 +787,29 @@ function renderMemberCourses(courses = []) {
                 
                 teachersContainer.appendChild(addTeacherIcon);
             }
+        } else if (isLoggedIn) {
+            // For logged-in users not in edit mode, show teachers without management
+            if (course.teachers && course.teachers.length > 0) {
+                course.teachers.forEach(teacher => {
+                    const teacherAvatar = document.createElement('div');
+                    teacherAvatar.classList.add('teacher-avatar');
+                    
+                    const teacherImg = document.createElement('img');
+                    teacherImg.src = teacher.image_url || 'assets/default-profile.jpg';
+                    teacherImg.alt = teacher[`name_${currentLang}`];
+                    teacherImg.title = teacher[`name_${currentLang}`];
+                    
+                    teacherAvatar.appendChild(teacherImg);
+                    teachersContainer.appendChild(teacherAvatar);
+                });
+            }
         }
         
-        courseCard.appendChild(teachersContainer);
+        // Only append teachers container if it has content and user is logged in
+        if (teachersContainer.children.length > 0 && isLoggedIn) {
+            courseCard.appendChild(teachersContainer);
+        }
+        
         coursesGrid.appendChild(courseCard);
     });
 

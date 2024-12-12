@@ -1,5 +1,5 @@
 import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
-import { getMemberById, updateMember, getAllCourses } from './api-service.js';
+import { getMemberById, updateMember, getAllCourses, getAllGalleryItems } from './api-service.js';
 
 // Global state with clear structure
 let currentLang = getCurrentLang();

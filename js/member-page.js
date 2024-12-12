@@ -597,7 +597,6 @@ function renderMemberGallery(galleryItems = []) {
     galleryGrid.innerHTML = '';
 
     if (galleryItems.length === 0) {
-        console.warn('⚠️ No Gallery Items');
         galleryGrid.innerHTML = `
             <p class="no-items-message">
                 <span data-lang="he">אין פריטים בגלריה</span>
@@ -666,6 +665,12 @@ function renderMemberGallery(galleryItems = []) {
                     console.error('Error deleting gallery item:', error);
                     alert(error.message || 'Failed to delete gallery item');
                 }
+            });
+        } else {
+            // Add click event listener to redirect to gallery item page
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', () => {
+                window.location.href = `/gallery-item.html?id=${item.id}`;
             });
         }
         
@@ -776,6 +781,12 @@ function renderMemberCourses(courses = []) {
             }
 
             courseCard.appendChild(teachersContainer);
+        } else {
+            // Add click event listener to redirect to course item page
+            courseCard.style.cursor = 'pointer';
+            courseCard.addEventListener('click', () => {
+                window.location.href = `/course-item.html?id=${course.id}`;
+            });
         }
         
         coursesGrid.appendChild(courseCard);

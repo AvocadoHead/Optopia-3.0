@@ -653,26 +653,28 @@ function renderMemberCourses(courses = []) {
         const courseCard = document.createElement('div');
         courseCard.classList.add('course-card');
         
-        // Course title
+        // Course content wrapper
+        const courseContent = document.createElement('div');
+        courseContent.classList.add('course-content');
+        
+        // Course title (h2 for consistency with other pages)
         const courseTitle = document.createElement('h2');
         courseTitle.classList.add('course-title');
-        courseTitle.textContent = course[`name_${currentLang}`];
-        courseCard.appendChild(courseTitle);
+        courseTitle.textContent = course[`name_${currentLang}`] || '';
+        courseContent.appendChild(courseTitle);
         
         // Course description
-        const courseDescription = document.createElement('p');
-        courseDescription.classList.add('course-description');
-        courseDescription.textContent = course[`description_${currentLang}`] || '';
-        courseCard.appendChild(courseDescription);
+        if (course[`description_${currentLang}`]) {
+            const courseDescription = document.createElement('p');
+            courseDescription.classList.add('course-description');
+            courseDescription.textContent = course[`description_${currentLang}`];
+            courseContent.appendChild(courseDescription);
+        }
 
-        // Redirect logic for non-edit mode
-        if (!isEditMode) {
-            courseCard.style.cursor = 'pointer';
-            courseCard.addEventListener('click', () => {
-                window.location.href = `https://avocadohead.github.io/Optopia-3.0/course-item.html?id=${course.id}`;
-            });
-        } else {
-            // Edit mode: Show full teacher management
+        courseCard.appendChild(courseContent);
+
+        // Edit mode: Show teacher management
+        if (isEditMode) {
             const teachersContainer = document.createElement('div');
             teachersContainer.classList.add('course-teachers');
 
@@ -716,12 +718,8 @@ function renderMemberCourses(courses = []) {
                 addTeacherIcon.classList.add('add-teacher-icon');
                 addTeacherIcon.textContent = '+';
                 addTeacherIcon.addEventListener('click', () => {
-                    // Only allow adding the current member as a teacher
-                    const currentMemberId = localStorage.getItem('memberId');
-                    if (currentMemberId && isValidEditMode()) {
-                        if (!pendingCourseTeacherChanges.addTeachers.includes(course.id)) {
-                            pendingCourseTeacherChanges.addTeachers.push(course.id);
-                        }
+                    if (!pendingCourseTeacherChanges.addTeachers.includes(course.id)) {
+                        pendingCourseTeacherChanges.addTeachers.push(course.id);
                     }
                 });
                 
@@ -729,6 +727,12 @@ function renderMemberCourses(courses = []) {
             }
 
             courseCard.appendChild(teachersContainer);
+        } else {
+            // Non-edit mode: Make entire card clickable
+            courseCard.style.cursor = 'pointer';
+            courseCard.addEventListener('click', () => {
+                window.location.href = `https://avocadohead.github.io/Optopia-3.0/course-item.html?id=${course.id}`;
+            });
         }
         
         coursesGrid.appendChild(courseCard);

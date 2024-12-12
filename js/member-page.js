@@ -642,7 +642,7 @@ function updateMemberDetails(memberData) {
     const bioHe = document.querySelector('[data-field="bio_he"]');
     const bioEn = document.querySelector('[data-field="bio_en"]');
     if (bioHe) bioHe.textContent = memberData.bio_he || '';
-    if (bioEn) bioEn.textContent = memberData.bio_en || '';
+    if (bioEn) bioHe.textContent = memberData.bio_en || '';
 }
 
 function renderMemberGallery(galleryItems = []) {
@@ -674,9 +674,9 @@ function renderMemberGallery(galleryItems = []) {
             <div class="gallery-image">
                 <img src="${item.image_url || 'placeholder.jpg'}" alt="${title || 'Gallery Item'}">
                 ${isEditMode ? `
-                    <div class="gallery-edit-controls">
-                        <span class="edit-gallery-item" data-index="${index}">✎</span>
-                        <span class="delete-gallery-item" data-index="${index}">×</span>
+                    <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; z-index: 10;">
+                        <span style="background: rgba(255,255,255,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #007bff;" class="edit-gallery-item" data-index="${index}">✎</span>
+                        <span style="background: rgba(255,255,255,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #dc3545;" class="delete-gallery-item" data-index="${index}">×</span>
                     </div>
                 ` : ''}
             </div>

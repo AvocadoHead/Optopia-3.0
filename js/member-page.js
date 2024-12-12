@@ -515,13 +515,21 @@ function showAddCourseForm(course, index) {
 }
 
 function addToCourse(courseId) {
-    if (!currentData.courses) {
-        currentData.courses = [];
+    // Validate that only the current member can be added as a teacher
+    const currentMemberId = localStorage.getItem('memberId');
+    if (!currentMemberId) {
+        console.warn('Cannot add to course: No logged-in member');
+        return;
     }
-    if (!currentData.courses.includes(courseId)) {
-        currentData.courses.push(courseId);
-        saveChanges();
-        renderMemberCourses(currentData.courses);
+
+    // Check if the user is in edit mode and viewing their own profile
+    if (!isValidEditMode()) {
+        console.warn('Cannot add to course: Invalid edit mode');
+        return;
+    }
+
+    if (!pendingCourseTeacherChanges.addTeachers.includes(courseId)) {
+        pendingCourseTeacherChanges.addTeachers.push(courseId);
     }
 }
 
@@ -676,13 +684,6 @@ function renderMemberCourses(courses = []) {
     const memberId = getMemberIdFromUrl();
     const currentMemberId = localStorage.getItem('memberId');
 
-    console.group('🔍 Rendering Member Courses Debug');
-    console.log('Input Courses:', JSON.stringify(courses, null, 2));
-    console.log('Member ID:', memberId);
-    console.log('Current User ID:', currentMemberId);
-    console.log('Is Logged In:', isLoggedIn);
-    console.log('Is Edit Mode:', isEditMode);
-
     // Reset pending changes
     pendingCourseTeacherChanges = {
         addTeachers: [],
@@ -692,10 +693,7 @@ function renderMemberCourses(courses = []) {
     // Determine which courses to show
     let coursesToRender = filterCoursesForMember(courses, memberId, isEditMode);
 
-    console.log('Courses to Render:', JSON.stringify(coursesToRender, null, 2));
-
     if (coursesToRender.length === 0) {
-        console.warn('⚠️ No Courses to Render');
         coursesGrid.innerHTML = `
             <p class="no-courses-message">
                 <span data-lang="he">אין קורסים</span>
@@ -719,13 +717,13 @@ function renderMemberCourses(courses = []) {
         courseDescription.classList.add('course-description');
         courseCard.appendChild(courseDescription);
         
-        // Teachers container
-        const teachersContainer = document.createElement('div');
-        teachersContainer.classList.add('course-teachers');
-
-        // Render teachers based on login and edit mode
+        // Render teachers based on mode
         if (isEditMode && isLoggedIn && currentMemberId === memberId) {
-            // In edit mode, show all teachers with management options
+            // Edit mode: Show full teacher management
+            const teachersContainer = document.createElement('div');
+            teachersContainer.classList.add('course-teachers');
+
+            // Show existing teachers with remove option
             if (course.teachers && course.teachers.length > 0) {
                 course.teachers.forEach(teacher => {
                     const teacherAvatar = document.createElement('div');
@@ -765,56 +763,23 @@ function renderMemberCourses(courses = []) {
                 addTeacherIcon.classList.add('add-teacher-icon');
                 addTeacherIcon.textContent = '+';
                 addTeacherIcon.addEventListener('click', () => {
-                    if (!pendingCourseTeacherChanges.addTeachers.includes(course.id)) {
-                        pendingCourseTeacherChanges.addTeachers.push(course.id);
+                    // Only allow adding the current member as a teacher
+                    const currentMemberId = localStorage.getItem('memberId');
+                    if (currentMemberId && isValidEditMode()) {
+                        if (!pendingCourseTeacherChanges.addTeachers.includes(course.id)) {
+                            pendingCourseTeacherChanges.addTeachers.push(course.id);
+                        }
                     }
-                    
-                    // Create a temporary avatar for the current user
-                    const currentUserAvatar = document.createElement('div');
-                    currentUserAvatar.classList.add('teacher-avatar');
-                    
-                    const currentUserImg = document.createElement('img');
-                    currentUserImg.src = localStorage.getItem('userImageUrl') || 'assets/default-profile.jpg';
-                    currentUserImg.alt = localStorage.getItem('userName');
-                    currentUserImg.title = localStorage.getItem('userName');
-                    
-                    currentUserAvatar.appendChild(currentUserImg);
-                    teachersContainer.appendChild(currentUserAvatar);
-                    
-                    // Remove the "+" icon
-                    addTeacherIcon.remove();
                 });
                 
                 teachersContainer.appendChild(addTeacherIcon);
             }
-        } else if (isLoggedIn) {
-            // For logged-in users not in edit mode, show teachers without management
-            if (course.teachers && course.teachers.length > 0) {
-                course.teachers.forEach(teacher => {
-                    const teacherAvatar = document.createElement('div');
-                    teacherAvatar.classList.add('teacher-avatar');
-                    
-                    const teacherImg = document.createElement('img');
-                    teacherImg.src = teacher.image_url || 'assets/default-profile.jpg';
-                    teacherImg.alt = teacher[`name_${currentLang}`];
-                    teacherImg.title = teacher[`name_${currentLang}`];
-                    
-                    teacherAvatar.appendChild(teacherImg);
-                    teachersContainer.appendChild(teacherAvatar);
-                });
-            }
-        }
-        
-        // Only append teachers container if it has content and user is logged in
-        if (teachersContainer.children.length > 0 && isLoggedIn) {
+
             courseCard.appendChild(teachersContainer);
         }
         
         coursesGrid.appendChild(courseCard);
     });
-
-    console.log(`Rendered ${coursesGrid.children.length} courses for member`);
-    console.groupEnd();
 }
 
 function updateLanguageDisplay() {

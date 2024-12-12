@@ -11,15 +11,18 @@ let membersData = [];
 
 // Language toggle functionality
 function toggleLanguage() {
+    const prevLang = currentLang;
     currentLang = currentLang === 'he' ? 'en' : 'he';
     setCurrentLang(currentLang);
     document.documentElement.lang = currentLang;
     document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
+    
+    console.log(`Language toggled: ${prevLang} → ${currentLang}`);
+    
     updateLanguageDisplay();
     
     // Re-render dynamic content based on current page
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    console.log('Toggling language on page:', currentPage);
     
     switch (currentPage) {
         case 'index.html':
@@ -40,7 +43,6 @@ function toggleLanguage() {
             break;
             
         case 'gallery.html':
-            console.log('Re-rendering gallery page');
             const galleryGrid = document.getElementById('gallery-grid');
             if (galleryGrid) {
                 renderGalleryPage();
@@ -48,7 +50,6 @@ function toggleLanguage() {
             break;
             
         case 'courses.html':
-            console.log('Re-rendering courses page');
             const coursesGrid = document.getElementById('courses-grid');
             if (coursesGrid) {
                 renderCoursesPage();
@@ -64,17 +65,14 @@ function toggleLanguage() {
             break;
             
         case 'member.html':
-            console.log('Re-rendering member page');
             initMemberPage();
             break;
             
         case 'gallery-item.html':
-            console.log('Re-rendering gallery item page');
             initGalleryItemPage();
             break;
             
         case 'course-item.html':
-            console.log('Re-rendering course item page');
             initCourseItemPage();
             break;
     }
@@ -112,9 +110,7 @@ function toggleMembers() {
 // Data initialization
 async function loadGalleryItems() {
     try {
-        console.log('Fetching gallery items...');
         const items = await getAllGalleryItems();
-        console.log('Raw gallery data:', items);
         if (items && Array.isArray(items)) {
             galleryData = items;
             return items;
@@ -129,12 +125,9 @@ async function loadGalleryItems() {
 
 async function loadCourses() {
     try {
-        console.log('Loading courses...');
         const courses = await getAllCourses();
-        console.log('Loaded courses:', courses);
         if (courses && Array.isArray(courses)) {
             coursesData = courses;
-            console.log('Updated coursesData:', coursesData);
             return courses;
         } else {
             console.error('Invalid courses data received:', courses);
@@ -149,9 +142,7 @@ async function loadCourses() {
 
 async function loadMembers() {
     try {
-        console.log('Fetching members...');
         const members = await getAllMembers();
-        console.log('Raw members data:', members);
         if (members && Array.isArray(members)) {
             membersData = members;
             return members;
@@ -179,12 +170,6 @@ async function initializeAppData() {
         galleryData = galleryItems;
         coursesData = courses;
         membersData = members;
-        
-        console.log('Data loaded successfully:', {
-            gallery: galleryData.length,
-            courses: coursesData.length,
-            members: membersData.length
-        });
         
         dataInitialized = true;
     } catch (error) {

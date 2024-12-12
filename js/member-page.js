@@ -657,8 +657,8 @@ function renderMemberCourses(courses = []) {
         const courseContent = document.createElement('div');
         courseContent.classList.add('course-content');
         
-        // Course title (h2 for consistency with other pages)
-        const courseTitle = document.createElement('h2');
+        // Course title (h3 instead of h2 to match CSS)
+        const courseTitle = document.createElement('h3');
         courseTitle.classList.add('course-title');
         courseTitle.textContent = course[`name_${currentLang}`] || '';
         courseContent.appendChild(courseTitle);

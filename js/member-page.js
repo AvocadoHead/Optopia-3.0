@@ -794,30 +794,15 @@ function isValidEditMode() {
     return true;
 }
 
-function toggleLanguage() {
-    // Toggle between Hebrew and English
+window.toggleLanguage = function() {
     currentLang = currentLang === 'he' ? 'en' : 'he';
-    
-    // Update language in localStorage
-    localStorage.setItem('language', currentLang);
-    
-    // Update language display for all elements with data-lang attribute
+    setCurrentLang(currentLang);
     updateLanguageDisplay();
     
-    // Re-render member details with new language
-    if (currentData) {
-        updateMemberDetails(currentData);
-    }
-    
-    // Re-render gallery and courses with new language
-    if (currentData.galleryItems) {
-        renderMemberGallery(currentData.galleryItems);
-    }
-    
-    if (currentData.courses) {
-        renderMemberCourses(currentData.courses);
-    }
-}
+    // Reload member data with new language
+    const memberId = getMemberIdFromUrl();
+    loadMemberData(memberId);
+};
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {

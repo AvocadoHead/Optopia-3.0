@@ -14,6 +14,12 @@ let currentData = {
 let isLoggedIn = localStorage.getItem('memberId') !== null;
 let currentUserId = null;
 
+// Global variable to track course teacher changes
+let pendingCourseTeacherChanges = {
+    addTeachers: [],
+    removeTeachers: []
+};
+
 async function loadMemberData(memberId) {
     console.group('🔍 Member Data Loading');
     console.log('Loading data for Member ID:', memberId);
@@ -108,6 +114,12 @@ function setupEditMode(memberId) {
 }
 
 function toggleEditMode() {
+    // Ensure only logged-in users can toggle edit mode
+    if (!isLoggedIn) {
+        console.warn('Unauthorized: Cannot enter edit mode');
+        return;
+    }
+
     const editButton = document.getElementById('edit-button');
     if (!editButton) {
         console.error('Edit button not found');
@@ -123,11 +135,43 @@ function toggleEditMode() {
     isEditMode = !isEditMode;
     document.body.classList.toggle('edit-mode', isEditMode);
     
-    // Update button text
+    // Create save and discard buttons if they don't exist
+    let saveButton = document.getElementById('save-changes-button');
+    let discardButton = document.getElementById('discard-changes-button');
+
+    if (!saveButton) {
+        saveButton = document.createElement('button');
+        saveButton.id = 'save-changes-button';
+        saveButton.classList.add('nav-btn');
+        saveButton.innerHTML = `
+            <span data-lang="he">שמור שינויים</span>
+            <span data-lang="en">Save Changes</span>
+        `;
+        saveButton.addEventListener('click', saveChanges);
+        editButton.parentNode.insertBefore(saveButton, editButton.nextSibling);
+    }
+
+    if (!discardButton) {
+        discardButton = document.createElement('button');
+        discardButton.id = 'discard-changes-button';
+        discardButton.classList.add('nav-btn');
+        discardButton.innerHTML = `
+            <span data-lang="he">בטל שינויים</span>
+            <span data-lang="en">Discard Changes</span>
+        `;
+        discardButton.addEventListener('click', cancelChanges);
+        editButton.parentNode.insertBefore(discardButton, saveButton.nextSibling);
+    }
+
+    // Toggle visibility of save/discard buttons
+    saveButton.style.display = isEditMode ? 'block' : 'none';
+    discardButton.style.display = isEditMode ? 'block' : 'none';
+    
+    // Update edit button text
     if (currentLang === 'he') {
-        editButton.querySelector('[data-lang="he"]').textContent = isEditMode ? 'שמור שינויים' : 'ערוך פרופיל';
+        editButton.querySelector('[data-lang="he"]').textContent = isEditMode ? 'ערוך פרופיל' : 'ערוך פרופיל';
     } else {
-        editButton.querySelector('[data-lang="en"]').textContent = isEditMode ? 'Save Changes' : 'Edit Profile';
+        editButton.querySelector('[data-lang="en"]').textContent = isEditMode ? 'Edit Profile' : 'Edit Profile';
     }
 
     // Show/hide add buttons
@@ -147,9 +191,6 @@ function toggleEditMode() {
         // Re-render courses to show all available ones
         renderMemberCourses();
     } else {
-        // Save changes
-        saveChanges();
-        
         // Make fields non-editable
         const editables = document.querySelectorAll('.editable');
         editables.forEach(field => {
@@ -181,6 +222,45 @@ async function saveChanges() {
         await updateMember(memberId, currentData);
         originalData = { ...currentData };
         alert('Changes saved successfully!');
+        
+        // Handle course teacher changes
+        if (pendingCourseTeacherChanges.removeTeachers.length > 0 || 
+            pendingCourseTeacherChanges.addTeachers.length > 0) {
+            
+            // Remove teachers
+            for (const courseId of pendingCourseTeacherChanges.removeTeachers) {
+                await fetch(`/api/courses/${courseId}/teachers`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        teacherId: parseInt(currentUserId) 
+                    })
+                });
+            }
+
+            // Add teachers
+            for (const courseId of pendingCourseTeacherChanges.addTeachers) {
+                await fetch(`/api/courses/${courseId}/teachers`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        teacherId: parseInt(currentUserId) 
+                    })
+                });
+            }
+
+            // Reset pending changes
+            pendingCourseTeacherChanges = {
+                addTeachers: [],
+                removeTeachers: []
+            };
+        }
     } catch (error) {
         console.error('Error saving changes:', error);
         alert('Failed to save changes. Please try again.');
@@ -191,6 +271,12 @@ async function saveChanges() {
 }
 
 function showAddGalleryItemForm(item, index) {
+    // Check authentication and edit mode
+    if (!isLoggedIn || !isEditMode) {
+        console.warn('Unauthorized: Cannot add/edit gallery item');
+        return;
+    }
+
     const dialog = document.createElement('dialog');
     dialog.className = 'edit-dialog';
     dialog.innerHTML = `
@@ -247,9 +333,10 @@ function showAddGalleryItemForm(item, index) {
         </form>
     `;
     
-    dialog.querySelector('form').addEventListener('submit', (e) => {
+    dialog.querySelector('form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
+        
         const newItem = {
             title_he: formData.get('title_he'),
             title_en: formData.get('title_en'),
@@ -258,16 +345,48 @@ function showAddGalleryItemForm(item, index) {
             image_url: formData.get('image_url')
         };
         
-        if (item) {
-            currentData.galleryItems[index] = newItem;
-        } else {
+        try {
+            // Get member ID from URL
+            const memberId = getMemberIdFromUrl();
+            
+            // Prepare authorization token
+            const token = localStorage.getItem('sessionToken');
+            if (!token) {
+                throw new Error('No session token found');
+            }
+
+            // Send request to backend to add gallery item
+            const response = await fetch(`/api/members/${memberId}/gallery`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(newItem)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to add gallery item');
+            }
+
+            const addedItem = await response.json();
+            
+            // Update local state
             if (!currentData.galleryItems) {
                 currentData.galleryItems = [];
             }
-            currentData.galleryItems.push(newItem);
+            currentData.galleryItems.push(addedItem);
+            
+            // Re-render gallery
+            renderMemberGallery(currentData.galleryItems);
+            
+            // Close dialog
+            dialog.close();
+        } catch (error) {
+            console.error('Error adding gallery item:', error);
+            alert(error.message || 'Failed to add gallery item');
         }
-        renderMemberGallery(currentData.galleryItems);
-        dialog.close();
     });
     
     document.body.appendChild(dialog);
@@ -475,6 +594,12 @@ function renderMemberGallery(galleryItems = []) {
         card.innerHTML = `
             <div class="gallery-image">
                 <img src="${item.image_url || 'placeholder.jpg'}" alt="${title || 'Gallery Item'}">
+                ${isEditMode ? `
+                    <button class="delete-gallery-item" data-index="${index}">
+                        <span data-lang="he">×</span>
+                        <span data-lang="en">×</span>
+                    </button>
+                ` : ''}
             </div>
             <div class="gallery-info">
                 <h3>${title || ''}</h3>
@@ -482,9 +607,49 @@ function renderMemberGallery(galleryItems = []) {
             </div>
         `;
         
+        // Add delete functionality if in edit mode
+        if (isEditMode) {
+            const deleteButton = card.querySelector('.delete-gallery-item');
+            deleteButton.addEventListener('click', async () => {
+                try {
+                    // Get member ID from URL
+                    const memberId = getMemberIdFromUrl();
+                    
+                    // Prepare authorization token
+                    const token = localStorage.getItem('sessionToken');
+                    if (!token) {
+                        throw new Error('No session token found');
+                    }
+
+                    // Send request to backend to delete gallery item
+                    const response = await fetch(`/api/members/${memberId}/gallery/${item.id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to delete gallery item');
+                    }
+
+                    // Remove item from local state
+                    currentData.galleryItems.splice(index, 1);
+                    
+                    // Re-render gallery
+                    renderMemberGallery(currentData.galleryItems);
+                } catch (error) {
+                    console.error('Error deleting gallery item:', error);
+                    alert(error.message || 'Failed to delete gallery item');
+                }
+            });
+        }
+        
         galleryGrid.appendChild(card);
     });
 
+    console.log(`Rendered ${galleryGrid.children.length} gallery items`);
     console.groupEnd();
 }
 
@@ -494,37 +659,138 @@ function renderMemberCourses(courses = []) {
 
     const currentLang = getCurrentLang();
     const memberId = getMemberIdFromUrl();
+    const currentMemberId = localStorage.getItem('memberId');
 
-    // Determine which courses to show based on login and edit state
+    console.group('🔍 Rendering Member Courses Debug');
+    console.log('Input Courses:', JSON.stringify(courses, null, 2));
+    console.log('Member ID:', memberId);
+    console.log('Current User ID:', currentMemberId);
+    console.log('Is Logged In:', isLoggedIn);
+    console.log('Is Edit Mode:', isEditMode);
+
+    // Reset pending changes
+    pendingCourseTeacherChanges = {
+        addTeachers: [],
+        removeTeachers: []
+    };
+
+    // Determine which courses to show
     let coursesToRender = courses;
-    if (!isLoggedIn || !isEditMode) {
-        // Unlogged or non-edit mode: show only courses taught by this member
+    if (!isEditMode) {
+        // Non-edit mode: show only courses taught by this member
         coursesToRender = courses.filter(course => 
-            course.course_teachers?.some(relation => relation.teacher_id === parseInt(memberId))
+            course.course_teachers?.some(relation => 
+                relation.teacher_id === parseInt(memberId)
+            )
         );
+    }
+
+    console.log('Courses to Render:', JSON.stringify(coursesToRender, null, 2));
+
+    if (coursesToRender.length === 0) {
+        console.warn('⚠️ No Courses to Render');
+        coursesGrid.innerHTML = `
+            <p class="no-courses-message">
+                <span data-lang="he">אין קורסים</span>
+                <span data-lang="en">No courses</span>
+            </p>`;
     }
 
     coursesToRender.forEach(course => {
         const courseCard = document.createElement('div');
         courseCard.classList.add('course-card');
         
+        // Course title
         const courseTitle = document.createElement('h3');
         courseTitle.textContent = course[`name_${currentLang}`];
         courseCard.appendChild(courseTitle);
         
-        // Only show teachers in edit mode or when logged in
-        if (isLoggedIn && isEditMode) {
-            const courseTeachers = document.createElement('p');
-            courseTeachers.textContent = course.course_teachers
-                .map(relation => relation.teacher[`name_${currentLang}`])
-                .join(', ');
-            courseCard.appendChild(courseTeachers);
+        // Course teachers section
+        const teachersContainer = document.createElement('div');
+        teachersContainer.classList.add('course-teachers');
+        
+        // Render existing teachers only in edit mode or for logged-in users
+        if ((isEditMode || isLoggedIn) && course.course_teachers) {
+            course.course_teachers.forEach(relation => {
+                const teacherAvatar = document.createElement('div');
+                teacherAvatar.classList.add('teacher-avatar');
+                
+                const teacherImg = document.createElement('img');
+                teacherImg.src = relation.teacher.image_url || 'assets/default-profile.jpg';
+                teacherImg.alt = relation.teacher[`name_${currentLang}`];
+                teacherImg.title = relation.teacher[`name_${currentLang}`];
+                
+                // In edit mode, add remove option for current user
+                if (isEditMode && isLoggedIn && currentMemberId) {
+                    const isCurrentUser = relation.teacher_id === parseInt(currentMemberId);
+                    if (isCurrentUser) {
+                        const removeIcon = document.createElement('span');
+                        removeIcon.textContent = '×';
+                        removeIcon.classList.add('remove-teacher-icon');
+                        removeIcon.addEventListener('click', () => {
+                            // Track removal of current user from course
+                            if (!pendingCourseTeacherChanges.removeTeachers.includes(course.id)) {
+                                pendingCourseTeacherChanges.removeTeachers.push(course.id);
+                                // Optionally, remove from addTeachers if previously added
+                                pendingCourseTeacherChanges.addTeachers = 
+                                    pendingCourseTeacherChanges.addTeachers.filter(id => id !== course.id);
+                            }
+                            teacherAvatar.style.display = 'none';
+                        });
+                        teacherAvatar.appendChild(removeIcon);
+                    }
+                }
+                
+                teacherAvatar.appendChild(teacherImg);
+                teachersContainer.appendChild(teacherAvatar);
+            });
         }
         
+        // In edit mode, add "+" for courses not taught by current user
+        if (isEditMode && isLoggedIn && currentMemberId) {
+            const isCurrentUserTeacher = course.course_teachers?.some(
+                relation => relation.teacher_id === parseInt(currentMemberId)
+            );
+            
+            if (!isCurrentUserTeacher) {
+                const addTeacherIcon = document.createElement('div');
+                addTeacherIcon.classList.add('add-teacher-icon');
+                addTeacherIcon.textContent = '+';
+                addTeacherIcon.addEventListener('click', () => {
+                    // Track addition of current user to course
+                    if (!pendingCourseTeacherChanges.addTeachers.includes(course.id)) {
+                        pendingCourseTeacherChanges.addTeachers.push(course.id);
+                        // Optionally, remove from removeTeachers if previously removed
+                        pendingCourseTeacherChanges.removeTeachers = 
+                            pendingCourseTeacherChanges.removeTeachers.filter(id => id !== course.id);
+                    }
+                    
+                    // Create a temporary avatar for the current user
+                    const currentUserAvatar = document.createElement('div');
+                    currentUserAvatar.classList.add('teacher-avatar');
+                    
+                    const currentUserImg = document.createElement('img');
+                    currentUserImg.src = localStorage.getItem('userImageUrl') || 'assets/default-profile.jpg';
+                    currentUserImg.alt = localStorage.getItem('userName');
+                    currentUserImg.title = localStorage.getItem('userName');
+                    
+                    currentUserAvatar.appendChild(currentUserImg);
+                    teachersContainer.appendChild(currentUserAvatar);
+                    
+                    // Remove the "+" icon
+                    addTeacherIcon.remove();
+                });
+                
+                teachersContainer.appendChild(addTeacherIcon);
+            }
+        }
+        
+        courseCard.appendChild(teachersContainer);
         coursesGrid.appendChild(courseCard);
     });
 
     console.log(`Rendered ${coursesGrid.children.length} courses for member`);
+    console.groupEnd();
 }
 
 function updateLanguageDisplay() {

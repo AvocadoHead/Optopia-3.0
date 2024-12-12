@@ -288,7 +288,7 @@ function showAddGalleryItemForm(item, index) {
                     <span data-lang="en" style="display:none;">Save</span>
                 </button>
                 <button type="button" class="nav-btn" onclick="this.closest('dialog').close()">
-                    <span data-lang="he">ביטול</span>
+                    <span data-lang="he">בטל</span>
                     <span data-lang="en" style="display:none;">Cancel</span>
                 </button>
             </div>
@@ -470,22 +470,8 @@ function showAddCourseForm(course, index) {
 }
 
 function addToCourse(courseId) {
-    // Validate that only the current member can be added as a teacher
-    const currentMemberId = localStorage.getItem('memberId');
-    if (!currentMemberId) {
-        console.warn('Cannot add to course: No logged-in member');
-        return;
-    }
-
-    // Check if the user is in edit mode and viewing their own profile
-    if (!isValidEditMode()) {
-        console.warn('Cannot add to course: Invalid edit mode');
-        return;
-    }
-
-    if (!pendingCourseTeacherChanges.addTeachers.includes(courseId)) {
-        pendingCourseTeacherChanges.addTeachers.push(courseId);
-    }
+    // This function is now handled directly in renderMemberCourses
+    console.warn('addToCourse is deprecated. Use the "+" button in edit mode.');
 }
 
 function deleteGalleryItem(index) {
@@ -562,10 +548,7 @@ function renderMemberGallery(galleryItems = []) {
             <div class="gallery-image">
                 <img src="${item.image_url || 'placeholder.jpg'}" alt="${title || 'Gallery Item'}">
                 ${isEditMode ? `
-                    <button class="delete-gallery-item" data-index="${index}">
-                        <span data-lang="he">×</span>
-                        <span data-lang="en">×</span>
-                    </button>
+                    <span class="delete-gallery-item" data-index="${index}">×</span>
                 ` : ''}
             </div>
             <div class="gallery-info">
@@ -585,30 +568,50 @@ function renderMemberGallery(galleryItems = []) {
                     // Prepare authorization token
                     const token = localStorage.getItem('sessionToken');
                     if (!token) {
-                        throw new Error('No session token found');
+                        throw new Error(
+                            getLangText({
+                                he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
+                                en: 'No session token found. Please log in again.'
+                            }, currentLang)
+                        );
                     }
 
                     // Send request to backend to delete gallery item
-                    const response = await fetch(`/api/members/${memberId}/gallery/${item.id}`, {
+                    const response = await fetch(`${API_BASE_URL}/members/${memberId}/gallery/${item.id}`, {
                         method: 'DELETE',
                         headers: {
-                            'Authorization': `Bearer ${token}`
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
                         }
                     });
 
                     if (!response.ok) {
                         const errorData = await response.json();
-                        throw new Error(errorData.message || 'Failed to delete gallery item');
+                        throw new Error(errorData.message || 
+                            getLangText({
+                                he: 'שגיאה במחיקת פריט הגלריה',
+                                en: 'Failed to delete gallery item'
+                            }, currentLang)
+                        );
                     }
 
                     // Remove item from local state
-                    currentData.galleryItems.splice(index, 1);
+                    currentData.galleryItems = currentData.galleryItems.filter(
+                        galleryItem => galleryItem.id !== item.id
+                    );
                     
                     // Re-render gallery
                     renderMemberGallery(currentData.galleryItems);
+
+                    alert(
+                        getLangText({
+                            he: 'פריט הגלריה נמחק בהצלחה',
+                            en: 'Gallery item deleted successfully'
+                        }, currentLang)
+                    );
                 } catch (error) {
                     console.error('Error deleting gallery item:', error);
-                    alert(error.message || 'Failed to delete gallery item');
+                    alert(error.message);
                 }
             });
         } else {
@@ -694,11 +697,54 @@ function renderMemberCourses(courses = []) {
                         const removeIcon = document.createElement('span');
                         removeIcon.textContent = '×';
                         removeIcon.classList.add('remove-teacher-icon');
-                        removeIcon.addEventListener('click', () => {
-                            if (!pendingCourseTeacherChanges.removeTeachers.includes(course.id)) {
-                                pendingCourseTeacherChanges.removeTeachers.push(course.id);
+                        removeIcon.addEventListener('click', async () => {
+                            try {
+                                const token = localStorage.getItem('sessionToken');
+                                const memberId = getMemberIdFromUrl();
+                                
+                                if (!token) {
+                                    throw new Error(
+                                        getLangText({
+                                            he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
+                                            en: 'No session token found. Please log in again.'
+                                        }, currentLang)
+                                    );
+                                }
+
+                                const response = await fetch(`${API_BASE_URL}/courses/${course.id}/teachers/${memberId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+
+                                if (!response.ok) {
+                                    const errorData = await response.json();
+                                    throw new Error(errorData.message || 
+                                        getLangText({
+                                            he: 'שגיאה בהסרת המורה',
+                                            en: 'Failed to remove teacher'
+                                        }, currentLang)
+                                    );
+                                }
+
+                                // Remove the teacher from the local course data
+                                course.teachers = course.teachers.filter(t => t.id !== parseInt(currentMemberId));
+                                
+                                // Re-render the courses
+                                renderMemberCourses(coursesToRender);
+
+                                alert(
+                                    getLangText({
+                                        he: 'מורה הוסר בהצלחה',
+                                        en: 'Teacher removed successfully'
+                                    }, currentLang)
+                                );
+                            } catch (error) {
+                                console.error('Error removing teacher:', error);
+                                alert(error.message);
                             }
-                            teacherAvatar.style.display = 'none';
                         });
                         teacherAvatar.appendChild(removeIcon);
                     }
@@ -710,16 +756,69 @@ function renderMemberCourses(courses = []) {
 
             // Add "+" button to add teacher if not already a teacher
             const isCurrentUserTeacher = course.teachers?.some(
-                relation => relation.id === parseInt(currentMemberId)
+                relation => 
+                    relation.id === parseInt(currentMemberId)
             );
             
             if (!isCurrentUserTeacher) {
                 const addTeacherIcon = document.createElement('div');
                 addTeacherIcon.classList.add('add-teacher-icon');
                 addTeacherIcon.textContent = '+';
-                addTeacherIcon.addEventListener('click', () => {
-                    if (!pendingCourseTeacherChanges.addTeachers.includes(course.id)) {
-                        pendingCourseTeacherChanges.addTeachers.push(course.id);
+                addTeacherIcon.addEventListener('click', async () => {
+                    try {
+                        const token = localStorage.getItem('sessionToken');
+                        const memberId = getMemberIdFromUrl();
+                        
+                        if (!token) {
+                            throw new Error(
+                                getLangText({
+                                    he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
+                                    en: 'No session token found. Please log in again.'
+                                }, currentLang)
+                            );
+                        }
+
+                        const response = await fetch(`${API_BASE_URL}/courses/${course.id}/teachers`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ memberId })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 
+                                getLangText({
+                                    he: 'שגיאה בהוספת המורה',
+                                    en: 'Failed to add teacher'
+                                }, currentLang)
+                            );
+                        }
+
+                        // Add the teacher to the local course data
+                        const memberData = await getMemberById(memberId);
+                        if (!course.teachers) course.teachers = [];
+                        course.teachers.push({
+                            id: parseInt(memberId),
+                            name_he: memberData.name_he,
+                            name_en: memberData.name_en,
+                            image_url: memberData.image_url
+                        });
+                        
+                        // Re-render the courses
+                        renderMemberCourses(coursesToRender);
+
+                        alert(
+                            getLangText({
+                                he: 'מורה נוסף בהצלחה',
+                                en: 'Teacher added successfully'
+                            }, currentLang)
+                        );
+                    } catch (error) {
+                        console.error('Error adding teacher:', error);
+                        alert(error.message);
                     }
                 });
                 
@@ -759,6 +858,7 @@ function filterCoursesForMember(courses, memberId, isEditMode = false) {
         return courses;
     }
 
+    // In non-edit mode, only show courses where the member teaches
     const filteredCourses = courses.filter(course => {
         if (!course.teachers || course.teachers.length === 0) return false;
 
@@ -793,6 +893,7 @@ function isValidEditMode() {
 
     return true;
 }
+
 
 window.toggleLanguage = function() {
     currentLang = currentLang === 'he' ? 'en' : 'he';

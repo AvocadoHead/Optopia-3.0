@@ -660,7 +660,7 @@ function renderMemberCourses(courses = []) {
         // Course title (h3 instead of h2 to match CSS)
         const courseTitle = document.createElement('h3');
         courseTitle.classList.add('course-title');
-        courseTitle.textContent = course[`name_${currentLang}`] || '';
+        courseTitle.textContent = course[`title_${currentLang}`] || course[`name_${currentLang}`] || '';
         courseContent.appendChild(courseTitle);
         
         // Course description

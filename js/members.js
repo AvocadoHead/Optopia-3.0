@@ -1,1492 +1,902 @@
-// Comprehensive list of Israeli AI Artists
-export const MEMBERS = [
-    {
-        id: 'yuval-avidani',
-        name: { 
-            he: 'יובל אבידני', 
-            en: 'Yuval Avidani' 
-        },
-        role: { 
-            he: 'מומחה בבינה מלאכותית, עושה עבור משרד האוצר וקבוצת שטראוס', 
-            en: 'AI Expert, working for Treasury Ministry and Strauss Group' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/yuval-avidani.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'tsippi-abramovitz',
-        name: { 
-            he: 'ציפי אברמוביץ', 
-            en: 'Tsippi Abramovitz' 
-        },
-        role: { 
-            he: 'מורה לחינוך מיוחד, משתמשת בAI בחינוך', 
-            en: 'Special Education Teacher, Using AI in Education' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/tsippi-abramovitz.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'evyatar-edri',
-        name: { 
-            he: 'אביתר אדרי', 
-            en: 'Evyatar Edri' 
-        },
-        role: { 
-            he: 'אמן דיגיטלי, מעצב, יזם', 
-            en: 'Digital Artist, Designer, Entrepreneur' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/evyatar-edri.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'ella-uzan',
-        name: { 
-            he: 'אלה אוזן', 
-            en: 'Ella Uzan' 
-        },
-        role: { 
-            he: 'צלמת, מעצבת ואנימטורית', 
-            en: 'Photographer, Designer, and Animator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/ella-uzan.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'hagai-onn',
-        name: { 
-            he: 'חגי און', 
-            en: 'Hagai Onn' 
-        },
-        role: { 
-            he: 'מהנדס מחשבים, מתכנת, אמן AI', 
-            en: 'Computer Engineer, Programmer, AI Artist' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/hagai-onn.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'shelly-or',
-        name: { 
-            he: 'שלי אור', 
-            en: 'Shelly Or' 
-        },
-        role: { 
-            he: 'מומחית לבינה מלאכותית, מרצה לעיצוב ומנהלת סטודיו קניבל', 
-            en: 'AI Expert, Design Lecturer, Cannibal Studio Manager' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/shelly-or.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'eyal-izenman',
-        name: { 
-            he: 'איל איזנמן', 
-            en: 'Eyal Izenman' 
-        },
-        role: { 
-            he: 'יוצר חזותי, בינאי ומורה', 
-            en: 'Visual Creator, AI Specialist, and Instructor' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added.jpg'
-        },
-        image: 'assets/eyal-izenman.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'maya-elav-nachshon',
-        name: { 
-            he: 'מאיה אלאב נחשון', 
-            en: 'Maya Elav Nachshon' 
-        },
-        role: { 
-            he: 'ארט דירקטורית, מאפיינת חווית משתמש ומעצבת ממשקים, אמנית AI', 
-            en: 'Art Director, UX Specialist, Interface Designer, AI Artist' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/maya-elav-nachshon.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'avichai-eliasi',
-        name: { 
-            he: 'אביחי אליאסי', 
-            en: 'Avichai Eliasi' 
-        },
-        role: { 
-            he: 'מרצה ל-AI מנהל שיווק, מוצר ומיתוג ומעצב גרפי', 
-            en: 'AI Lecturer, Marketing, Product, and Branding Manager, Graphic Designer' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/avichai-eliasi.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'tali-appel',
-        name: { 
-            he: 'טלי אפל', 
-            en: 'Tali Appel' 
-        },
-        role: { 
-            he: 'יוצרת אמנות, אנימציה, סרטונים, קליפרים, יועצת פילוסופית', 
-            en: 'Art Creator, Animation, Video, Clipper, Philosophical Consultant' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/tali-appel.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'daniel-efrat',
-        name: { 
-            he: 'דניאל אפרת', 
-            en: 'Daniel Efrat' 
-        },
-        role: { 
-            he: 'מעצב, אנימטור, פריק של AI', 
-            en: 'Designer, Animator, AI Enthusiast' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/daniel-efrat.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'dana-akerman',
-        name: { 
-            he: 'דנה אקרמן', 
-            en: 'Dana Akerman' 
-        },
-        role: { 
-            he: 'מתכנתת, יוצרת, מנהלת קהילת מידג׳רני ישראל', 
-            en: 'Programmer, Creator, Manager of Israeli Midjourney Community' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/dana-akerman.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'marian-bo',
-        name: { 
-            he: 'מריאן בו', 
-            en: 'Marian Boo' 
-        },
-        role: { 
-            he: 'מאיירת, קריאייטיב ובכלל סטוריטלרית', 
-            en: 'Illustrator, Creative Professional, Storyteller' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/marian-boo.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'roni--dolov-bolelis',
-        name: { 
-            he: 'רוני בולליס', 
-            en: 'Roni Dolov Bolelis' 
-        },
-        role: { 
-            he: 'יוצרת ב-AI ובעלת סטודיו "מעוצבת", מעבירה סדנאות לעיצוב AI', 
-            en: 'AI Creator, Owner of "Mesuevet" Studio, AI Design Workshop Facilitator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/roni-dolov-bolelis.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'shani-burshtein',
-        name: { 
-            he: 'שני בורשטיין', 
-            en: 'Shani Burshtein' 
-        },
-        role: { 
-            he: 'יוצרת דיגיטלית, יועצת ומנהלת קהילת ai community hub', 
-            en: 'Digital Creator, Consultant, AI Community Hub Manager' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/shani-burshtein.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'ori-bejerno',
-        name: { 
-            he: 'אורי בז׳רנו', 
-            en: 'Ori Bejerno' 
-        },
-        role: { 
-            he: 'יוצר תוכן ומומחה בינה מלאכותית', 
-            en: 'Content Creator and AI Expert' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/ori-bejerano.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'maya-bielik',
-        name: { 
-            he: 'מאיה ביאליק', 
-            en: 'Maya Bielik' 
-        },
-        role: { 
-            he: 'יוצרת ai, מנהלת הקבוצות "מקום ברשת" ו"ג׳ימאניה"', 
-            en: 'AI Creator, Manager of "Makom Bareshet" and "Jimania" Groups' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/maya-bielik.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'oded-becker',
-        name: { 
-            he: 'עודד בקר', 
-            en: 'Oded Becker' 
-        },
-        role: { 
-            he: 'יוצר ב-ai, בעלי OR2K Restaurants', 
-            en: 'AI Creator, Owner of OR2K Restaurants' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/oded-becker.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'guy-bar',
-        name: { 
-            he: 'גיא בר', 
-            en: 'Guy Bar' 
-        },
-        role: { 
-            he: 'מנהל חדשנות ראשי של קבוצת Gitam BBDO', 
-            en: 'Chief Innovation Manager at Gitam BBDO Group' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/guy-bar.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'nava-bar-sagi',
-        name: { 
-            he: 'נאווה בר-שגיא', 
-            en: 'Nava Bar-Sagi' 
-        },
-        role: { 
-            he: 'מנהלת פרוקטים בהייטק (RedHat) ויוצרת AI', 
-            en: 'Tech Project Manager at RedHat, AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/nava-bar-sagi.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'eyal-brook',
-        name: { 
-            he: 'אייל ברוק', 
-            en: 'Eyal Brook' 
-        },
-        role: { 
-            he: 'מוזיקאי, עורך דין ודוקטור למוזיקה ובינה מלאכותית', 
-            en: 'Musician, Lawyer, Doctor in Music and Artificial Intelligence' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/eyal-brook.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'guy-gutman',
-        name: { 
-            he: 'גיא גוטמן', 
-            en: 'Guy Gutman' 
-        },
-        role: { 
-            he: 'אנימטור תלת מימד, מומחה ביצירת תוכן עם בינה מלאכותית', 
-            en: '3D Animator, Expert in AI Content Creation' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/guy-gutman.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'michael-goldstein',
-        name: { 
-            he: 'מיקי גולדשטיין', 
-            en: 'Michael Goldstein' 
-        },
-        role: { 
-            he: 'מומחה בבינה מלאכותית, מרצה, מדריך יוטיוב', 
-            en: 'AI Expert, Lecturer, YouTube Instructor' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/michael-goldstein.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'shachar-golan',
-        name: { 
-            he: 'שחר גולן', 
-            en: 'Shahar Golan' 
-        },
-        role: { 
-            he: 'מומחה ומרצה לוידאו ובינה מלאכותית', 
-            en: 'Video and AI Expert, Lecturer' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/shahar-golan.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'reut-glam',
-        name: { 
-            he: 'רעות גלאם', 
-            en: 'Reut Glam' 
-        },
-        role: { 
-            he: 'יוצרת ai ומנחה', 
-            en: 'AI Creator and Facilitator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/reut-glam.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'itzhak-garbuz',
-        name: { 
-            he: 'יצחק גרבוז', 
-            en: 'Itzhak Garbuz' 
-        },
-        role: { 
-            he: 'עורך וידאו, יזם ומומחה בינה ג׳נרטיבית', 
-            en: 'Video Editor, Entrepreneur, Generative AI Expert' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/itzhak-garbuz.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'guy-gross',
-        name: { 
-            he: 'גיא גרוס', 
-            en: 'Guy Gross' 
-        },
-        role: { 
-            he: 'אפטריסט, תלתיסט וגרפיקאי חוקר אינטגרציית אפטר ותלת ומשלב AI', 
-            en: 'After Effects Artist, 3D Artist, Graphic Researcher Integrating After Effects, 3D, and AI' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/guy-gross.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'nadav-gal',
-        name: { 
-            he: 'נדב גל', 
-            en: 'Nadav Gal' 
-        },
-        role: { 
-            he: 'אפטריסט, עורך וידאו', 
-            en: 'After Effects Artist, Video Editor' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/nadav-gal.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'shenikwa-dvorkin',
-        name: { 
-            he: 'שניקוואה דבורקין', 
-            en: 'Shenikwa Dvorkin' 
-        },
-        role: { 
-            he: 'תלתיסטית ויוצרת ב-ai', 
-            en: '3D Artist and AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/shanikwa-dvorkin.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'orit-dichter',
-        name: { 
-            he: 'אורית דיכטר', 
-            en: 'Orit Dichter' 
-        },
-        role: { 
-            he: 'מעצבת גרפית ויוצרת AI, בעיקר בתחום של שילוב מוצרים אמיתיים ויצירת פרזנטורים', 
-            en: 'Graphic Designer and AI Creator, Specializing in Integrating Real Products and Creating Presenters' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/orit-dichter.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'yoni-heuberger',
-        name: { 
-            he: 'יוני הויברגר', 
-            en: 'Yoni Heuberger' 
-        },
-        role: { 
-            he: 'יוצר ב-ai', 
-            en: 'AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/yoni-heuberger.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },    
-    {
-        id: 'shay-halahmi',
-        name: { 
-            he: 'שי הלחמי', 
-            en: 'Shay Halahmi' 
-        },
-        role: { 
-            he: 'מעצבת פרילאנס, איור דיגיטלי ועריכה גרפית', 
-            en: 'Freelance Designer, Digital Illustration and Graphic Editing' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/shay-halahmi.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: []
-    },
-    {
-        id: 'einav-har-anan-cohen',
-        name: { 
-            he: 'עינב הר ענן כהן', 
-            en: 'Einav Har Anan Cohen' 
-        },
-        role: { 
-            he: 'מוסיקאית, יוצרת ומעצבת ux/ui', 
-            en: 'Musician, Creator, and UX/UI Designer' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/einav-har-anan-cohen.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'anna-volovik-malamud',
-        name: { 
-            he: 'אנה וולביק מלמוד', 
-            en: 'Anna Volovik Malamud' 
-        },
-        role: { 
-            he: 'חוקרת ומנחה בתחום ה-ai', 
-            en: 'AI Research and Guidance Specialist' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/anna-volovik-malamud.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'ronen-herzog',
-        name: { 
-            he: 'רונן הרצוג', 
-            en: 'Ronen Herzog' 
-        },
-        role: { 
-            he: 'יוצר דיגיטלי, צלם, עורך יוצר תוכן ai', 
-            en: 'AI Creator, Content Creator, and Instructor' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/ronen-herzog.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'ron-zikno',
-        name: { 
-            he: 'רון זיקנו', 
-            en: 'Ron Zikno' 
-        },
-        role: { 
-            he: 'מעצב תפאורות, מעצב גרפי, עוסק בתלת מהצד האדריכלי', 
-            en: 'Set Designer, Graphic Designer, 3D Artist with Architectural Approach' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/ron-zikno.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'naama-chen-abadi',
-        name: { 
-            he: 'נעמה חן-עבאדי', 
-            en: 'Naama Chen-Abadi' 
-        },
-        role: { 
-            he: 'יוצרת ai בעלת Didoo Covers', 
-            en: 'AI Creator, Owner of Didoo Covers' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/naama-chen-abadi.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'noa-tamir',
-        name: { 
-            he: 'נועה טמיר', 
-            en: 'Noa Tamir' 
-        },
-        role: { 
-            he: 'תכשיטנית ויוצרת ai', 
-            en: 'Jewelry Designer and AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/noa-tamir.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'efrat-yamin',
-        name: { 
-            he: 'אפרת ימין', 
-            en: 'Efrat Yamin' 
-        },
-        role: { 
-            he: 'ארט דירקטורית ומעצבת לשיווק', 
-            en: 'Art Director and Marketing Designer' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/efrat-yamin.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'michal-levitzky',
-        name: { 
-            he: 'מיכל לויצקי', 
-            en: 'Michal Levitzky' 
-        },
-        role: { 
-            he: 'יוצרת, מעצבת תעשייתית. מרצה', 
-            en: 'Creator, Industrial Designer, Lecturer' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/michal-levitzky.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'orit-litmanovitz',
-        name: { 
-            he: 'אורית ליטמנוביץ׳', 
-            en: 'Orit Litmanovitz' 
-        },
-        role: { 
-            he: 'מעצבת ויוצרת ב-AI', 
-            en: 'Designer and AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/orit-litmanovitz.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'nathan-lichter',
-        name: { 
-            he: 'נתן ליכטר', 
-            en: 'Nathan Lichter' 
-        },
-        role: { 
-            he: 'איש קידום אורגני, יוצר תוכן עם בינה מלאכותית', 
-            en: 'Organic Promotion Specialist, AI Content Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/nathan-lichter.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'noam-mymon',
-        name: { 
-            he: 'נועם מימון', 
-            en: 'Noam Mymon' 
-        },
-        role: { 
-            he: 'מומחה ועורך פוטושופ, יוצר ai', 
-            en: 'Photoshop Expert and Editor, AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/noam-mymon.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'sharon-mitzy-sheen',
-        name: { 
-            he: 'שרון מיצי שין', 
-            en: 'Sharon Mitzy Sheen' 
-        },
-        role: { 
-            he: 'אנימטורית ומעצבת', 
-            en: 'Animator and Designer' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/sharon-mitzy-sheen.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'noam-naumovsky',
-        name: { 
-            he: 'נועם נאומובסקי', 
-            en: 'Noam Naumovsky' 
-        },
-        role: { 
-            he: 'יוצר תוכן ומומחה Comfy UI', 
-            en: 'Content Creator and Comfy UI Expert' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/noam-naumovsky.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'tal-navarro',
-        name: { 
-            he: 'טל נווארו', 
-            en: 'Tal Navarro' 
-        },
-        role: { 
-            he: 'מפיקה, פרסומאית ויוצרת תוכן', 
-            en: 'Producer, Advertiser, and Content Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/tal-navarro.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'asaf-norani',
-        name: { 
-            he: 'אסף נורני', 
-            en: 'Asaf Norani' 
-        },
-        role: { 
-            he: 'עורך תלת ומעצב בינה מלאכותית', 
-            en: '3D Editor and AI Designer' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/asaf-norani.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'daniel-nehemia',
-        name: { 
-            he: 'דניאל נחמיה', 
-            en: 'Daniel Nehemia' 
-        },
-        role: { 
-            he: 'מרצה לבינה מלאכותית | יוצר, בונה ומעצב אתרים וסרטוני אנימציה', 
-            en: 'AI Lecturer | Creator, Builder, and Designer of Websites and Animation Videos' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/daniel-nehemia.jpeg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'ido-suliman',
-        name: { 
-            he: 'עידו סולימן', 
-            en: 'Ido Suliman' 
-        },
-        role: { 
-            he: 'מנחה ומרצה לקולנוע, יוצר וידאו ג׳נרטיבי', 
-            en: 'Cinema Instructor and Lecturer, Generative Video Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/ido-suliman.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'nimrod-saunders',
-        name: { 
-            he: 'נמרוד סונדרס', 
-            en: 'Nimrod Saunders' 
-        },
-        role: { 
-            he: 'מומחה לבינה מלאכותית וצילום', 
-            en: 'AI and Photography Expert' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/nimrod-saunders.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'addy-feuerstein',
-        name: { 
-            he: 'עדי פוירשטיין', 
-            en: 'Addy Feuerstein' 
-        },
-        role: { 
-            he: 'מעצב ויזם', 
-            en: 'Designer and Entrepreneur' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/addy-feuerstein.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'elhanan-portan',
-        name: { 
-            he: 'אלחנן פורטן', 
-            en: 'Elhanan Portan' 
-        },
-        role: { 
-            he: 'יוצר AI ויועץ', 
-            en: 'AI Creator and Consultant' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/elhanan-portan.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'maya-pinto-koren',
-        name: { 
-            he: 'מאיה פינטו קורן', 
-            en: 'Maya Pinto Koren' 
-        },
-        role: { 
-            he: 'יוצרת AI', 
-            en: 'AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/maya-pinto-koren.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'shai-fishman',
-        name: { 
-            he: 'שי פישמן', 
-            en: 'Shai Fishman' 
-        },
-        role: { 
-            he: 'מפיק ומנהל מוסיקלי, ומפתח מוצרי תכנה למוסיקה המשתמשים ברשתות נוירונים וטכנולוגיות AI (בעיקר Generative), זוכה פרס האמי', 
-            en: 'Music Producer and Musical Director, Software Developer for Music using Neural Networks and AI Technologies (mainly Generative), Emmy Award Winner' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/shai-fishman.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'shahar-fleisher',
-        name: { 
-            he: 'שחר פליישר', 
-            en: 'Shahar Fleisher' 
-        },
-        role: { 
-            he: 'אנימטור, אפטריסט ויוצר וידאו AI, מעצב ומוזיקאי', 
-            en: 'Animator, After Effects Artist, AI Video Creator, Designer, and Musician' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/shahar-fleisher.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'oded-farber',
-        name: { 
-            he: 'עודד פרבר', 
-            en: 'Oded Farber' 
-        },
-        role: { 
-            he: 'קולנוען, בינאי', 
-            en: 'Filmmaker, AI Specialist' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/oded-farber.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'hadas-frank',
-        name: { 
-            he: 'הדס פרנק', 
-            en: 'Hadas Frank' 
-        },
-        role: { 
-            he: 'מנכ"לית Nextgenai', 
-            en: 'CEO of Nextgenai' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/hadas-frank.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'dari-zuron',
-        name: { 
-            he: 'דרי צוראון', 
-            en: 'Dari Zuron' 
-        },
-        role: { 
-            he: 'יוצרת AI ואפטריסטית', 
-            en: 'AI Creator and After Effects Artist' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/dari-zuron.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'kineret-tzach',
-        name: { 
-            he: 'כנרת צח', 
-            en: 'Kineret Tzach' 
-        },
-        role: { 
-            he: 'יוצרת AI', 
-            en: 'AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/kineret-tzach.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'daniel-kutz',
-        name: { 
-            he: 'דניאל קוץ', 
-            en: 'Daniel Kutz' 
-        },
-        role: { 
-            he: 'במאי ואיש פוסט', 
-            en: 'Director and Post-Production Specialist' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/daniel-kutz.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'liron-kroll',
-        name: { 
-            he: 'לירון קרול בן צבי', 
-            en: 'Liron Kroll Ben Zvi' 
-        },
-        role: { 
-            he: 'ארט-דירקטורית, מעצבת ועורכת', 
-            en: 'Art Director, Designer, and Editor' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/liron-kroll-ben-zvi.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'ifat-kariv-gurion',
-        name: { 
-            he: 'יפעת קריב גוריון', 
-            en: 'Ifat Kariv Gurion' 
-        },
-        role: { 
-            he: 'מעצבת, מפיקה ויוצרת AI', 
-            en: 'Designer, Producer, and AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/ifat-kariv-gurion.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'noa-rabiner',
-        name: { 
-            he: 'נועה רבינר', 
-            en: 'Noa Rabiner' 
-        },
-        role: { 
-            he: 'פסלת ואמנית רב-תחומית, יוצרת ב-ai', 
-            en: 'Sculptor, Multidisciplinary Artist, AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/noa-rabiner.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'marina-rudinski',
-        name: { 
-            he: 'מרינה רודינסקי', 
-            en: 'Marina Rudinski' 
-        },
-        role: { 
-            he: 'יוצרת ai, ארט דיירקטורית ב-Orbs.com', 
-            en: 'AI Creator, Art Director at Orbs.com' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/marina-rudinsky.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'maya-shoshani',
-        name: { 
-            he: 'מאיה שושני', 
-            en: 'Maya Shoshani' 
-        },
-        role: { 
-            he: 'מומחית לבינה מלאכותית יצירתית ב-Lightricks, מעצבת גרפית ותנועה, יוצרת תוכן וידאו, מנהלת קריאייטיב', 
-            en: 'Creative AI Specialist at Lightricks, Graphic and Motion Designer, Video Content Creator, Creative Director' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/shay-halahmi.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: []
-    },
-    {
-        id: 'guy-shoshani',
-        name: { 
-            he: 'גיא שושני', 
-            en: 'Guy Shoshani' 
-        },
-        role: { 
-            he: 'מבעלי ZigZag Media, יוצר ב-ai', 
-            en: 'Owner of ZigZag Media, AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/guy-shoshani.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'or-shmueli',
-        name: { 
-            he: 'אור שמואלי', 
-            en: 'Or Shmueli' 
-        },
-        role: { 
-            he: 'יוצר וידאו ai', 
-            en: 'AI Video Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/or-shmueli.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'itay-schiff',
-        name: { 
-            he: 'איתי שיף', 
-            en: 'Itay Schiff' 
-        },
-        role: { 
-            he: 'מייסד-שותף של Astria, ארט-דיירקטור, מרצה ויוצר בבינה מלאכותית', 
-            en: 'Co-Founder of Astria, Art Director, Lecturer, and AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/itay-schiff.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'ofir-shlomi',
-        name: { 
-            he: 'אופיר שלומי', 
-            en: 'Ofir Shlomi' 
-        },
-        role: { 
-            he: 'ארכיטקטית ויוצרת ב-AI', 
-            en: 'Architect and AI Creator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/ofir-shlomi.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'ilanit-shamia',
-        name: { 
-            he: 'אילנית שמיע', 
-            en: 'Ilanit Shamia' 
-        },
-        role: { 
-            he: 'יוצרת ומנחה ליצירה באמצעות ai', 
-            en: 'Creator and Guide for AI-Assisted Creation' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/ilanit-shamia.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
-    },
-    {
-        id: 'nataly-shafir',
-        name: { 
-            he: 'נטלי שפיר', 
-            en: 'Nataly Shafir' 
-        },
-        role: { 
-            he: 'מעצבת, מעבירת הדרכות והרצאות בבינה מלאכותית', 
-            en: 'Designer, AI Training and Lecture Facilitator' 
-        },
-        bio: {
-            he: 'תיאור מלא יבוא בהמשך',
-            en: 'Full description to be added'
-        },
-        image: 'assets/nataly-shafir.jpg',
-        skills: [],
-        socialLinks: {},
-        gallery: [],
-        courses: [],
-        category: 'ai-experts'
+import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
+import { getMemberById, updateMember, getAllCourses, getAllGalleryItems } from './api-service.js';
+
+// Global state with clear structure
+let currentLang = getCurrentLang();
+let isEditMode = false;
+let originalData = null;
+let currentData = {
+    memberDetails: null,
+    allCourses: [],
+    galleryItems: [],
+    teachingRelationships: []
+};
+let isLoggedIn = localStorage.getItem('memberId') !== null;
+let currentUserId = null;
+
+// Global variable to track course teacher changes
+let pendingCourseTeacherChanges = {
+    addTeachers: [],
+    removeTeachers: []
+};
+
+async function loadMemberData(memberId) {
+    try {
+        const memberData = await getMemberById(memberId);
+        currentData = memberData;
+
+        // Update member details
+        updateMemberDetails(memberData);
+
+        // Fetch and render gallery items
+        const galleryItems = await getAllGalleryItems();
+        const memberGalleryItems = galleryItems.filter(item => item.artist_id === memberId);
+        renderMemberGallery(memberGalleryItems);
+
+        // Fetch and render courses
+        const courses = await getAllCourses();
+        renderMemberCourses(courses);
+    } catch (error) {
+        console.error('Error loading member data:', error);
     }
-]
+}
+
+function setupEditMode(memberId) {
+    console.group('🛠️ Edit Mode Setup');
+    
+    // Check if edit mode should be enabled
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentMemberId = localStorage.getItem('memberId');
+    const shouldEnableEditMode = urlParams.get('edit') === 'true' && isLoggedIn;
+    
+    console.log('Edit Mode Parameters:', {
+        urlMemberId: memberId,
+        currentMemberId,
+        isLoggedIn,
+        shouldEnableEditMode
+    });
+
+    // Only create edit button if viewing own profile
+    if (isLoggedIn && memberId === currentMemberId) {
+        // Create edit button dynamically
+        const editButton = document.createElement('button');
+        editButton.id = 'edit-button';
+        editButton.classList.add('nav-btn');
+        editButton.innerHTML = `
+            <span data-lang="he">ערוך פרופיל</span>
+            <span data-lang="en">Edit Profile</span>
+        `;
+        editButton.addEventListener('click', toggleEditMode);
+        
+        // Find a suitable location to insert the edit button (e.g., near other navigation buttons)
+        const navContainer = document.querySelector('.member-nav-container') || 
+                             document.querySelector('nav') || 
+                             document.body;
+        
+        navContainer.appendChild(editButton);
+
+        // Conditionally show edit mode if requested
+        if (shouldEnableEditMode) {
+            console.log('🔓 Automatically enabling edit mode');
+            toggleEditMode();
+        }
+    }
+
+    console.groupEnd();
+}
+
+function toggleEditMode() {
+    if (!isValidEditMode()) {
+        return;
+    }
+
+    isEditMode = !isEditMode;
+    document.body.classList.toggle('edit-mode', isEditMode);
+
+    const saveButton = document.getElementById('save-changes');
+    const discardButton = document.getElementById('cancel-changes');
+    const addGalleryItemButton = document.getElementById('add-gallery-item');
+
+    saveButton.style.display = isEditMode ? 'block' : 'none';
+    discardButton.style.display = isEditMode ? 'block' : 'none';
+    addGalleryItemButton.style.display = isEditMode ? 'block' : 'none';
+
+    const editables = document.querySelectorAll('.editable');
+    editables.forEach(field => {
+        field.contentEditable = isEditMode;
+        if (isEditMode) {
+            field.addEventListener('blur', handleFieldEdit);
+        } else {
+            field.removeEventListener('blur', handleFieldEdit);
+        }
+    });
+
+    if (isEditMode) {
+        fetchAllCoursesForEditMode();
+        renderMemberGallery(currentData.galleryItems);
+    } else {
+        renderMemberCourses(currentData.allCourses);
+    }
+
+    // Add event listener for add gallery item button
+    if (isEditMode) {
+        addGalleryItemButton.addEventListener('click', showAddGalleryItemForm);
+    } else {
+        addGalleryItemButton.removeEventListener('click', showAddGalleryItemForm);
+    }
+}
+
+async function handleFieldEdit(event) {
+    const field = event.target.dataset.field;
+    const value = event.target.textContent;
+    if (!currentData) currentData = {};
+    currentData[field] = value;
+}
+
+async function saveChanges() {
+    try {
+        console.log('Attempting to save changes');
+        
+        // Get session token from localStorage
+        const sessionToken = localStorage.getItem('sessionToken');
+        if (!sessionToken) {
+            throw new Error('No session token found. Please log in.');
+        }
+
+        // Validate edit mode and permissions
+        if (!isValidEditMode()) {
+            throw new Error('Invalid edit mode or unauthorized access');
+        }
+
+        // Prepare member data to update
+        const updatedMemberData = {
+            name_he: document.querySelector('[data-field="name_he"]').textContent,
+            name_en: document.querySelector('[data-field="name_en"]').textContent,
+            role_he: document.querySelector('[data-field="role_he"]').textContent,
+            role_en: document.querySelector('[data-field="role_en"]').textContent,
+            bio_he: document.querySelector('[data-field="bio_he"]').textContent,
+            bio_en: document.querySelector('[data-field="bio_en"]').textContent
+        };
+
+        // Get member ID from URL
+        const memberId = getMemberIdFromUrl();
+
+        // Update member details with explicit authorization
+        const updatedMember = await updateMember(memberId, updatedMemberData, sessionToken);
+
+        // Handle course teacher changes
+        if (pendingCourseTeacherChanges.addTeachers.length > 0 || 
+            pendingCourseTeacherChanges.removeTeachers.length > 0) {
+            // Implement course teacher update logic here
+            console.log('Pending course teacher changes:', pendingCourseTeacherChanges);
+        }
+
+        // Reset edit mode
+        toggleEditMode();
+        
+        console.log('Changes saved successfully');
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        alert(error.message || 'Failed to save changes. Please try again.');
+    }
+}
+
+function showAddGalleryItemForm() {
+    const dialogContent = `
+        <div class="add-gallery-item-dialog">
+            <h2>${getLangText({
+                he: 'הוסף פריט גלריה',
+                en: 'Add Gallery Item'
+            }, currentLang)}</h2>
+            
+            <label for="gallery-item-title">${getLangText({
+                he: 'כותרת',
+                en: 'Title'
+            }, currentLang)}</label>
+            <input type="text" id="gallery-item-title" required>
+            
+            <label for="gallery-item-description">${getLangText({
+                he: 'תיאור',
+                en: 'Description'
+            }, currentLang)}</label>
+            <textarea id="gallery-item-description" rows="4"></textarea>
+            
+            <label for="gallery-item-image">${getLangText({
+                he: 'תמונה',
+                en: 'Image'
+            }, currentLang)}</label>
+            <input type="file" id="gallery-item-image" accept="image/*" required>
+            
+            <div class="dialog-buttons">
+                <button id="save-new-gallery-item">${getLangText({
+                    he: 'שמור',
+                    en: 'Save'
+                }, currentLang)}</button>
+                <button id="cancel-new-gallery-item">${getLangText({
+                    he: 'בטל',
+                    en: 'Cancel'
+                }, currentLang)}</button>
+            </div>
+        </div>
+    `;
+
+    // Create and show dialog
+    const dialog = createDialog(dialogContent);
+    
+    const saveButton = dialog.querySelector('#save-new-gallery-item');
+    const cancelButton = dialog.querySelector('#cancel-new-gallery-item');
+    
+    cancelButton.addEventListener('click', () => dialog.close());
+    
+    saveButton.addEventListener('click', async () => {
+        try {
+            const memberId = getMemberIdFromUrl();
+            const token = localStorage.getItem('sessionToken');
+            
+            if (!token) {
+                throw new Error(getLangText({
+                    he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
+                    en: 'No session token found. Please log in again.'
+                }, currentLang));
+            }
+
+            const formData = new FormData();
+            const titleInput = dialog.querySelector('#gallery-item-title');
+            const descriptionInput = dialog.querySelector('#gallery-item-description');
+            const imageInput = dialog.querySelector('#gallery-item-image');
+
+            // Validate inputs
+            if (!titleInput.value) {
+                alert(getLangText({
+                    he: 'אנא הזן כותרת',
+                    en: 'Please enter a title'
+                }, currentLang));
+                return;
+            }
+
+            if (!imageInput.files.length) {
+                alert(getLangText({
+                    he: 'אנא בחר תמונה',
+                    en: 'Please select an image'
+                }, currentLang));
+                return;
+            }
+
+            formData.append('title', titleInput.value);
+            formData.append('description', descriptionInput.value || '');
+            formData.append('image', imageInput.files[0]);
+
+            const response = await fetch(`${API_BASE_URL}/members/${memberId}/gallery`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 
+                    getLangText({
+                        he: 'שגיאה ביצירת פריט גלריה',
+                        en: 'Failed to create gallery item'
+                    }, currentLang)
+                );
+            }
+
+            const newItem = await response.json();
+            
+            // Update local state and re-render
+            if (!currentData.galleryItems) {
+                currentData.galleryItems = [];
+            }
+            currentData.galleryItems.push(newItem);
+            
+            renderMemberGallery(currentData.galleryItems);
+            dialog.close();
+
+            alert(getLangText({
+                he: 'פריט הגלריה נוסף בהצלחה',
+                en: 'Gallery item added successfully'
+            }, currentLang));
+        } catch (error) {
+            console.error('Error adding gallery item:', error);
+            alert(error.message);
+        }
+    });
+}
+
+function showAddCourseForm(course, index) {
+    if (!isValidEditMode()) {
+        return;
+    }
+
+    const dialog = document.createElement('dialog');
+    dialog.className = 'edit-dialog';
+    dialog.innerHTML = `
+        <form class="edit-form">
+            <h3>
+                <span data-lang="he">הוסף קורס</span>
+                <span data-lang="en" style="display:none;">Add Course</span>
+            </h3>
+            <div class="form-group">
+                <label>
+                    <span data-lang="he">שם הקורס בעברית</span>
+                    <span data-lang="en" style="display:none;">Hebrew Course Name</span>
+                </label>
+                <input type="text" name="name_he" value="${course ? course.name_he : ''}" required>
+            </div>
+            <div class="form-group">
+                <label>
+                    <span data-lang="he">שם הקורס באנגלית</span>
+                    <span data-lang="en" style="display:none;">English Course Name</span>
+                </label>
+                <input type="text" name="name_en" value="${course ? course.name_en : ''}" required>
+            </div>
+            <div class="form-group">
+                <label>
+                    <span data-lang="he">תיאור בעברית</span>
+                    <span data-lang="en" style="display:none;">Hebrew Description</span>
+                </label>
+                <textarea name="description_he" required>${course ? course.description_he : ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label>
+                    <span data-lang="he">תיאור באנגלית</span>
+                    <span data-lang="en" style="display:none;">English Description</span>
+                </label>
+                <textarea name="description_en" required>${course ? course.description_en : ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label>
+                    <span data-lang="he">רמת קושי בעברית</span>
+                    <span data-lang="en" style="display:none;">Hebrew Difficulty</span>
+                </label>
+                <input type="text" name="difficulty_he" value="${course ? course.difficulty_he : ''}" required>
+            </div>
+            <div class="form-group">
+                <label>
+                    <span data-lang="he">רמת קושי באנגלית</span>
+                    <span data-lang="en" style="display:none;">English Difficulty</span>
+                </label>
+                <input type="text" name="difficulty_en" value="${course ? course.difficulty_en : ''}" required>
+            </div>
+            <div class="form-group">
+                <label>
+                    <span data-lang="he">משך בעברית</span>
+                    <span data-lang="en" style="display:none;">Hebrew Duration</span>
+                </label>
+                <input type="text" name="duration_he" value="${course ? course.duration_he : ''}" required>
+            </div>
+            <div class="form-group">
+                <label>
+                    <span data-lang="he">משך באנגלית</span>
+                    <span data-lang="en" style="display:none;">English Duration</span>
+                </label>
+                <input type="text" name="duration_en" value="${course ? course.duration_en : ''}" required>
+            </div>
+            <div class="button-group">
+                <button type="submit" class="nav-btn">
+                    <span data-lang="he">שמור</span>
+                    <span data-lang="en" style="display:none;">Save</span>
+                </button>
+                <button type="button" class="nav-btn" onclick="this.closest('dialog').close()">
+                    <span data-lang="he">ביטול</span>
+                    <span data-lang="en" style="display:none;">Cancel</span>
+                </button>
+            </div>
+        </form>
+    `;
+    
+    dialog.querySelector('form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const newCourse = {
+            name_he: formData.get('name_he'),
+            name_en: formData.get('name_en'),
+            description_he: formData.get('description_he'),
+            description_en: formData.get('description_en'),
+            difficulty_he: formData.get('difficulty_he'),
+            difficulty_en: formData.get('difficulty_en'),
+            duration_he: formData.get('duration_he'),
+            duration_en: formData.get('duration_en')
+        };
+        
+        if (course) {
+            currentData.courses[index] = newCourse;
+        } else {
+            if (!currentData.courses) {
+                currentData.courses = [];
+            }
+            currentData.courses.push(newCourse);
+        }
+        renderMemberCourses(currentData.courses);
+        dialog.close();
+    });
+    
+    document.body.appendChild(dialog);
+    dialog.showModal();
+    updateLanguageDisplay();
+}
+
+function showEditGalleryItemForm(item, index) {
+    const dialogContent = `
+        <div class="add-gallery-item-dialog">
+            <h2>${getLangText({
+                he: 'ערוך פריט גלריה',
+                en: 'Edit Gallery Item'
+            }, currentLang)}</h2>
+            
+            <label for="gallery-item-title">${getLangText({
+                he: 'כותרת',
+                en: 'Title'
+            }, currentLang)}</label>
+            <input type="text" id="gallery-item-title" value="${item.title || ''}" required>
+            
+            <label for="gallery-item-description">${getLangText({
+                he: 'תיאור',
+                en: 'Description'
+            }, currentLang)}</label>
+            <textarea id="gallery-item-description" rows="4">${item.description || ''}</textarea>
+            
+            <label for="gallery-item-image">${getLangText({
+                he: 'תמונה',
+                en: 'Image'
+            }, currentLang)}</label>
+            <input type="file" id="gallery-item-image" accept="image/*">
+            
+            <div class="dialog-buttons">
+                <button id="save-gallery-item">${getLangText({
+                    he: 'שמור',
+                    en: 'Save'
+                }, currentLang)}</button>
+                <button id="cancel-gallery-item">${getLangText({
+                    he: 'בטל',
+                    en: 'Cancel'
+                }, currentLang)}</button>
+            </div>
+        </div>
+    `;
+
+    // Create dialog
+    const dialog = createDialog(dialogContent);
+    
+    // Reference elements
+    const titleInput = dialog.querySelector('#gallery-item-title');
+    const descriptionInput = dialog.querySelector('#gallery-item-description');
+    const imageInput = dialog.querySelector('#gallery-item-image');
+    const saveButton = dialog.querySelector('#save-gallery-item');
+    const cancelButton = dialog.querySelector('#cancel-gallery-item');
+
+    // Cancel button
+    cancelButton.addEventListener('click', () => {
+        dialog.close();
+    });
+
+    // Save button
+    saveButton.addEventListener('click', async () => {
+        try {
+            // Get member ID from URL
+            const memberId = getMemberIdFromUrl();
+            
+            // Prepare authorization token
+            const token = localStorage.getItem('sessionToken');
+            if (!token) {
+                throw new Error(
+                    getLangText({
+                        he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
+                        en: 'No session token found. Please log in again.'
+                    }, currentLang)
+                );
+            }
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('title', titleInput.value);
+            formData.append('description', descriptionInput.value);
+
+            // Add image if selected
+            if (imageInput.files.length > 0) {
+                formData.append('image', imageInput.files[0]);
+            }
+
+            // Send request to backend to update gallery item
+            const response = await fetch(`${API_BASE_URL}/members/${memberId}/gallery/${item.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 
+                    getLangText({
+                        he: 'שגיאה בעדכון פריט הגלריה',
+                        en: 'Failed to update gallery item'
+                    }, currentLang)
+                );
+            }
+
+            // Parse updated item
+            const updatedItem = await response.json();
+
+            // Update local state
+            currentData.galleryItems[index] = updatedItem;
+            
+            // Re-render gallery
+            renderMemberGallery(currentData.galleryItems);
+
+            // Close dialog
+            dialog.close();
+
+            // Show success message
+            alert(
+                getLangText({
+                    he: 'פריט הגלריה עודכן בהצלחה',
+                    en: 'Gallery item updated successfully'
+                }, currentLang)
+            );
+        } catch (error) {
+            console.error('Error updating gallery item:', error);
+            alert(error.message);
+        }
+    });
+}
+
+function addToCourse(courseId) {
+    // This function is now handled directly in renderMemberCourses
+    console.warn('addToCourse is deprecated. Use the "+" button in edit mode.');
+}
+
+function deleteGalleryItem(index) {
+    if (currentData.galleryItems) {
+        currentData.galleryItems.splice(index, 1);
+        saveChanges();
+        renderMemberGallery(currentData.galleryItems);
+    }
+}
+
+function cancelChanges() {
+    if (!isValidEditMode()) {
+        return;
+    }
+
+    currentData = { ...originalData };
+    updateMemberDetails(originalData);
+    renderMemberGallery(originalData.galleryItems || []);
+    renderMemberCourses(originalData.courses || []);
+}
+
+function updateMemberDetails(memberData) {
+    // Set member image
+    const memberImage = document.getElementById('member-image');
+    if (memberImage) {
+        memberImage.src = memberData.image_url || '';
+    }
+
+    // Set member name
+    const nameHe = document.querySelector('[data-field="name_he"]');
+    const nameEn = document.querySelector('[data-field="name_en"]');
+    if (nameHe) nameHe.textContent = memberData.name_he || '';
+    if (nameEn) nameEn.textContent = memberData.name_en || '';
+
+    // Set member role
+    const roleHe = document.querySelector('[data-field="role_he"]');
+    const roleEn = document.querySelector('[data-field="role_en"]');
+    if (roleHe) roleHe.textContent = memberData.role_he || '';
+    if (roleEn) roleEn.textContent = memberData.role_en || '';
+
+    // Set member bio
+    const bioHe = document.querySelector('[data-field="bio_he"]');
+    const bioEn = document.querySelector('[data-field="bio_en"]');
+    if (bioHe) bioHe.textContent = memberData.bio_he || '';
+    if (bioEn) bioHe.textContent = memberData.bio_en || '';
+}
+
+function renderMemberGallery(galleryItems = []) {
+    const galleryGrid = document.getElementById('member-gallery-grid');
+    if (!galleryGrid) return;
+
+    galleryGrid.innerHTML = '';
+
+    // Add "Add Gallery Item" button in edit mode
+    if (isEditMode) {
+        const addButton = document.createElement('div');
+        addButton.className = 'gallery-card add-gallery-item-button';
+        addButton.innerHTML = `
+            <div class="gallery-image" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0; cursor: pointer;">
+                <span style="font-size: 3rem; color: #007bff;">+</span>
+            </div>
+            <div class="gallery-info">
+                <h3>${getLangText({
+                    he: 'הוסף פריט גלריה',
+                    en: 'Add Gallery Item'
+                }, currentLang)}</h3>
+            </div>
+        `;
+        addButton.addEventListener('click', showAddGalleryItemForm);
+        galleryGrid.appendChild(addButton);
+    }
+
+    if (galleryItems.length === 0) {
+        const noItemsMessage = document.createElement('p');
+        noItemsMessage.textContent = getLangText({
+            he: 'אין פריטים בגלריה',
+            en: 'No items in gallery'
+        }, currentLang);
+        galleryGrid.appendChild(noItemsMessage);
+        return;
+    }
+
+    galleryItems.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'gallery-card';
+
+        const title = item.title || '';
+        const description = item.description || '';
+
+        card.innerHTML = `
+            <div class="gallery-image">
+                <img src="${item.image_url || 'placeholder.jpg'}" alt="${title}">
+                ${isEditMode ? `
+                    <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; z-index: 10;">
+                        <span style="background: rgba(255,255,255,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #007bff;" class="edit-gallery-item">✎</span>
+                        <span style="background: rgba(255,255,255,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #dc3545;" class="delete-gallery-item">×</span>
+                    </div>
+                ` : ''}
+            </div>
+            <div class="gallery-info">
+                <h3>${title}</h3>
+                <p>${description}</p>
+            </div>
+        `;
+
+        if (isEditMode) {
+            const editButton = card.querySelector('.edit-gallery-item');
+            const deleteButton = card.querySelector('.delete-gallery-item');
+
+            editButton.addEventListener('click', () => showEditGalleryItemForm(item));
+            deleteButton.addEventListener('click', () => deleteGalleryItem(item));
+        }
+
+        galleryGrid.appendChild(card);
+    });
+}
+
+function renderMemberCourses(courses = []) {
+    const coursesGrid = document.getElementById('member-courses-grid');
+    if (!coursesGrid) return;
+
+    coursesGrid.innerHTML = '';
+
+    // In edit mode, show all courses; otherwise, filter by teaching courses
+    const filteredCourses = isEditMode ? courses : 
+        courses.filter(course => course.teachers.includes(currentUserId));
+
+    if (filteredCourses.length === 0) {
+        const noCoursesMessage = document.createElement('p');
+        noCoursesMessage.textContent = getLangText({
+            he: 'אין קורסים זמינים',
+            en: 'No courses available'
+        }, currentLang);
+        coursesGrid.appendChild(noCoursesMessage);
+        return;
+    }
+
+    filteredCourses.forEach(course => {
+        const courseCard = document.createElement('div');
+        courseCard.className = 'course-card';
+        
+        const courseTitle = course.title_he || course.title_en || 'Untitled Course';
+        const isTeachingCourse = course.teachers.includes(currentUserId);
+
+        courseCard.innerHTML = `
+            <div class="course-card-content">
+                <h3>${courseTitle}</h3>
+                ${isEditMode ? `
+                    <div class="course-edit-controls" style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="add-teacher-btn" style="background-color: #28a745; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
+                            ${getLangText({
+                                he: 'הוסף כמרצה',
+                                en: 'Add as Teacher'
+                            }, currentLang)}
+                        </button>
+                        ${isTeachingCourse ? `
+                            <button class="remove-teacher-btn" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">
+                                ${getLangText({
+                                    he: 'הסר כמרצה',
+                                    en: 'Remove as Teacher'
+                                }, currentLang)}
+                            </button>
+                        ` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        // Add event listeners for adding/removing teachers in edit mode
+        if (isEditMode) {
+            const addTeacherBtn = courseCard.querySelector('.add-teacher-btn');
+            const removeTeacherBtn = courseCard.querySelector('.remove-teacher-btn');
+
+            if (addTeacherBtn) {
+                addTeacherBtn.addEventListener('click', async () => {
+                    try {
+                        const memberId = getMemberIdFromUrl();
+                        const token = localStorage.getItem('sessionToken');
+                        
+                        const response = await fetch(`${API_BASE_URL}/courses/${course.id}/teachers`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ member_id: memberId })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 
+                                getLangText({
+                                    he: 'שגיאה בהוספת מרצה',
+                                    en: 'Failed to add teacher'
+                                }, currentLang)
+                            );
+                        }
+
+                        // Reload courses to reflect changes
+                        const updatedCourses = await getAllCourses();
+                        renderMemberCourses(updatedCourses);
+
+                        alert(getLangText({
+                            he: 'מרצה נוסף בהצלחה',
+                            en: 'Teacher added successfully'
+                        }, currentLang));
+                    } catch (error) {
+                        console.error('Error adding teacher:', error);
+                        alert(error.message);
+                    }
+                });
+            }
+
+            if (removeTeacherBtn) {
+                removeTeacherBtn.addEventListener('click', async () => {
+                    try {
+                        const memberId = getMemberIdFromUrl();
+                        const token = localStorage.getItem('sessionToken');
+                        
+                        const response = await fetch(`${API_BASE_URL}/courses/${course.id}/teachers/${memberId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 
+                                getLangText({
+                                    he: 'שגיאה בהסרת מרצה',
+                                    en: 'Failed to remove teacher'
+                                }, currentLang)
+                            );
+                        }
+
+                        // Reload courses to reflect changes
+                        const updatedCourses = await getAllCourses();
+                        renderMemberCourses(updatedCourses);
+
+                        alert(getLangText({
+                            he: 'מרצה הוסר בהצלחה',
+                            en: 'Teacher removed successfully'
+                        }, currentLang));
+                    } catch (error) {
+                        console.error('Error removing teacher:', error);
+                        alert(error.message);
+                    }
+                });
+            }
+        }
+
+        coursesGrid.appendChild(courseCard);
+    });
+}
+
+function updateLanguageDisplay() {
+    document.querySelectorAll('[data-lang]').forEach(el => {
+        if (el.getAttribute('data-lang') === currentLang) {
+            el.style.display = '';
+        } else {
+            el.style.display = 'none';
+        }
+    });
+}
+
+function getMemberIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('id');
+}
+
+function filterCoursesForMember(courses, memberId, isEditMode = false) {
+    if (isEditMode) {
+        return courses;
+    }
+
+    // In non-edit mode, only show courses where the member teaches
+    const filteredCourses = courses.filter(course => {
+        if (!course.teachers || course.teachers.length === 0) return false;
+
+        return course.teachers.some(teacher => 
+            teacher.id === memberId
+        );
+    });
+
+    return filteredCourses;
+}
+
+function isValidEditMode() {
+    // Check if user is logged in
+    if (!isLoggedIn) {
+        console.warn('Edit mode not allowed: User not logged in');
+        return false;
+    }
+
+    // Get current member ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberId = urlParams.get('id');
+    const currentMemberId = localStorage.getItem('memberId');
+
+    // Validate that the user is editing their own profile
+    if (!memberId || !currentMemberId || memberId !== currentMemberId) {
+        console.warn('Edit mode not allowed: Unauthorized profile access', {
+            urlMemberId: memberId,
+            currentMemberId: currentMemberId
+        });
+        return false;
+    }
+
+    return true;
+}
+
+
+window.toggleLanguage = function() {
+    currentLang = currentLang === 'he' ? 'en' : 'he';
+    setCurrentLang(currentLang);
+    updateLanguageDisplay();
+    
+    // Reload member data with new language
+    const memberId = getMemberIdFromUrl();
+    loadMemberData(memberId);
+};
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberId = urlParams.get('id');
+    const editMode = urlParams.get('edit') === 'true';
+    
+    console.log('Page Initialization Debug:', {
+        memberId,
+        editMode,
+        isLoggedIn,
+        currentMemberId: localStorage.getItem('memberId')
+    });
+
+    if (memberId) {
+        try {
+            await loadMemberData(memberId);
+            
+            // Explicitly set edit mode if requested and user is logged in
+            if (editMode && isLoggedIn && memberId === localStorage.getItem('memberId')) {
+                console.log('Enabling Edit Mode');
+                toggleEditMode();
+            }
+            
+            updateLanguageDisplay();
+        } catch (error) {
+            console.error('Error loading member data:', error);
+        }
+    }
+});

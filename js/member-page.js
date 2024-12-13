@@ -588,7 +588,7 @@ function showAddCourseForm() {
                 <h2 data-lang="en">Add Course</h2>
                 <select id="course-select">
                     ${currentData.allCourses.map(course => 
-                        `<option value="${course.id}">${course.name_${currentLang}}</option>`
+                        `<option value="${course.id}">${course[`name_${currentLang}`]}</option>`
                     ).join('')}
                 </select>
                 <button id="add-course-btn" data-lang="he">הוסף</button>

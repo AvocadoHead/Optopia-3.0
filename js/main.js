@@ -3,7 +3,7 @@ import { getAllCourses, getAllGalleryItems, getAllMembers, getMemberById, update
 import { handleError, getLangText, getCurrentLang, setCurrentLang, getMemberIdFromUrl } from './utils.js';
 
 // Global state
-let currentLang = getCurrentLang();
+let currentLang = getCurrentLang() || 'he'; // Default to Hebrew if not set
 let dataInitialized = false;
 let galleryData = [];
 let coursesData = [];
@@ -879,6 +879,11 @@ window.getGlobalAppData = () => ({
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        // Set initial language to Hebrew
+        setCurrentLang('he');
+        document.documentElement.lang = 'he';
+        document.documentElement.dir = 'rtl';
+        
         // First initialize language
         initLanguageToggle();
         

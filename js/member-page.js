@@ -14,10 +14,13 @@ let currentData = {
 let isLoggedIn = localStorage.getItem('memberId') !== null;
 let currentUserId = null;
 
-// Global variable to track course teacher changes
-let pendingCourseTeacherChanges = {
-    addTeachers: [],
-    removeTeachers: []
+// Enhanced Edit State Management
+let pendingChanges = {
+    galleryItems: [],
+    courseTeachers: {
+        added: [],
+        removed: []
+    }
 };
 
 async function loadMemberData(memberId) {
@@ -41,114 +44,110 @@ async function loadMemberData(memberId) {
     }
 }
 
+// Enhanced Edit Mode Management
 function setupEditMode(memberId) {
-    console.group('🛠️ Edit Mode Setup');
-    
-    // Check if edit mode should be enabled
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentMemberId = localStorage.getItem('memberId');
-    const shouldEnableEditMode = urlParams.get('edit') === 'true' && isLoggedIn;
-    
-    console.log('Edit Mode Parameters:', {
-        urlMemberId: memberId,
-        currentMemberId,
-        isLoggedIn,
-        shouldEnableEditMode
-    });
+    // Clear any existing edit buttons first
+    const existingEditButton = document.getElementById('edit-mode-toggle');
+    if (existingEditButton) {
+        existingEditButton.remove();
+    }
 
-    // Only create edit button if viewing own profile
-    if (isLoggedIn && memberId === currentMemberId) {
-        // Create edit button dynamically
+    // Check if current user is logged in and owns this profile
+    const currentMemberId = localStorage.getItem('memberId');
+    const isOwnProfile = isLoggedIn && memberId === currentMemberId;
+
+    if (isOwnProfile) {
+        // Create edit mode toggle button
         const editButton = document.createElement('button');
         editButton.id = 'edit-mode-toggle';
-        editButton.classList.add('nav-btn', 'edit-mode-btn');
+        editButton.className = 'nav-btn edit-mode-btn';
         editButton.innerHTML = `
             <span data-lang="he">ערוך פרופיל</span>
-            <span data-lang="en" style="display:none;">Edit Profile</span>
+            <span data-lang="en">Edit Profile</span>
         `;
-        editButton.addEventListener('click', toggleEditMode);
         
-        // Find a suitable location to insert the edit button
+        // Add click event to toggle edit mode
+        editButton.addEventListener('click', () => toggleEditMode());
+        
+        // Find appropriate container for edit button
         const navContainer = document.querySelector('.member-nav-container') || 
                              document.querySelector('nav') || 
                              document.body;
         
         navContainer.appendChild(editButton);
-
-        // Conditionally show edit mode if requested
-        if (shouldEnableEditMode) {
-            console.log('🔓 Automatically enabling edit mode');
-            toggleEditMode();
-        }
     }
-
-    console.groupEnd();
 }
 
 function toggleEditMode() {
     if (!isValidEditMode()) {
+        console.warn('Edit mode not allowed');
         return;
     }
 
     isEditMode = !isEditMode;
-    document.body.classList.toggle('edit-mode', isEditMode);
-
-    // Get references to buttons
-    const editModeToggleButton = document.getElementById('edit-mode-toggle');
-    const saveButton = document.getElementById('save-changes');
-    const discardButton = document.getElementById('cancel-changes');
-    const addGalleryItemButton = document.getElementById('add-gallery-item');
-
-    // Update edit mode toggle button
-    if (editModeToggleButton) {
-        editModeToggleButton.style.display = isEditMode ? 'none' : 'block';
-    }
-
-    // Show/hide save and discard buttons
-    if (saveButton) {
-        saveButton.style.display = isEditMode ? 'block' : 'none';
-        saveButton.onclick = saveChanges;
-    }
-
-    if (discardButton) {
-        discardButton.style.display = isEditMode ? 'block' : 'none';
-        discardButton.onclick = cancelChanges;
-    }
-
-    // Toggle add gallery item button
-    if (addGalleryItemButton) {
-        addGalleryItemButton.style.display = isEditMode ? 'block' : 'none';
-    }
-
-    // Make editable fields content-editable
-    const editables = document.querySelectorAll('.editable');
-    editables.forEach(field => {
-        field.contentEditable = isEditMode;
-        if (isEditMode) {
-            field.addEventListener('blur', handleFieldEdit);
-        } else {
-            field.removeEventListener('blur', handleFieldEdit);
-        }
-    });
 
     if (isEditMode) {
-        // Store original data before editing
+        // Capture original data before editing
         originalData = JSON.parse(JSON.stringify(currentData));
         
-        // In edit mode, fetch and show ALL courses
+        // Prepare edit mode specific rendering
         fetchAllCoursesForEditMode();
-        renderMemberGallery(currentData.galleryItems);
+        
+        // Setup edit buttons
+        const addGalleryButton = document.getElementById('add-gallery-item');
+        const addCourseButton = document.getElementById('add-course-btn');
+        
+        if (addGalleryButton) addGalleryButton.style.display = 'block';
+        if (addCourseButton) addCourseButton.style.display = 'block';
     } else {
-        // In view mode, show only member's courses
-        renderMemberCourses(currentData.allCourses);
+        // Reset edit-specific buttons
+        const addGalleryButton = document.getElementById('add-gallery-item');
+        const addCourseButton = document.getElementById('add-course-btn');
+        
+        if (addGalleryButton) addGalleryButton.style.display = 'none';
+        if (addCourseButton) addCourseButton.style.display = 'none';
     }
 
-    // Add event listener for add gallery item button
-    if (isEditMode) {
-        addGalleryItemButton.addEventListener('click', showAddGalleryItemForm);
-    } else {
-        addGalleryItemButton.removeEventListener('click', showAddGalleryItemForm);
+    updateEditModeUI();
+}
+
+function isValidEditMode() {
+    // Ensure user is logged in
+    if (!isLoggedIn) {
+        console.warn('Edit mode requires login');
+        return false;
     }
+
+    // Verify profile ownership
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberId = urlParams.get('id');
+    const currentMemberId = localStorage.getItem('memberId');
+
+    return memberId && currentMemberId && memberId === currentMemberId;
+}
+
+function updateEditModeUI() {
+    // Select editable elements
+    const editableFields = document.querySelectorAll('.editable');
+    const saveButton = document.getElementById('save-changes-btn');
+    const cancelButton = document.getElementById('cancel-changes-btn');
+    const editModeToggleButton = document.getElementById('edit-mode-toggle');
+
+    // Toggle contentEditable and visual editing state
+    editableFields.forEach(field => {
+        field.contentEditable = isEditMode;
+        field.classList.toggle('editing', isEditMode);
+    });
+
+    // Show/hide buttons based on edit mode
+    if (saveButton) saveButton.style.display = isEditMode ? 'block' : 'none';
+    if (cancelButton) cancelButton.style.display = isEditMode ? 'block' : 'none';
+
+    // Optional: Add body class for global styling
+    document.body.classList.toggle('edit-mode', isEditMode);
+
+    // Update language display
+    updateLanguageDisplay();
 }
 
 async function fetchAllCoursesForEditMode() {
@@ -239,14 +238,14 @@ function toggleMemberTeacherStatus(course, isCurrentlyTeacher) {
 
     if (isCurrentlyTeacher) {
         // Remove from teachers
-        pendingCourseTeacherChanges.removeTeachers.push(course.id);
-        pendingCourseTeacherChanges.addTeachers = 
-            pendingCourseTeacherChanges.addTeachers.filter(id => id !== course.id);
+        pendingChanges.courseTeachers.removed.push(course.id);
+        pendingChanges.courseTeachers.added = 
+            pendingChanges.courseTeachers.added.filter(id => id !== course.id);
     } else {
         // Add to teachers
-        pendingCourseTeacherChanges.addTeachers.push(course.id);
-        pendingCourseTeacherChanges.removeTeachers = 
-            pendingCourseTeacherChanges.removeTeachers.filter(id => id !== course.id);
+        pendingChanges.courseTeachers.added.push(course.id);
+        pendingChanges.courseTeachers.removed = 
+            pendingChanges.courseTeachers.removed.filter(id => id !== course.id);
     }
 
     // Re-render to update UI
@@ -261,470 +260,421 @@ async function handleFieldEdit(event) {
 }
 
 async function saveChanges() {
+    if (!isEditMode) return;
+
     try {
-        console.log('Attempting to save changes');
-        
+        // Validate session and authorization
         const sessionToken = localStorage.getItem('sessionToken');
-        if (!sessionToken) {
-            throw new Error('No session token found. Please log in.');
-        }
-
-        if (!isValidEditMode()) {
-            throw new Error('Invalid edit mode or unauthorized access');
-        }
-
         const memberId = getMemberIdFromUrl();
 
-        // 1. Save Personal Details
-        const updatedMemberData = {
-            name_he: document.querySelector('[data-field="name_he"]').textContent,
-            name_en: document.querySelector('[data-field="name_en"]').textContent,
-            role_he: document.querySelector('[data-field="role_he"]').textContent,
-            role_en: document.querySelector('[data-field="role_en"]').textContent,
-            bio_he: document.querySelector('[data-field="bio_he"]').textContent,
-            bio_en: document.querySelector('[data-field="bio_en"]').textContent
-        };
-        const updatedMember = await updateMember(memberId, updatedMemberData, sessionToken);
-
-        // 2. Save Gallery Items
-        // Note: Gallery item saving is likely handled in separate functions 
-        // like showAddGalleryItemForm, showEditGalleryItemForm, etc.
-
-        // 3. Save Course Teacher Relationships
-        if (pendingCourseTeacherChanges.addTeachers.length > 0 || 
-            pendingCourseTeacherChanges.removeTeachers.length > 0) {
-            
-            const courseTeacherUpdatePayload = {
-                memberId: memberId,
-                addTeachers: pendingCourseTeacherChanges.addTeachers,
-                removeTeachers: pendingCourseTeacherChanges.removeTeachers
-            };
-
-            const response = await fetch(`${API_BASE_URL}/members/${memberId}/courses/teachers`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionToken}`
-                },
-                body: JSON.stringify(courseTeacherUpdatePayload)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update course teacher relationships');
-            }
-
-            // Reset pending changes
-            pendingCourseTeacherChanges = {
-                addTeachers: [],
-                removeTeachers: []
-            };
+        if (!sessionToken) {
+            throw new Error(getLangText({
+                he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
+                en: 'No session token found. Please log in again.'
+            }, currentLang));
         }
 
-        // Update original data after successful save
-        originalData = JSON.parse(JSON.stringify(currentData));
+        // Prepare payload for backend
+        const payload = {
+            personalDetails: preparePersonalDetailsUpdate(),
+            galleryItems: await prepareGalleryItemsUpdate(memberId, sessionToken),
+            courseTeachers: prepareCourseTeachersUpdate()
+        };
 
-        // Reset edit mode
-        toggleEditMode();
-        
-        alert(getLangText({
-            he: 'השינויים נשמרו בהצלחה',
-            en: 'Changes saved successfully'
+        // Validate changes exist
+        if (isEmptyPayload(payload)) {
+            toggleEditMode();
+            return;
+        }
+
+        // Send comprehensive update to backend
+        const response = await fetch(`${API_BASE_URL}/members/${memberId}/profile`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionToken}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || getLangText({
+                he: 'שגיאה בעדכון הפרופיל',
+                en: 'Error updating profile'
+            }, currentLang));
+        }
+
+        // Update local data with server response
+        const updatedMemberData = await response.json();
+        updateLocalMemberData(updatedMemberData);
+
+        // Reset edit mode and changes
+        resetEditState();
+
+        // Show success message
+        showSuccessNotification(getLangText({
+            he: 'הפרופיל עודכן בהצלחה',
+            en: 'Profile updated successfully'
         }, currentLang));
+
     } catch (error) {
-        console.error('Error saving changes:', error);
-        alert(error.message || getLangText({
-            he: 'שגיאה בשמירת השינויים',
-            en: 'Failed to save changes'
-        }, currentLang));
+        console.error('Save Changes Error:', error);
+        showErrorNotification(error.message);
     }
 }
 
-function showAddGalleryItemForm() {
-    const dialogContent = `
-        <div class="add-gallery-item-dialog">
-            <h2>${getLangText({
-                he: 'הוסף פריט גלריה',
-                en: 'Add Gallery Item'
-            }, currentLang)}</h2>
-            
-            <label for="gallery-item-title">${getLangText({
-                he: 'כותרת',
-                en: 'Title'
-            }, currentLang)}</label>
-            <input type="text" id="gallery-item-title" required>
-            
-            <label for="gallery-item-description">${getLangText({
-                he: 'תיאור',
-                en: 'Description'
-            }, currentLang)}</label>
-            <textarea id="gallery-item-description" rows="4"></textarea>
-            
-            <label for="gallery-item-image">${getLangText({
-                he: 'תמונה',
-                en: 'Image'
-            }, currentLang)}</label>
-            <input type="file" id="gallery-item-image" accept="image/*" required>
-            
-            <div class="dialog-buttons">
-                <button id="save-new-gallery-item">${getLangText({
-                    he: 'שמור',
-                    en: 'Save'
-                }, currentLang)}</button>
-                <button id="cancel-new-gallery-item">${getLangText({
-                    he: 'בטל',
-                    en: 'Cancel'
-                }, currentLang)}</button>
-            </div>
-        </div>
-    `;
+function preparePersonalDetailsUpdate() {
+    const detailsToUpdate = {};
+    const editableFields = [
+        'name_he', 'name_en', 
+        'role_he', 'role_en', 
+        'bio_he', 'bio_en'
+    ];
 
-    // Create and show dialog
-    const dialog = createDialog(dialogContent);
-    
-    const saveButton = dialog.querySelector('#save-new-gallery-item');
-    const cancelButton = dialog.querySelector('#cancel-new-gallery-item');
-    
-    cancelButton.addEventListener('click', () => dialog.close());
-    
-    saveButton.addEventListener('click', async () => {
+    editableFields.forEach(field => {
+        const element = document.querySelector(`[data-field="${field}"]`);
+        if (element) {
+            const newValue = element.textContent.trim();
+            if (newValue !== currentData[field]) {
+                detailsToUpdate[field] = newValue;
+            }
+        }
+    });
+
+    return Object.keys(detailsToUpdate).length > 0 ? detailsToUpdate : null;
+}
+
+async function prepareGalleryItemsUpdate(memberId, sessionToken) {
+    const galleryUpdates = {
+        added: [],
+        deleted: []
+    };
+
+    // Handle new gallery items
+    for (const newItem of pendingChanges.galleryItems) {
+        const formData = new FormData();
+        formData.append('title_he', newItem.title_he);
+        formData.append('title_en', newItem.title_en);
+        formData.append('image', newItem.imageFile);
+
         try {
-            const memberId = getMemberIdFromUrl();
-            const token = localStorage.getItem('sessionToken');
-            
-            if (!token) {
-                throw new Error(getLangText({
-                    he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
-                    en: 'No session token found. Please log in again.'
-                }, currentLang));
-            }
-
-            const formData = new FormData();
-            const titleInput = dialog.querySelector('#gallery-item-title');
-            const descriptionInput = dialog.querySelector('#gallery-item-description');
-            const imageInput = dialog.querySelector('#gallery-item-image');
-
-            // Validate inputs
-            if (!titleInput.value) {
-                alert(getLangText({
-                    he: 'אנא הזן כותרת',
-                    en: 'Please enter a title'
-                }, currentLang));
-                return;
-            }
-
-            if (!imageInput.files.length) {
-                alert(getLangText({
-                    he: 'אנא בחר תמונה',
-                    en: 'Please select an image'
-                }, currentLang));
-                return;
-            }
-
-            formData.append('title', titleInput.value);
-            formData.append('description', descriptionInput.value || '');
-            formData.append('image', imageInput.files[0]);
-
             const response = await fetch(`${API_BASE_URL}/members/${memberId}/gallery`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${sessionToken}`
                 },
                 body: formData
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 
-                    getLangText({
-                        he: 'שגיאה ביצירת פריט גלריה',
-                        en: 'Failed to create gallery item'
-                    }, currentLang)
-                );
+                throw new Error('Failed to upload gallery item');
             }
 
-            const newItem = await response.json();
-            
-            // Update local state and re-render
-            if (!currentData.galleryItems) {
-                currentData.galleryItems = [];
-            }
-            currentData.galleryItems.push(newItem);
-            
-            renderMemberGallery(currentData.galleryItems);
-            dialog.close();
-
-            alert(getLangText({
-                he: 'פריט הגלריה נוסף בהצלחה',
-                en: 'Gallery item added successfully'
-            }, currentLang));
+            const uploadedItem = await response.json();
+            galleryUpdates.added.push(uploadedItem);
         } catch (error) {
-            console.error('Error adding gallery item:', error);
-            alert(error.message);
+            console.error('Gallery Item Upload Error:', error);
         }
-    });
-}
-
-function showAddCourseForm(course, index) {
-    if (!isValidEditMode()) {
-        return;
     }
 
-    const dialog = document.createElement('dialog');
-    dialog.className = 'edit-dialog';
-    dialog.innerHTML = `
-        <form class="edit-form">
-            <h3>
-                <span data-lang="he">הוסף קורס</span>
-                <span data-lang="en" style="display:none;">Add Course</span>
-            </h3>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">שם הקורס בעברית</span>
-                    <span data-lang="en" style="display:none;">Hebrew Course Name</span>
-                </label>
-                <input type="text" name="name_he" value="${course ? course.name_he : ''}" required>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">שם הקורס באנגלית</span>
-                    <span data-lang="en" style="display:none;">English Course Name</span>
-                </label>
-                <input type="text" name="name_en" value="${course ? course.name_en : ''}" required>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">תיאור בעברית</span>
-                    <span data-lang="en" style="display:none;">Hebrew Description</span>
-                </label>
-                <textarea name="description_he" required>${course ? course.description_he : ''}</textarea>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">תיאור באנגלית</span>
-                    <span data-lang="en" style="display:none;">English Description</span>
-                </label>
-                <textarea name="description_en" required>${course ? course.description_en : ''}</textarea>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">רמת קושי בעברית</span>
-                    <span data-lang="en" style="display:none;">Hebrew Difficulty</span>
-                </label>
-                <input type="text" name="difficulty_he" value="${course ? course.difficulty_he : ''}" required>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">רמת קושי באנגלית</span>
-                    <span data-lang="en" style="display:none;">English Difficulty</span>
-                </label>
-                <input type="text" name="difficulty_en" value="${course ? course.difficulty_en : ''}" required>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">משך בעברית</span>
-                    <span data-lang="en" style="display:none;">Hebrew Duration</span>
-                </label>
-                <input type="text" name="duration_he" value="${course ? course.duration_he : ''}" required>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">משך באנגלית</span>
-                    <span data-lang="en" style="display:none;">English Duration</span>
-                </label>
-                <input type="text" name="duration_en" value="${course ? course.duration_en : ''}" required>
-            </div>
-            <div class="button-group">
-                <button type="submit" class="nav-btn">
-                    <span data-lang="he">שמור</span>
-                    <span data-lang="en" style="display:none;">Save</span>
-                </button>
-                <button type="button" class="nav-btn" onclick="this.closest('dialog').close()">
-                    <span data-lang="he">ביטול</span>
-                    <span data-lang="en" style="display:none;">Cancel</span>
-                </button>
-            </div>
-        </form>
-    `;
-    
-    dialog.querySelector('form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const newCourse = {
-            name_he: formData.get('name_he'),
-            name_en: formData.get('name_en'),
-            description_he: formData.get('description_he'),
-            description_en: formData.get('description_en'),
-            difficulty_he: formData.get('difficulty_he'),
-            difficulty_en: formData.get('difficulty_en'),
-            duration_he: formData.get('duration_he'),
-            duration_en: formData.get('duration_en')
-        };
-        
-        if (course) {
-            currentData.courses[index] = newCourse;
-        } else {
-            if (!currentData.courses) {
-                currentData.courses = [];
-            }
-            currentData.courses.push(newCourse);
-        }
-        renderMemberCourses(currentData.courses);
-        dialog.close();
-    });
-    
-    document.body.appendChild(dialog);
-    dialog.showModal();
-    updateLanguageDisplay();
+    // Handle deleted gallery items
+    const currentGalleryIds = currentData.galleryItems.map(item => item.id);
+    const pendingGalleryIds = pendingChanges.galleryItems.map(item => item.id);
+    galleryUpdates.deleted = currentGalleryIds.filter(id => !pendingGalleryIds.includes(id));
+
+    return galleryUpdates.added.length > 0 || galleryUpdates.deleted.length > 0 ? galleryUpdates : null;
 }
 
-function showEditGalleryItemForm(item, index) {
-    const dialogContent = `
-        <div class="add-gallery-item-dialog">
-            <h2>${getLangText({
-                he: 'ערוך פריט גלריה',
-                en: 'Edit Gallery Item'
-            }, currentLang)}</h2>
-            
-            <label for="gallery-item-title">${getLangText({
-                he: 'כותרת',
-                en: 'Title'
-            }, currentLang)}</label>
-            <input type="text" id="gallery-item-title" value="${item.title || ''}" required>
-            
-            <label for="gallery-item-description">${getLangText({
-                he: 'תיאור',
-                en: 'Description'
-            }, currentLang)}</label>
-            <textarea id="gallery-item-description" rows="4">${item.description || ''}</textarea>
-            
-            <label for="gallery-item-image">${getLangText({
-                he: 'תמונה',
-                en: 'Image'
-            }, currentLang)}</label>
-            <input type="file" id="gallery-item-image" accept="image/*">
-            
-            <div class="dialog-buttons">
-                <button id="save-gallery-item">${getLangText({
-                    he: 'שמור',
-                    en: 'Save'
-                }, currentLang)}</button>
-                <button id="cancel-gallery-item">${getLangText({
-                    he: 'בטל',
-                    en: 'Cancel'
-                }, currentLang)}</button>
+function prepareCourseTeachersUpdate() {
+    const courseTeacherUpdates = {
+        added: pendingChanges.courseTeachers.added.map(course => course.courseId),
+        removed: pendingChanges.courseTeachers.removed
+    };
+
+    return courseTeacherUpdates.added.length > 0 || courseTeacherUpdates.removed.length > 0 
+        ? courseTeacherUpdates 
+        : null;
+}
+
+function isEmptyPayload(payload) {
+    return !payload.personalDetails && 
+           !payload.galleryItems && 
+           !payload.courseTeachers;
+}
+
+function updateLocalMemberData(serverData) {
+    // Update personal details
+    if (serverData.personalDetails) {
+        Object.keys(serverData.personalDetails).forEach(key => {
+            currentData[key] = serverData.personalDetails[key];
+        });
+    }
+
+    // Update gallery items
+    if (serverData.galleryItems) {
+        if (serverData.galleryItems.added) {
+            currentData.galleryItems.push(...serverData.galleryItems.added);
+        }
+        if (serverData.galleryItems.deleted) {
+            currentData.galleryItems = currentData.galleryItems.filter(
+                item => !serverData.galleryItems.deleted.includes(item.id)
+            );
+        }
+    }
+
+    // Update course teachers
+    if (serverData.courseTeachers) {
+        // Implement course teacher update logic
+        // This might involve updating currentData.allCourses or other related data
+    }
+
+    // Re-render updated sections
+    renderMemberDetails(currentData);
+    renderMemberGallery(currentData.galleryItems);
+    renderMemberCourses(currentData.allCourses);
+}
+
+function resetEditState() {
+    // Reset pending changes
+    pendingChanges = {
+        galleryItems: [],
+        courseTeachers: { added: [], removed: [] }
+    };
+
+    // Exit edit mode
+    toggleEditMode();
+}
+
+function showSuccessNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification success';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 500);
+    }, 3000);
+}
+
+function showErrorNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification error';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 500);
+    }, 3000);
+}
+
+function showAddGalleryItemForm() {
+    if (!isEditMode) return;
+
+    const modalHtml = `
+        <div id="gallery-item-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 data-lang="he">הוסף פריט גלריה</h2>
+                <h2 data-lang="en">Add Gallery Item</h2>
+                <form id="gallery-item-form">
+                    <input type="text" id="gallery-item-title-he" placeholder="כותרת בעברית" data-lang="he">
+                    <input type="text" id="gallery-item-title-en" placeholder="English Title" data-lang="en">
+                    <input type="file" id="gallery-item-image" accept="image/*">
+                    <button type="submit" data-lang="he">שמור</button>
+                    <button type="submit" data-lang="en">Save</button>
+                </form>
             </div>
         </div>
     `;
 
-    // Create dialog
-    const dialog = createDialog(dialogContent);
+    // Create and append modal
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+
+    const modal = document.getElementById('gallery-item-modal');
+    const closeBtn = modal.querySelector('.close-modal');
+    const form = modal.querySelector('form');
+
+    closeBtn.onclick = () => modal.remove();
+    form.onsubmit = (e) => {
+        e.preventDefault();
+        addGalleryItem();
+    };
+
+    modal.style.display = 'block';
+    updateLanguageDisplay();
+}
+
+function addGalleryItem() {
+    const titleHe = document.getElementById('gallery-item-title-he').value;
+    const titleEn = document.getElementById('gallery-item-title-en').value;
+    const imageFile = document.getElementById('gallery-item-image').files[0];
+
+    if (!titleHe || !titleEn || !imageFile) {
+        alert(getLangText({
+            he: 'אנא מלא את כל השדות',
+            en: 'Please fill all fields'
+        }, currentLang));
+        return;
+    }
+
+    const newGalleryItem = {
+        id: Date.now(), // Temporary ID
+        title_he: titleHe,
+        title_en: titleEn,
+        imageFile: imageFile,
+        isNew: true
+    };
+
+    pendingChanges.galleryItems.push(newGalleryItem);
+    renderPendingGalleryItems();
+    document.getElementById('gallery-item-modal').remove();
+}
+
+function renderPendingGalleryItems() {
+    const galleryContainer = document.getElementById('member-gallery');
     
-    // Reference elements
-    const titleInput = dialog.querySelector('#gallery-item-title');
-    const descriptionInput = dialog.querySelector('#gallery-item-description');
-    const imageInput = dialog.querySelector('#gallery-item-image');
-    const saveButton = dialog.querySelector('#save-gallery-item');
-    const cancelButton = dialog.querySelector('#cancel-gallery-item');
+    // Clear existing pending items
+    const pendingItems = galleryContainer.querySelectorAll('.pending-gallery-item');
+    pendingItems.forEach(item => item.remove());
 
-    // Cancel button
-    cancelButton.addEventListener('click', () => {
-        dialog.close();
-    });
-
-    // Save button
-    saveButton.addEventListener('click', async () => {
-        try {
-            // Get member ID from URL
-            const memberId = getMemberIdFromUrl();
-            
-            // Prepare authorization token
-            const token = localStorage.getItem('sessionToken');
-            if (!token) {
-                throw new Error(
-                    getLangText({
-                        he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
-                        en: 'No session token found. Please log in again.'
-                    }, currentLang)
-                );
-            }
-
-            // Prepare form data
-            const formData = new FormData();
-            formData.append('title', titleInput.value);
-            formData.append('description', descriptionInput.value);
-
-            // Add image if selected
-            if (imageInput.files.length > 0) {
-                formData.append('image', imageInput.files[0]);
-            }
-
-            // Send request to backend to update gallery item
-            const response = await fetch(`${API_BASE_URL}/members/${memberId}/gallery/${item.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 
-                    getLangText({
-                        he: 'שגיאה בעדכון פריט הגלריה',
-                        en: 'Failed to update gallery item'
-                    }, currentLang)
-                );
-            }
-
-            // Parse updated item
-            const updatedItem = await response.json();
-
-            // Update local state
-            currentData.galleryItems[index] = updatedItem;
-            
-            // Re-render gallery
-            renderMemberGallery(currentData.galleryItems);
-
-            // Close dialog
-            dialog.close();
-
-            // Show success message
-            alert(
-                getLangText({
-                    he: 'פריט הגלריה עודכן בהצלחה',
-                    en: 'Gallery item updated successfully'
-                }, currentLang)
-            );
-        } catch (error) {
-            console.error('Error updating gallery item:', error);
-            alert(error.message);
-        }
-    });
-}
-
-function deleteGalleryItem(index) {
-    if (currentData.galleryItems) {
-        currentData.galleryItems.splice(index, 1);
-        saveChanges();
-        renderMemberGallery(currentData.galleryItems);
-    }
-}
-
-function cancelChanges() {
-    // Restore original data
-    if (originalData) {
-        currentData = JSON.parse(JSON.stringify(originalData));
+    // Render new pending items
+    pendingChanges.galleryItems.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.classList.add('gallery-item', 'pending-gallery-item');
         
-        // Revert UI to original state
-        updateMemberDetails(currentData);
-        renderMemberCourses(currentData.allCourses);
-        renderMemberGallery(currentData.galleryItems);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            itemElement.appendChild(img);
+        };
+        reader.readAsDataURL(item.imageFile);
+
+        const titleElement = document.createElement('div');
+        titleElement.textContent = currentLang === 'he' ? item.title_he : item.title_en;
+        itemElement.appendChild(titleElement);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = getLangText({
+            he: 'מחק',
+            en: 'Delete'
+        }, currentLang);
+        deleteBtn.onclick = () => removePendingGalleryItem(item.id);
+        itemElement.appendChild(deleteBtn);
+
+        galleryContainer.appendChild(itemElement);
+    });
+}
+
+function removePendingGalleryItem(itemId) {
+    pendingChanges.galleryItems = pendingChanges.galleryItems.filter(item => item.id !== itemId);
+    renderPendingGalleryItems();
+}
+
+// Course Teacher Management
+function showAddCourseForm() {
+    if (!isEditMode) return;
+
+    const modalHtml = `
+        <div id="course-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 data-lang="he">הוסף קורס</h2>
+                <h2 data-lang="en">Add Course</h2>
+                <select id="course-select">
+                    ${currentData.allCourses.map(course => 
+                        `<option value="${course.id}">${course.name_${currentLang}}</option>`
+                    ).join('')}
+                </select>
+                <button id="add-course-btn" data-lang="he">הוסף</button>
+                <button id="add-course-btn" data-lang="en">Add</button>
+            </div>
+        </div>
+    `;
+
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+
+    const modal = document.getElementById('course-modal');
+    const closeBtn = modal.querySelector('.close-modal');
+    const addBtn = modal.querySelector('#add-course-btn');
+
+    closeBtn.onclick = () => modal.remove();
+    addBtn.onclick = addCourseTeacher;
+
+    modal.style.display = 'block';
+    updateLanguageDisplay();
+}
+
+function addCourseTeacher() {
+    const courseSelect = document.getElementById('course-select');
+    const courseId = courseSelect.value;
+
+    if (!courseId) {
+        alert(getLangText({
+            he: 'אנא בחר קורס',
+            en: 'Please select a course'
+        }, currentLang));
+        return;
     }
 
-    // Exit edit mode
-    toggleEditMode();
+    // Check if course is already added
+    const isAlreadyAdded = pendingChanges.courseTeachers.added.some(c => c.courseId === courseId);
+    if (isAlreadyAdded) {
+        alert(getLangText({
+            he: 'קורס זה כבר נוסף',
+            en: 'This course is already added'
+        }, currentLang));
+        return;
+    }
+
+    const course = currentData.allCourses.find(c => c.id === courseId);
+    pendingChanges.courseTeachers.added.push({
+        courseId: courseId,
+        courseName_he: course.name_he,
+        courseName_en: course.name_en
+    });
+
+    renderPendingCourseTeachers();
+    document.getElementById('course-modal').remove();
+}
+
+function renderPendingCourseTeachers() {
+    const courseContainer = document.getElementById('member-courses');
+    
+    // Clear existing pending courses
+    const pendingCourses = courseContainer.querySelectorAll('.pending-course');
+    pendingCourses.forEach(course => course.remove());
+
+    // Render new pending courses
+    pendingChanges.courseTeachers.added.forEach(course => {
+        const courseElement = document.createElement('div');
+        courseElement.classList.add('course-item', 'pending-course');
+        
+        courseElement.textContent = currentLang === 'he' ? course.courseName_he : course.courseName_en;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = getLangText({
+            he: 'מחק',
+            en: 'Delete'
+        }, currentLang);
+        deleteBtn.onclick = () => removePendingCourse(course.courseId);
+        courseElement.appendChild(deleteBtn);
+
+        courseContainer.appendChild(courseElement);
+    });
+}
+
+function removePendingCourse(courseId) {
+    pendingChanges.courseTeachers.added = 
+        pendingChanges.courseTeachers.added.filter(c => c.courseId !== courseId);
+    renderPendingCourseTeachers();
 }
 
 function updateMemberDetails(memberData) {
@@ -855,30 +805,21 @@ function filterCoursesForMember(courses, memberId, isEditMode = false) {
     return filteredCourses;
 }
 
-function isValidEditMode() {
-    // Check if user is logged in
-    if (!isLoggedIn) {
-        console.warn('Edit mode not allowed: User not logged in');
-        return false;
-    }
-
-    // Get current member ID from URL
+// Modify existing initialization to include edit mode setup
+document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const memberId = urlParams.get('id');
-    const currentMemberId = localStorage.getItem('memberId');
-
-    // Validate that the user is editing their own profile
-    if (!memberId || !currentMemberId || memberId !== currentMemberId) {
-        console.warn('Edit mode not allowed: Unauthorized profile access', {
-            urlMemberId: memberId,
-            currentMemberId: currentMemberId
-        });
-        return false;
+    
+    if (memberId) {
+        try {
+            await loadMemberData(memberId);
+            setupEditMode(memberId);
+            updateLanguageDisplay();
+        } catch (error) {
+            console.error('Error loading member data:', error);
+        }
     }
-
-    return true;
-}
-
+});
 
 window.toggleLanguage = function() {
     currentLang = currentLang === 'he' ? 'en' : 'he';
@@ -889,33 +830,3 @@ window.toggleLanguage = function() {
     const memberId = getMemberIdFromUrl();
     loadMemberData(memberId);
 };
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const memberId = urlParams.get('id');
-    const editMode = urlParams.get('edit') === 'true';
-    
-    console.log('Page Initialization Debug:', {
-        memberId,
-        editMode,
-        isLoggedIn,
-        currentMemberId: localStorage.getItem('memberId')
-    });
-
-    if (memberId) {
-        try {
-            await loadMemberData(memberId);
-            
-            // Explicitly set edit mode if requested and user is logged in
-            if (editMode && isLoggedIn && memberId === localStorage.getItem('memberId')) {
-                console.log('Enabling Edit Mode');
-                toggleEditMode();
-            }
-            
-            updateLanguageDisplay();
-        } catch (error) {
-            console.error('Error loading member data:', error);
-        }
-    }
-});

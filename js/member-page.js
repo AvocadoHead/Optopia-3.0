@@ -264,18 +264,18 @@ async function saveChanges() {
     try {
         console.log('Attempting to save changes');
         
-        // Get session token from localStorage
         const sessionToken = localStorage.getItem('sessionToken');
         if (!sessionToken) {
             throw new Error('No session token found. Please log in.');
         }
 
-        // Validate edit mode and permissions
         if (!isValidEditMode()) {
             throw new Error('Invalid edit mode or unauthorized access');
         }
 
-        // Prepare member data to update
+        const memberId = getMemberIdFromUrl();
+
+        // 1. Save Personal Details
         const updatedMemberData = {
             name_he: document.querySelector('[data-field="name_he"]').textContent,
             name_en: document.querySelector('[data-field="name_en"]').textContent,
@@ -284,27 +284,59 @@ async function saveChanges() {
             bio_he: document.querySelector('[data-field="bio_he"]').textContent,
             bio_en: document.querySelector('[data-field="bio_en"]').textContent
         };
-
-        // Get member ID from URL
-        const memberId = getMemberIdFromUrl();
-
-        // Update member details with explicit authorization
         const updatedMember = await updateMember(memberId, updatedMemberData, sessionToken);
 
-        // Handle course teacher changes
+        // 2. Save Gallery Items
+        // Note: Gallery item saving is likely handled in separate functions 
+        // like showAddGalleryItemForm, showEditGalleryItemForm, etc.
+
+        // 3. Save Course Teacher Relationships
         if (pendingCourseTeacherChanges.addTeachers.length > 0 || 
             pendingCourseTeacherChanges.removeTeachers.length > 0) {
-            // Implement course teacher update logic here
-            console.log('Pending course teacher changes:', pendingCourseTeacherChanges);
+            
+            const courseTeacherUpdatePayload = {
+                memberId: memberId,
+                addTeachers: pendingCourseTeacherChanges.addTeachers,
+                removeTeachers: pendingCourseTeacherChanges.removeTeachers
+            };
+
+            const response = await fetch(`${API_BASE_URL}/members/${memberId}/courses/teachers`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionToken}`
+                },
+                body: JSON.stringify(courseTeacherUpdatePayload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update course teacher relationships');
+            }
+
+            // Reset pending changes
+            pendingCourseTeacherChanges = {
+                addTeachers: [],
+                removeTeachers: []
+            };
         }
+
+        // Update original data after successful save
+        originalData = JSON.parse(JSON.stringify(currentData));
 
         // Reset edit mode
         toggleEditMode();
         
-        console.log('Changes saved successfully');
+        alert(getLangText({
+            he: 'השינויים נשמרו בהצלחה',
+            en: 'Changes saved successfully'
+        }, currentLang));
     } catch (error) {
         console.error('Error saving changes:', error);
-        alert(error.message || 'Failed to save changes. Please try again.');
+        alert(error.message || getLangText({
+            he: 'שגיאה בשמירת השינויים',
+            en: 'Failed to save changes'
+        }, currentLang));
     }
 }
 
@@ -693,72 +725,6 @@ function cancelChanges() {
 
     // Exit edit mode
     toggleEditMode();
-}
-
-async function saveChanges() {
-    try {
-        console.log('Attempting to save changes');
-        
-        // Get session token from localStorage
-        const sessionToken = localStorage.getItem('sessionToken');
-        if (!sessionToken) {
-            throw new Error('No session token found. Please log in.');
-        }
-
-        // Validate edit mode and permissions
-        if (!isValidEditMode()) {
-            throw new Error('Invalid edit mode or unauthorized access');
-        }
-
-        // Prepare member data to update
-        const updatedMemberData = {
-            name_he: document.querySelector('[data-field="name_he"]').textContent,
-            name_en: document.querySelector('[data-field="name_en"]').textContent,
-            role_he: document.querySelector('[data-field="role_he"]').textContent,
-            role_en: document.querySelector('[data-field="role_en"]').textContent,
-            bio_he: document.querySelector('[data-field="bio_he"]').textContent,
-            bio_en: document.querySelector('[data-field="bio_en"]').textContent
-        };
-
-        // Get member ID from URL
-        const memberId = getMemberIdFromUrl();
-
-        // Update member details with explicit authorization
-        const updatedMember = await updateMember(memberId, updatedMemberData, sessionToken);
-
-        // Handle course teacher changes
-        if (pendingCourseTeacherChanges.addTeachers.length > 0 || 
-            pendingCourseTeacherChanges.removeTeachers.length > 0) {
-            // TODO: Implement backend API call to update course teacher relationships
-            console.log('Pending course teacher changes:', pendingCourseTeacherChanges);
-            
-            // Reset pending changes after saving
-            pendingCourseTeacherChanges = {
-                addTeachers: [],
-                removeTeachers: []
-            };
-        }
-
-        // Update original data after successful save
-        originalData = JSON.parse(JSON.stringify(currentData));
-
-        // Reset edit mode
-        toggleEditMode();
-        
-        console.log('Changes saved successfully');
-        
-        // Optional: Show success message
-        alert(getLangText({
-            he: 'השינויים נשמרו בהצלחה',
-            en: 'Changes saved successfully'
-        }, currentLang));
-    } catch (error) {
-        console.error('Error saving changes:', error);
-        alert(error.message || getLangText({
-            he: 'שגיאה בשמירת השינויים',
-            en: 'Failed to save changes'
-        }, currentLang));
-    }
 }
 
 function updateMemberDetails(memberData) {

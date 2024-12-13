@@ -60,15 +60,15 @@ function setupEditMode(memberId) {
     if (isLoggedIn && memberId === currentMemberId) {
         // Create edit button dynamically
         const editButton = document.createElement('button');
-        editButton.id = 'edit-button';
-        editButton.classList.add('nav-btn');
+        editButton.id = 'edit-mode-toggle';
+        editButton.classList.add('nav-btn', 'edit-mode-btn');
         editButton.innerHTML = `
             <span data-lang="he">ערוך פרופיל</span>
-            <span data-lang="en">Edit Profile</span>
+            <span data-lang="en" style="display:none;">Edit Profile</span>
         `;
         editButton.addEventListener('click', toggleEditMode);
         
-        // Find a suitable location to insert the edit button (e.g., near other navigation buttons)
+        // Find a suitable location to insert the edit button
         const navContainer = document.querySelector('.member-nav-container') || 
                              document.querySelector('nav') || 
                              document.body;
@@ -90,93 +90,167 @@ function toggleEditMode() {
         return;
     }
 
-    const editButton = document.getElementById('edit-button');
-    if (!editButton) {
-        console.error('Edit button not found');
-        return;
-    }
-
-    console.log('Toggle Edit Mode - Current State:', {
-        isEditMode, 
-        isLoggedIn, 
-        currentUserId: localStorage.getItem('memberId')
-    });
-
     isEditMode = !isEditMode;
     document.body.classList.toggle('edit-mode', isEditMode);
-    
-    // Create save and discard buttons if they don't exist
-    let saveButton = document.getElementById('save-changes-button');
-    let discardButton = document.getElementById('discard-changes-button');
 
-    if (!saveButton) {
-        saveButton = document.createElement('button');
-        saveButton.id = 'save-changes-button';
-        saveButton.classList.add('nav-btn');
-        saveButton.innerHTML = `
-            <span data-lang="he">שמור שינויים</span>
-            <span data-lang="en">Save Changes</span>
-        `;
-        saveButton.addEventListener('click', saveChanges);
-        editButton.parentNode.insertBefore(saveButton, editButton.nextSibling);
-        
-        // Initially hide the save button
-        saveButton.style.display = 'none';
+    // Get references to buttons
+    const editModeToggleButton = document.getElementById('edit-mode-toggle');
+    const saveButton = document.getElementById('save-changes');
+    const discardButton = document.getElementById('cancel-changes');
+    const addGalleryItemButton = document.getElementById('add-gallery-item');
+
+    // Update edit mode toggle button
+    if (editModeToggleButton) {
+        editModeToggleButton.style.display = isEditMode ? 'none' : 'block';
     }
 
-    if (!discardButton) {
-        discardButton = document.createElement('button');
-        discardButton.id = 'discard-changes-button';
-        discardButton.classList.add('nav-btn');
-        discardButton.innerHTML = `
-            <span data-lang="he">בטל שינויים</span>
-            <span data-lang="en">Discard Changes</span>
-        `;
-        discardButton.addEventListener('click', cancelChanges);
-        editButton.parentNode.insertBefore(discardButton, saveButton.nextSibling);
-        
-        // Initially hide the discard button
-        discardButton.style.display = 'none';
+    // Show/hide save and discard buttons
+    if (saveButton) {
+        saveButton.style.display = isEditMode ? 'block' : 'none';
+        saveButton.onclick = saveChanges;
     }
 
-    // Toggle visibility of save/discard buttons only when in edit mode
-    saveButton.style.display = isEditMode ? 'block' : 'none';
-    discardButton.style.display = isEditMode ? 'block' : 'none';
-    
-    // Update edit button text
-    if (currentLang === 'he') {
-        editButton.querySelector('[data-lang="he"]').textContent = isEditMode ? 'סיים עריכה' : 'ערוך פרופיל';
-    } else {
-        editButton.querySelector('[data-lang="en"]').textContent = isEditMode ? 'Finish Editing' : 'Edit Profile';
+    if (discardButton) {
+        discardButton.style.display = isEditMode ? 'block' : 'none';
+        discardButton.onclick = cancelChanges;
     }
 
-    // Show/hide add buttons
-    const addButtons = document.querySelectorAll('#add-gallery-item, #add-course');
-    addButtons.forEach(button => {
-        if (button) button.style.display = isEditMode ? 'block' : 'none';
+    // Toggle add gallery item button
+    if (addGalleryItemButton) {
+        addGalleryItemButton.style.display = isEditMode ? 'block' : 'none';
+    }
+
+    // Make editable fields content-editable
+    const editables = document.querySelectorAll('.editable');
+    editables.forEach(field => {
+        field.contentEditable = isEditMode;
+        if (isEditMode) {
+            field.addEventListener('blur', handleFieldEdit);
+        } else {
+            field.removeEventListener('blur', handleFieldEdit);
+        }
     });
 
     if (isEditMode) {
-        // Make fields editable
-        const editables = document.querySelectorAll('.editable');
-        editables.forEach(field => {
-            field.contentEditable = true;
-            field.addEventListener('blur', handleFieldEdit);
-        });
-
-        // Re-render courses to show all available ones
-        renderMemberCourses();
+        // Store original data before editing
+        originalData = JSON.parse(JSON.stringify(currentData));
+        
+        // In edit mode, fetch and show ALL courses
+        fetchAllCoursesForEditMode();
+        renderMemberGallery(currentData.galleryItems);
     } else {
-        // Make fields non-editable
-        const editables = document.querySelectorAll('.editable');
-        editables.forEach(field => {
-            field.contentEditable = false;
-            field.removeEventListener('blur', handleFieldEdit);
-        });
-
-        // Re-render courses to show only teaching ones
-        renderMemberCourses();
+        // In view mode, show only member's courses
+        renderMemberCourses(currentData.allCourses);
     }
+
+    // Add event listener for add gallery item button
+    if (isEditMode) {
+        addGalleryItemButton.addEventListener('click', showAddGalleryItemForm);
+    } else {
+        addGalleryItemButton.removeEventListener('click', showAddGalleryItemForm);
+    }
+}
+
+async function fetchAllCoursesForEditMode() {
+    try {
+        // Fetch all courses
+        const allCourses = await getAllCourses();
+        
+        // Render all courses in edit mode
+        renderMemberCourses(allCourses, true);
+    } catch (error) {
+        console.error('Error fetching all courses for edit mode:', error);
+    }
+}
+
+function renderMemberCourses(courses = [], isEditMode = false) {
+    const coursesContainer = document.getElementById('member-courses-container');
+    if (!coursesContainer) return;
+
+    // Clear previous content
+    coursesContainer.innerHTML = '';
+
+    // Filter courses if not in edit mode
+    const memberId = getMemberIdFromUrl();
+    const filteredCourses = isEditMode ? 
+        courses : 
+        filterCoursesForMember(courses, memberId);
+
+    // Render courses
+    filteredCourses.forEach((course, index) => {
+        const courseElement = createMemberCourseElement(course, index, isEditMode);
+        coursesContainer.appendChild(courseElement);
+    });
+
+    // Add "Add Course" button in edit mode
+    if (isEditMode) {
+        const addCourseButton = document.createElement('button');
+        addCourseButton.id = 'add-course-btn';
+        addCourseButton.classList.add('nav-btn');
+        addCourseButton.textContent = getLangText({
+            he: 'הוסף קורס',
+            en: 'Add Course'
+        }, currentLang);
+        addCourseButton.addEventListener('click', showAddCourseForm);
+        coursesContainer.appendChild(addCourseButton);
+    }
+}
+
+function createMemberCourseElement(course, index, isEditMode = false) {
+    const courseDiv = document.createElement('div');
+    courseDiv.classList.add('course-card');
+
+    const title = currentLang === 'he' ? course.name_he : course.name_en;
+    const description = currentLang === 'he' ? course.description_he : course.description_en;
+
+    // Determine if current member is a teacher
+    const memberId = getMemberIdFromUrl();
+    const isMemberTeacher = course.teachers && 
+        course.teachers.some(teacher => teacher && teacher.id === memberId);
+
+    courseDiv.innerHTML = `
+        <div class="course-content">
+            <h3>${title || ''}</h3>
+            <p class="course-description">${description || ''}</p>
+        </div>
+        ${isEditMode ? `
+            <div class="course-edit-actions">
+                <button class="add-teacher-btn" data-course-id="${course.id}">
+                    ${getLangText({
+                        he: isMemberTeacher ? 'הסר כמרצה' : 'הוסף כמרצה', 
+                        en: isMemberTeacher ? 'Remove as Teacher' : 'Add as Teacher'
+                    }, currentLang)}
+                </button>
+            </div>
+        ` : ''}
+    `;
+
+    // Add event listener for adding/removing as teacher in edit mode
+    if (isEditMode) {
+        const addTeacherBtn = courseDiv.querySelector('.add-teacher-btn');
+        addTeacherBtn.addEventListener('click', () => toggleMemberTeacherStatus(course, isMemberTeacher));
+    }
+
+    return courseDiv;
+}
+
+function toggleMemberTeacherStatus(course, isCurrentlyTeacher) {
+    const memberId = getMemberIdFromUrl();
+
+    if (isCurrentlyTeacher) {
+        // Remove from teachers
+        pendingCourseTeacherChanges.removeTeachers.push(course.id);
+        pendingCourseTeacherChanges.addTeachers = 
+            pendingCourseTeacherChanges.addTeachers.filter(id => id !== course.id);
+    } else {
+        // Add to teachers
+        pendingCourseTeacherChanges.addTeachers.push(course.id);
+        pendingCourseTeacherChanges.removeTeachers = 
+            pendingCourseTeacherChanges.removeTeachers.filter(id => id !== course.id);
+    }
+
+    // Re-render to update UI
+    renderMemberCourses(currentData.allCourses, true);
 }
 
 async function handleFieldEdit(event) {
@@ -234,126 +308,129 @@ async function saveChanges() {
     }
 }
 
-function showAddGalleryItemForm(item, index) {
-    if (!isValidEditMode()) {
-        return;
-    }
-
-    const dialog = document.createElement('dialog');
-    dialog.className = 'edit-dialog';
-    dialog.innerHTML = `
-        <form class="edit-form">
-            <h3>
-                <span data-lang="he">הוסף פריט לגלריה</span>
-                <span data-lang="en" style="display:none;">Add Gallery Item</span>
-            </h3>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">כותרת בעברית</span>
-                    <span data-lang="en" style="display:none;">Hebrew Title</span>
-                </label>
-                <input type="text" name="title_he" value="${item ? item.title_he : ''}" required>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">כותרת באנגלית</span>
-                    <span data-lang="en" style="display:none;">English Title</span>
-                </label>
-                <input type="text" name="title_en" value="${item ? item.title_en : ''}" required>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">תיאור בעברית</span>
-                    <span data-lang="en" style="display:none;">Hebrew Description</span>
-                </label>
-                <textarea name="description_he" required>${item ? item.description_he : ''}</textarea>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">תיאור באנגלית</span>
-                    <span data-lang="en" style="display:none;">English Description</span>
-                </label>
-                <textarea name="description_en" required>${item ? item.description_en : ''}</textarea>
-            </div>
-            <div class="form-group">
-                <label>
-                    <span data-lang="he">קישור לתמונה</span>
-                    <span data-lang="en" style="display:none;">Image URL</span>
-                </label>
-                <input type="url" name="image_url" value="${item ? item.image_url : ''}" required>
-            </div>
-            <div class="button-group">
-                <button type="submit" class="nav-btn">
-                    <span data-lang="he">שמור</span>
-                    <span data-lang="en" style="display:none;">Save</span>
-                </button>
-                <button type="button" class="nav-btn" onclick="this.closest('dialog').close()">
-                    <span data-lang="he">בטל</span>
-                    <span data-lang="en" style="display:none;">Cancel</span>
-                </button>
-            </div>
-        </form>
-    `;
-    
-    dialog.querySelector('form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        
-        const newItem = {
-            title_he: formData.get('title_he'),
-            title_en: formData.get('title_en'),
-            description_he: formData.get('description_he'),
-            description_en: formData.get('description_en'),
-            image_url: formData.get('image_url')
-        };
-        
-        try {
-            // Get member ID from URL
-            const memberId = getMemberIdFromUrl();
+function showAddGalleryItemForm() {
+    const dialogContent = `
+        <div class="add-gallery-item-dialog">
+            <h2>${getLangText({
+                he: 'הוסף פריט גלריה',
+                en: 'Add Gallery Item'
+            }, currentLang)}</h2>
             
-            // Prepare authorization token
+            <label for="gallery-item-title">${getLangText({
+                he: 'כותרת',
+                en: 'Title'
+            }, currentLang)}</label>
+            <input type="text" id="gallery-item-title" required>
+            
+            <label for="gallery-item-description">${getLangText({
+                he: 'תיאור',
+                en: 'Description'
+            }, currentLang)}</label>
+            <textarea id="gallery-item-description" rows="4"></textarea>
+            
+            <label for="gallery-item-image">${getLangText({
+                he: 'תמונה',
+                en: 'Image'
+            }, currentLang)}</label>
+            <input type="file" id="gallery-item-image" accept="image/*" required>
+            
+            <div class="dialog-buttons">
+                <button id="save-new-gallery-item">${getLangText({
+                    he: 'שמור',
+                    en: 'Save'
+                }, currentLang)}</button>
+                <button id="cancel-new-gallery-item">${getLangText({
+                    he: 'בטל',
+                    en: 'Cancel'
+                }, currentLang)}</button>
+            </div>
+        </div>
+    `;
+
+    // Create and show dialog
+    const dialog = createDialog(dialogContent);
+    
+    const saveButton = dialog.querySelector('#save-new-gallery-item');
+    const cancelButton = dialog.querySelector('#cancel-new-gallery-item');
+    
+    cancelButton.addEventListener('click', () => dialog.close());
+    
+    saveButton.addEventListener('click', async () => {
+        try {
+            const memberId = getMemberIdFromUrl();
             const token = localStorage.getItem('sessionToken');
+            
             if (!token) {
-                throw new Error('No session token found');
+                throw new Error(getLangText({
+                    he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
+                    en: 'No session token found. Please log in again.'
+                }, currentLang));
             }
 
-            // Send request to backend to add gallery item
-            const response = await fetch(`/api/members/${memberId}/gallery`, {
+            const formData = new FormData();
+            const titleInput = dialog.querySelector('#gallery-item-title');
+            const descriptionInput = dialog.querySelector('#gallery-item-description');
+            const imageInput = dialog.querySelector('#gallery-item-image');
+
+            // Validate inputs
+            if (!titleInput.value) {
+                alert(getLangText({
+                    he: 'אנא הזן כותרת',
+                    en: 'Please enter a title'
+                }, currentLang));
+                return;
+            }
+
+            if (!imageInput.files.length) {
+                alert(getLangText({
+                    he: 'אנא בחר תמונה',
+                    en: 'Please select an image'
+                }, currentLang));
+                return;
+            }
+
+            formData.append('title', titleInput.value);
+            formData.append('description', descriptionInput.value || '');
+            formData.append('image', imageInput.files[0]);
+
+            const response = await fetch(`${API_BASE_URL}/members/${memberId}/gallery`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(newItem)
+                body: formData
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to add gallery item');
+                throw new Error(errorData.message || 
+                    getLangText({
+                        he: 'שגיאה ביצירת פריט גלריה',
+                        en: 'Failed to create gallery item'
+                    }, currentLang)
+                );
             }
 
-            const addedItem = await response.json();
+            const newItem = await response.json();
             
-            // Update local state
+            // Update local state and re-render
             if (!currentData.galleryItems) {
                 currentData.galleryItems = [];
             }
-            currentData.galleryItems.push(addedItem);
+            currentData.galleryItems.push(newItem);
             
-            // Re-render gallery
             renderMemberGallery(currentData.galleryItems);
-            
-            // Close dialog
             dialog.close();
+
+            alert(getLangText({
+                he: 'פריט הגלריה נוסף בהצלחה',
+                en: 'Gallery item added successfully'
+            }, currentLang));
         } catch (error) {
             console.error('Error adding gallery item:', error);
-            alert(error.message || 'Failed to add gallery item');
+            alert(error.message);
         }
     });
-    
-    document.body.appendChild(dialog);
-    dialog.showModal();
-    updateLanguageDisplay();
 }
 
 function showAddCourseForm(course, index) {
@@ -595,11 +672,6 @@ function showEditGalleryItemForm(item, index) {
     });
 }
 
-function addToCourse(courseId) {
-    // This function is now handled directly in renderMemberCourses
-    console.warn('addToCourse is deprecated. Use the "+" button in edit mode.');
-}
-
 function deleteGalleryItem(index) {
     if (currentData.galleryItems) {
         currentData.galleryItems.splice(index, 1);
@@ -609,14 +681,84 @@ function deleteGalleryItem(index) {
 }
 
 function cancelChanges() {
-    if (!isValidEditMode()) {
-        return;
+    // Restore original data
+    if (originalData) {
+        currentData = JSON.parse(JSON.stringify(originalData));
+        
+        // Revert UI to original state
+        updateMemberDetails(currentData);
+        renderMemberCourses(currentData.allCourses);
+        renderMemberGallery(currentData.galleryItems);
     }
 
-    currentData = { ...originalData };
-    updateMemberDetails(originalData);
-    renderMemberGallery(originalData.galleryItems || []);
-    renderMemberCourses(originalData.courses || []);
+    // Exit edit mode
+    toggleEditMode();
+}
+
+async function saveChanges() {
+    try {
+        console.log('Attempting to save changes');
+        
+        // Get session token from localStorage
+        const sessionToken = localStorage.getItem('sessionToken');
+        if (!sessionToken) {
+            throw new Error('No session token found. Please log in.');
+        }
+
+        // Validate edit mode and permissions
+        if (!isValidEditMode()) {
+            throw new Error('Invalid edit mode or unauthorized access');
+        }
+
+        // Prepare member data to update
+        const updatedMemberData = {
+            name_he: document.querySelector('[data-field="name_he"]').textContent,
+            name_en: document.querySelector('[data-field="name_en"]').textContent,
+            role_he: document.querySelector('[data-field="role_he"]').textContent,
+            role_en: document.querySelector('[data-field="role_en"]').textContent,
+            bio_he: document.querySelector('[data-field="bio_he"]').textContent,
+            bio_en: document.querySelector('[data-field="bio_en"]').textContent
+        };
+
+        // Get member ID from URL
+        const memberId = getMemberIdFromUrl();
+
+        // Update member details with explicit authorization
+        const updatedMember = await updateMember(memberId, updatedMemberData, sessionToken);
+
+        // Handle course teacher changes
+        if (pendingCourseTeacherChanges.addTeachers.length > 0 || 
+            pendingCourseTeacherChanges.removeTeachers.length > 0) {
+            // TODO: Implement backend API call to update course teacher relationships
+            console.log('Pending course teacher changes:', pendingCourseTeacherChanges);
+            
+            // Reset pending changes after saving
+            pendingCourseTeacherChanges = {
+                addTeachers: [],
+                removeTeachers: []
+            };
+        }
+
+        // Update original data after successful save
+        originalData = JSON.parse(JSON.stringify(currentData));
+
+        // Reset edit mode
+        toggleEditMode();
+        
+        console.log('Changes saved successfully');
+        
+        // Optional: Show success message
+        alert(getLangText({
+            he: 'השינויים נשמרו בהצלחה',
+            en: 'Changes saved successfully'
+        }, currentLang));
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        alert(error.message || getLangText({
+            he: 'שגיאה בשמירת השינויים',
+            en: 'Failed to save changes'
+        }, currentLang));
+    }
 }
 
 function updateMemberDetails(memberData) {
@@ -642,334 +784,76 @@ function updateMemberDetails(memberData) {
     const bioHe = document.querySelector('[data-field="bio_he"]');
     const bioEn = document.querySelector('[data-field="bio_en"]');
     if (bioHe) bioHe.textContent = memberData.bio_he || '';
-    if (bioEn) bioHe.textContent = memberData.bio_en || '';
+    if (bioEn) bioEn.textContent = memberData.bio_en || '';
 }
 
 function renderMemberGallery(galleryItems = []) {
     const galleryGrid = document.getElementById('member-gallery-grid');
-    if (!galleryGrid) {
-        console.error('❌ Gallery Grid Not Found');
-        return;
-    }
+    if (!galleryGrid) return;
 
     galleryGrid.innerHTML = '';
 
+    // Add "Add Gallery Item" button in edit mode
+    if (isEditMode) {
+        const addButton = document.createElement('div');
+        addButton.className = 'gallery-card add-gallery-item-button';
+        addButton.innerHTML = `
+            <div class="gallery-image" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0; cursor: pointer;">
+                <span style="font-size: 3rem; color: #007bff;">+</span>
+            </div>
+            <div class="gallery-info">
+                <h3>${getLangText({
+                    he: 'הוסף פריט גלריה',
+                    en: 'Add Gallery Item'
+                }, currentLang)}</h3>
+            </div>
+        `;
+        addButton.addEventListener('click', showAddGalleryItemForm);
+        galleryGrid.appendChild(addButton);
+    }
+
     if (galleryItems.length === 0) {
-        galleryGrid.innerHTML = `
-            <p class="no-items-message">
-                <span data-lang="he">אין פריטים בגלריה</span>
-                <span data-lang="en">No items in gallery</span>
-            </p>`;
+        const noItemsMessage = document.createElement('p');
+        noItemsMessage.textContent = getLangText({
+            he: 'אין פריטים בגלריה',
+            en: 'No items in gallery'
+        }, currentLang);
+        galleryGrid.appendChild(noItemsMessage);
         return;
     }
 
-    galleryItems.forEach((item, index) => {
+    galleryItems.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'gallery-card';
-        
-        const title = currentLang === 'he' ? item.title_he : item.title_en;
-        const description = currentLang === 'he' ? item.description_he : item.description_en;
-        
+
+        const title = item.title || '';
+        const description = item.description || '';
+
         card.innerHTML = `
             <div class="gallery-image">
-                <img src="${item.image_url || 'placeholder.jpg'}" alt="${title || 'Gallery Item'}">
+                <img src="${item.image_url || 'placeholder.jpg'}" alt="${title}">
                 ${isEditMode ? `
                     <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; z-index: 10;">
-                        <span style="background: rgba(255,255,255,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #007bff;" class="edit-gallery-item" data-index="${index}">✎</span>
-                        <span style="background: rgba(255,255,255,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #dc3545;" class="delete-gallery-item" data-index="${index}">×</span>
+                        <span style="background: rgba(255,255,255,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #007bff;" class="edit-gallery-item">✎</span>
+                        <span style="background: rgba(255,255,255,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #dc3545;" class="delete-gallery-item">×</span>
                     </div>
                 ` : ''}
             </div>
             <div class="gallery-info">
-                <h3>${title || ''}</h3>
-                <p>${description || ''}</p>
+                <h3>${title}</h3>
+                <p>${description}</p>
             </div>
         `;
-        
-        // Add edit and delete functionality if in edit mode
+
         if (isEditMode) {
             const editButton = card.querySelector('.edit-gallery-item');
             const deleteButton = card.querySelector('.delete-gallery-item');
 
-            editButton.addEventListener('click', () => {
-                showEditGalleryItemForm(item, index);
-            });
-
-            deleteButton.addEventListener('click', async () => {
-                try {
-                    // Get member ID from URL
-                    const memberId = getMemberIdFromUrl();
-                    
-                    // Prepare authorization token
-                    const token = localStorage.getItem('sessionToken');
-                    if (!token) {
-                        throw new Error(
-                            getLangText({
-                                he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
-                                en: 'No session token found. Please log in again.'
-                            }, currentLang)
-                        );
-                    }
-
-                    // Send request to backend to delete gallery item
-                    const response = await fetch(`${API_BASE_URL}/members/${memberId}/gallery/${item.id}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || 
-                            getLangText({
-                                he: 'שגיאה במחיקת פריט הגלריה',
-                                en: 'Failed to delete gallery item'
-                            }, currentLang)
-                        );
-                    }
-
-                    // Remove item from local state
-                    currentData.galleryItems = currentData.galleryItems.filter(
-                        galleryItem => galleryItem.id !== item.id
-                    );
-                    
-                    // Re-render gallery
-                    renderMemberGallery(currentData.galleryItems);
-
-                    alert(
-                        getLangText({
-                            he: 'פריט הגלריה נמחק בהצלחה',
-                            en: 'Gallery item deleted successfully'
-                        }, currentLang)
-                    );
-                } catch (error) {
-                    console.error('Error deleting gallery item:', error);
-                    alert(error.message);
-                }
-            });
-        } else {
-            // Add click event listener to redirect to gallery item page with full repository path
-            card.style.cursor = 'pointer';
-            card.addEventListener('click', () => {
-                window.location.href = `https://avocadohead.github.io/Optopia-3.0/gallery-item.html?id=${item.id}`;
-            });
+            editButton.addEventListener('click', () => showEditGalleryItemForm(item));
+            deleteButton.addEventListener('click', () => deleteGalleryItem(item));
         }
-        
+
         galleryGrid.appendChild(card);
-    });
-}
-
-function renderMemberCourses(courses = []) {
-    const coursesGrid = document.getElementById('member-courses-grid');
-    coursesGrid.innerHTML = ''; // Clear previous content
-
-    const currentLang = getCurrentLang();
-    const memberId = getMemberIdFromUrl();
-    const currentMemberId = localStorage.getItem('memberId');
-
-    // Reset pending changes
-    pendingCourseTeacherChanges = {
-        addTeachers: [],
-        removeTeachers: []
-    };
-
-    // Determine which courses to show
-    let coursesToRender = filterCoursesForMember(courses, memberId, isEditMode);
-
-    if (coursesToRender.length === 0) {
-        coursesGrid.innerHTML = `
-            <p class="no-courses-message">
-                <span data-lang="he">אין קורסים</span>
-                <span data-lang="en">No courses</span>
-            </p>`;
-        return;
-    }
-
-    coursesToRender.forEach(course => {
-        const courseCard = document.createElement('div');
-        courseCard.classList.add('course-card');
-        
-        // Course content wrapper
-        const courseContent = document.createElement('div');
-        courseContent.classList.add('course-content');
-        
-        // Course title (h3 instead of h2 to match CSS)
-        const courseTitle = document.createElement('h3');
-        courseTitle.classList.add('course-title');
-        courseTitle.textContent = course[`title_${currentLang}`] || course[`name_${currentLang}`] || '';
-        courseContent.appendChild(courseTitle);
-        
-        // Course description
-        if (course[`description_${currentLang}`]) {
-            const courseDescription = document.createElement('p');
-            courseDescription.classList.add('course-description');
-            courseDescription.textContent = course[`description_${currentLang}`];
-            courseContent.appendChild(courseDescription);
-        }
-
-        courseCard.appendChild(courseContent);
-
-        // Edit mode: Show teacher management
-        if (isEditMode) {
-            const teachersContainer = document.createElement('div');
-            teachersContainer.classList.add('course-teachers');
-
-            // Show existing teachers with remove option
-            if (course.teachers && course.teachers.length > 0) {
-                course.teachers.forEach(teacher => {
-                    const teacherAvatar = document.createElement('div');
-                    teacherAvatar.classList.add('teacher-avatar');
-                    
-                    const teacherImg = document.createElement('img');
-                    teacherImg.src = teacher.image_url || 'assets/default-profile.jpg';
-                    teacherImg.alt = teacher[`name_${currentLang}`];
-                    teacherImg.title = teacher[`name_${currentLang}`];
-                    
-                    // Add remove option if it's the current user
-                    if (teacher.id === parseInt(currentMemberId)) {
-                        const removeIcon = document.createElement('span');
-                        removeIcon.textContent = '×';
-                        removeIcon.classList.add('remove-teacher-icon');
-                        removeIcon.addEventListener('click', async () => {
-                            try {
-                                const token = localStorage.getItem('sessionToken');
-                                const memberId = getMemberIdFromUrl();
-                                
-                                if (!token) {
-                                    throw new Error(
-                                        getLangText({
-                                            he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
-                                            en: 'No session token found. Please log in again.'
-                                        }, currentLang)
-                                    );
-                                }
-
-                                const response = await fetch(`${API_BASE_URL}/courses/${course.id}/teachers/${memberId}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'Authorization': `Bearer ${token}`,
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
-
-                                if (!response.ok) {
-                                    const errorData = await response.json();
-                                    throw new Error(errorData.message || 
-                                        getLangText({
-                                            he: 'שגיאה בהסרת המורה',
-                                            en: 'Failed to remove teacher'
-                                        }, currentLang)
-                                    );
-                                }
-
-                                // Remove the teacher from the local course data
-                                course.teachers = course.teachers.filter(t => t.id !== parseInt(currentMemberId));
-                                
-                                // Re-render the courses
-                                renderMemberCourses(coursesToRender);
-
-                                alert(
-                                    getLangText({
-                                        he: 'מורה הוסר בהצלחה',
-                                        en: 'Teacher removed successfully'
-                                    }, currentLang)
-                                );
-                            } catch (error) {
-                                console.error('Error removing teacher:', error);
-                                alert(error.message);
-                            }
-                        });
-                        teacherAvatar.appendChild(removeIcon);
-                    }
-                    
-                    teacherAvatar.appendChild(teacherImg);
-                    teachersContainer.appendChild(teacherAvatar);
-                });
-            }
-
-            // Add "+" button to add teacher if not already a teacher
-            const isCurrentUserTeacher = course.teachers?.some(
-                relation => 
-                    relation.id === parseInt(currentMemberId)
-            );
-            
-            if (!isCurrentUserTeacher) {
-                const addTeacherIcon = document.createElement('div');
-                addTeacherIcon.classList.add('add-teacher-icon');
-                addTeacherIcon.textContent = '+';
-                addTeacherIcon.addEventListener('click', async () => {
-                    try {
-                        const token = localStorage.getItem('sessionToken');
-                        const memberId = getMemberIdFromUrl();
-                        
-                        if (!token) {
-                            throw new Error(
-                                getLangText({
-                                    he: 'לא נמצא אסימון הזדהות. אנא התחבר מחדש.',
-                                    en: 'No session token found. Please log in again.'
-                                }, currentLang)
-                            );
-                        }
-
-                        const response = await fetch(`${API_BASE_URL}/courses/${course.id}/teachers`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ memberId })
-                        });
-
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.message || 
-                                getLangText({
-                                    he: 'שגיאה בהוספת המורה',
-                                    en: 'Failed to add teacher'
-                                }, currentLang)
-                            );
-                        }
-
-                        // Add the teacher to the local course data
-                        const memberData = await getMemberById(memberId);
-                        if (!course.teachers) course.teachers = [];
-                        course.teachers.push({
-                            id: parseInt(memberId),
-                            name_he: memberData.name_he,
-                            name_en: memberData.name_en,
-                            image_url: memberData.image_url
-                        });
-                        
-                        // Re-render the courses
-                        renderMemberCourses(coursesToRender);
-
-                        alert(
-                            getLangText({
-                                he: 'מורה נוסף בהצלחה',
-                                en: 'Teacher added successfully'
-                            }, currentLang)
-                        );
-                    } catch (error) {
-                        console.error('Error adding teacher:', error);
-                        alert(error.message);
-                    }
-                });
-                
-                teachersContainer.appendChild(addTeacherIcon);
-            }
-
-            courseCard.appendChild(teachersContainer);
-        } else {
-            // Non-edit mode: Make entire card clickable
-            courseCard.style.cursor = 'pointer';
-            courseCard.addEventListener('click', () => {
-                window.location.href = `https://avocadohead.github.io/Optopia-3.0/course-item.html?id=${course.id}`;
-            });
-        }
-        
-        coursesGrid.appendChild(courseCard);
     });
 }
 

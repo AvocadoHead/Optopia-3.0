@@ -19,6 +19,12 @@ function toggleLanguage() {
     
     console.log(`Language toggled: ${prevLang} → ${currentLang}`);
     
+    // Update language toggle button text
+    const toggleBtn = document.querySelector('button[onclick="toggleLanguage()"]');
+    if (toggleBtn) {
+        toggleBtn.textContent = currentLang === 'he' ? 'EN' : 'HE';
+    }
+    
     updateLanguageDisplay();
     
     // Re-render dynamic content based on current page

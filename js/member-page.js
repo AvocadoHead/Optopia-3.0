@@ -56,6 +56,13 @@ function setupEditMode(memberId) {
     const currentMemberId = localStorage.getItem('memberId');
     const isOwnProfile = isLoggedIn && memberId === currentMemberId;
 
+    console.log('Edit Mode Setup Debug:', {
+        memberId,
+        currentMemberId,
+        isLoggedIn,
+        isOwnProfile
+    });
+
     if (isOwnProfile) {
         // Create edit mode toggle button
         const editButton = document.createElement('button');
@@ -75,6 +82,15 @@ function setupEditMode(memberId) {
                              document.body;
         
         navContainer.appendChild(editButton);
+
+        // Check for edit mode in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const shouldEnableEditMode = urlParams.get('edit') === 'true';
+
+        if (shouldEnableEditMode) {
+            console.log('Automatically enabling edit mode');
+            toggleEditMode();
+        }
     }
 }
 
@@ -163,36 +179,31 @@ async function fetchAllCoursesForEditMode() {
 }
 
 function renderMemberCourses(courses = [], isEditMode = false) {
-    const coursesContainer = document.getElementById('member-courses-container');
+    const coursesContainer = document.getElementById('member-courses');
     if (!coursesContainer) return;
 
-    // Clear previous content
+    // Clear existing courses
     coursesContainer.innerHTML = '';
 
-    // Filter courses if not in edit mode
-    const memberId = getMemberIdFromUrl();
-    const filteredCourses = isEditMode ? 
-        courses : 
-        filterCoursesForMember(courses, memberId);
+    // Filter courses the member teaches
+    const memberCourses = filterCoursesForMember(courses, getMemberIdFromUrl(), isEditMode);
+
+    // If no courses, show a message
+    if (memberCourses.length === 0) {
+        const noCoursesMessage = document.createElement('p');
+        noCoursesMessage.textContent = getLangText({
+            he: 'אין קורסים כרגע',
+            en: 'No courses at the moment'
+        }, currentLang);
+        coursesContainer.appendChild(noCoursesMessage);
+        return;
+    }
 
     // Render courses
-    filteredCourses.forEach((course, index) => {
+    memberCourses.forEach((course, index) => {
         const courseElement = createMemberCourseElement(course, index, isEditMode);
         coursesContainer.appendChild(courseElement);
     });
-
-    // Add "Add Course" button in edit mode
-    if (isEditMode) {
-        const addCourseButton = document.createElement('button');
-        addCourseButton.id = 'add-course-btn';
-        addCourseButton.classList.add('nav-btn');
-        addCourseButton.textContent = getLangText({
-            he: 'הוסף קורס',
-            en: 'Add Course'
-        }, currentLang);
-        addCourseButton.addEventListener('click', showAddCourseForm);
-        coursesContainer.appendChild(addCourseButton);
-    }
 }
 
 function createMemberCourseElement(course, index, isEditMode = false) {
@@ -789,20 +800,18 @@ function getMemberIdFromUrl() {
 }
 
 function filterCoursesForMember(courses, memberId, isEditMode = false) {
+    if (!courses || !memberId) return [];
+
+    // In edit mode, show all courses
     if (isEditMode) {
-        return courses;
+        return currentData.allCourses || [];
     }
 
-    // In non-edit mode, only show courses where the member teaches
-    const filteredCourses = courses.filter(course => {
-        if (!course.teachers || course.teachers.length === 0) return false;
-
-        return course.teachers.some(teacher => 
-            teacher.id === memberId
-        );
-    });
-
-    return filteredCourses;
+    // In view mode, filter courses the member teaches
+    return courses.filter(course => 
+        course.teachers && 
+        course.teachers.some(teacher => teacher.memberId === memberId)
+    );
 }
 
 // Modify existing initialization to include edit mode setup

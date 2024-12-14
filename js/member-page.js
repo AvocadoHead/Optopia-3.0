@@ -825,7 +825,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (memberId) {
         try {
             await loadMemberData(memberId);
-            setupEditMode(memberId);
+            // setupEditMode(memberId);
             updateLanguageDisplay();
         } catch (error) {
             console.error('Error loading member data:', error);

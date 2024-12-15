@@ -148,11 +148,14 @@
 
                 // If logged in and member is the current user, load edit mode
                 if (isLoggedIn && memberId === currentUserId) {
+                    console.log('Loading edit script for current user');
                     scriptElement.src = './js/member-page-edit.js';
                     document.body.classList.add('edit-mode');
                 } else {
                     // Otherwise, load view mode
+                    console.log('Loading view script for other user');
                     scriptElement.src = './js/member-page-view.js';
+                    document.body.classList.remove('edit-mode');
                 }
 
                 document.body.appendChild(scriptElement);
@@ -175,6 +178,9 @@
                 if (!response.ok) {
                     // Invalid token, load view script
                     isLoggedIn = false;
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userId');
                     loadMemberScript();
                     return null;
                 }
@@ -199,7 +205,8 @@
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('userId');
                 
-                // Load view script
+                // Always load view script on error
+                isLoggedIn = false;
                 loadMemberScript();
             });
         });

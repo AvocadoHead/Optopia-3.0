@@ -1,164 +1,143 @@
-import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
 import { 
     getMemberById, 
     getAllCourses, 
     getAllGalleryItems 
 } from './api-service.js';
+import { 
+    handleError, 
+    getLangText, 
+    getCurrentLang, 
+    setCurrentLang, 
+    getMemberIdFromUrl 
+} from './utils.js';
 
-// Authentication utility functions
-function isUserLoggedIn() {
-    return !!localStorage.getItem('authToken');
+let currentLang = getCurrentLang() || 'he';
+let memberData = null;
+let coursesData = [];
+let galleryData = [];
+
+function updateLanguageDisplay() {
+    document.querySelectorAll('[data-lang]').forEach(el => {
+        el.style.display = el.dataset.lang === currentLang ? '' : 'none';
+    });
 }
 
-function getCurrentUserId() {
-    return localStorage.getItem('userId');
+function renderMemberDetails(member) {
+    if (!member) return;
+
+    const nameElement = document.getElementById('member-name');
+    const roleElement = document.getElementById('member-role');
+    const bioElement = document.getElementById('member-bio');
+    const imageElement = document.getElementById('member-image');
+
+    nameElement.textContent = currentLang === 'he' ? member.name_he : member.name_en;
+    roleElement.textContent = currentLang === 'he' ? member.role_he : member.role_en;
+    bioElement.textContent = currentLang === 'he' ? member.bio_he : member.bio_en;
+    
+    imageElement.src = member.image_url || 'assets/default-profile.jpg';
+    imageElement.alt = currentLang === 'he' ? member.name_he : member.name_en;
 }
 
-class MemberPageView {
-    constructor() {
-        // Redirect to login if not authenticated
-        if (!isUserLoggedIn()) {
-            window.location.href = 'login.html';
-            return;
-        }
+function renderMemberCourses(courses) {
+    const coursesContainer = document.getElementById('member-courses-grid');
+    coursesContainer.innerHTML = ''; // Clear existing courses
 
-        this.currentLang = getCurrentLang();
-        this.memberId = new URLSearchParams(window.location.search).get('id');
+    const memberCourses = courses.filter(course => 
+        course.teachers && 
+        course.teachers.some(teacher => teacher.id === memberData.id)
+    );
+
+    memberCourses.forEach(course => {
+        const courseCard = document.createElement('div');
+        courseCard.className = 'course-card';
         
-        // Additional validation
-        if (!this.memberId) {
-            alert('Invalid member ID');
-            window.location.href = 'members.html';
-            return;
-        }
-    }
+        const title = currentLang === 'he' ? course.title_he : course.title_en;
+        const description = currentLang === 'he' ? course.description_he : course.description_en;
 
-    async init() {
-        try {
-            const [memberData, courses, galleryItems] = await Promise.all([
-                this.fetchMemberDetails(),
-                this.fetchMemberCourses(),
-                this.fetchMemberGalleryItems()
-            ]);
+        courseCard.innerHTML = `
+            <img src="${course.avatar_url || 'assets/default-course.jpg'}" 
+                 alt="${title}" 
+                 class="course-image">
+            <div class="course-details">
+                <h3>${title}</h3>
+                <p>${description}</p>
+            </div>
+        `;
 
-            this.renderMemberDetails(memberData);
-            this.renderMemberCourses(courses);
-            this.renderMemberGallery(galleryItems);
-        } catch (error) {
-            this.handleError(error);
-        }
-    }
-
-    async fetchMemberDetails() {
-        return await getMemberById(this.memberId);
-    }
-
-    async fetchMemberCourses() {
-        const allCourses = await getAllCourses();
-        // Filter courses where this member is a teacher
-        return allCourses.filter(course => 
-            course.teachers && 
-            course.teachers.some(teacher => teacher.id === parseInt(this.memberId))
-        );
-    }
-
-    async fetchMemberGalleryItems() {
-        const allGalleryItems = await getAllGalleryItems();
-        // Filter gallery items by this member
-        return allGalleryItems.filter(item => item.artist_id === parseInt(this.memberId));
-    }
-
-    renderMemberDetails(memberData) {
-        // Populate name
-        const nameElement = document.getElementById('member-name');
-        nameElement.textContent = this.currentLang === 'he' 
-            ? memberData.name_he 
-            : memberData.name_en;
-        
-        // Populate role
-        const roleElement = document.getElementById('member-role');
-        roleElement.textContent = this.currentLang === 'he' 
-            ? memberData.role_he 
-            : memberData.role_en;
-        
-        // Populate bio
-        const bioElement = document.getElementById('member-bio');
-        bioElement.textContent = this.currentLang === 'he' 
-            ? memberData.bio_he 
-            : memberData.bio_en;
-    }
-
-    renderMemberCourses(courses) {
-        const coursesContainer = document.getElementById('member-courses');
-        coursesContainer.innerHTML = ''; // Clear existing courses
-
-        if (courses.length === 0) {
-            const noCoursesMessage = document.createElement('p');
-            noCoursesMessage.textContent = getLangText({
-                he: 'אין קורסים כרגע',
-                en: 'No courses at the moment'
-            }, this.currentLang);
-            coursesContainer.appendChild(noCoursesMessage);
-            return;
-        }
-
-        courses.forEach(course => {
-            const courseElement = document.createElement('div');
-            courseElement.classList.add('course-item');
-            
-            // Use language-specific course name
-            courseElement.textContent = this.currentLang === 'he' 
-                ? course.title_he 
-                : course.title_en;
-            
-            coursesContainer.appendChild(courseElement);
+        courseCard.addEventListener('click', () => {
+            window.location.href = `course-item.html?id=${course.id}`;
         });
-    }
 
-    renderMemberGallery(galleryItems) {
-        const galleryContainer = document.getElementById('member-gallery');
-        galleryContainer.innerHTML = ''; // Clear existing gallery
+        coursesContainer.appendChild(courseCard);
+    });
+}
 
-        if (galleryItems.length === 0) {
-            const noGalleryMessage = document.createElement('p');
-            noGalleryMessage.textContent = getLangText({
-                he: 'אין פריטים בגלריה כרגע',
-                en: 'No gallery items at the moment'
-            }, this.currentLang);
-            galleryContainer.appendChild(noGalleryMessage);
-            return;
+function renderMemberGallery(items) {
+    const galleryContainer = document.getElementById('member-gallery-grid');
+    galleryContainer.innerHTML = ''; // Clear existing gallery items
+
+    const memberGalleryItems = items.filter(item => 
+        item.artist && item.artist.id === memberData.id
+    );
+
+    memberGalleryItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'gallery-card';
+        
+        const title = currentLang === 'he' ? item.title_he : item.title_en;
+
+        card.innerHTML = `
+            <div class="gallery-image">
+                <img src="${item.image_url || 'assets/default-gallery.jpg'}" 
+                     alt="${title}" 
+                     onerror="this.src='assets/default-gallery.jpg'">
+            </div>
+            <div class="gallery-details">
+                <h3>${title}</h3>
+            </div>
+        `;
+
+        card.addEventListener('click', () => {
+            window.location.href = `gallery-item.html?id=${item.id}`;
+        });
+
+        galleryContainer.appendChild(card);
+    });
+}
+
+async function loadMemberData() {
+    try {
+        const memberId = getMemberIdFromUrl();
+        if (!memberId) {
+            throw new Error('No member ID provided');
         }
 
-        galleryItems.forEach(item => {
-            const itemElement = document.createElement('div');
-            itemElement.classList.add('gallery-item');
-            
-            const img = document.createElement('img');
-            img.src = item.image_url;
-            img.alt = this.currentLang === 'he' 
-                ? (item.title_he || 'תמונה') 
-                : (item.title_en || 'Image');
-            
-            itemElement.appendChild(img);
-            galleryContainer.appendChild(itemElement);
-        });
-    }
+        const [member, courses, galleryItems] = await Promise.all([
+            getMemberById(memberId),
+            getAllCourses(),
+            getAllGalleryItems()
+        ]);
 
-    handleError(error) {
-        console.error('Error loading member data:', error);
-        const errorContainer = document.createElement('div');
-        errorContainer.classList.add('error-message');
-        errorContainer.textContent = getLangText({
-            he: 'אירעה שגיאה בטעינת הנתונים',
-            en: 'An error occurred while loading data'
-        }, this.currentLang);
-        
-        document.querySelector('main').appendChild(errorContainer);
+        memberData = member;
+        coursesData = courses;
+        galleryData = galleryItems;
+
+        renderMemberDetails(member);
+        renderMemberCourses(courses);
+        renderMemberGallery(galleryItems);
+    } catch (error) {
+        handleError(error);
     }
 }
 
-// Initialize page on load
-document.addEventListener('DOMContentLoaded', () => {
-    const memberPageView = new MemberPageView();
-    memberPageView.init();
-});
+function initMemberPage() {
+    updateLanguageDisplay();
+    loadMemberData();
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', initMemberPage);
+
+// Expose functions for potential external use
+window.initMemberPage = initMemberPage;
+window.loadMemberData = loadMemberData;

@@ -146,14 +146,19 @@
                 const scriptElement = document.createElement('script');
                 scriptElement.type = 'module';
 
+                console.log('Loading script - Final check');
+                console.log('Is logged in:', isLoggedIn);
+                console.log('Current user ID:', currentUserId);
+                console.log('Member ID:', memberId);
+
                 // If logged in and member is the current user, load edit mode
-                if (isLoggedIn && memberId === currentUserId) {
-                    console.log('Loading edit script for current user');
+                if (isLoggedIn && currentUserId === memberId) {
+                    console.log('CONDITION MET: Loading EDIT script');
                     scriptElement.src = './js/member-page-edit.js';
                     document.body.classList.add('edit-mode');
                 } else {
                     // Otherwise, load view mode
-                    console.log('Loading view script for other user');
+                    console.log('CONDITION NOT MET: Loading VIEW script');
                     scriptElement.src = './js/member-page-view.js';
                     document.body.classList.remove('edit-mode');
                 }
@@ -175,6 +180,11 @@
                 }
             })
             .then(response => {
+                console.log('Session validation response:', response.status);
+                console.log('Session token:', sessionToken);
+                console.log('Current user ID:', currentUserId);
+                console.log('Member ID from URL:', memberId);
+
                 if (!response.ok) {
                     // Invalid token, load view script
                     isLoggedIn = false;
@@ -189,7 +199,13 @@
             .then(data => {
                 if (data) {
                     isLoggedIn = true;
-                    currentUserId = data.member.id;
+                    currentUserId = data.member.id.toString(); // Ensure string comparison
+                    memberId = memberId.toString(); // Ensure string comparison
+                    
+                    console.log('Validated user data:', data);
+                    console.log('Is logged in:', isLoggedIn);
+                    console.log('Current user ID:', currentUserId);
+                    console.log('Member ID:', memberId);
                     
                     // Store tokens for compatibility with existing scripts
                     localStorage.setItem('authToken', sessionToken);

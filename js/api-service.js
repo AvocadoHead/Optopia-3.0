@@ -111,6 +111,30 @@ export async function updateMember(id, data, token) {
     }
 }
 
+export async function updateMemberCourses(memberId, courseIds, token) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/members/${memberId}/courses`, {
+            method: 'PUT',
+            headers: {
+                ...defaultHeaders,
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ courseIds })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating member courses:', error);
+        throw error;
+    }
+}
+
 // Gallery API
 export async function getAllGalleryItems() {
     try {

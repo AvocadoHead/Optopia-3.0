@@ -1,4 +1,4 @@
-import { getLangText, getCurrentLang } from './utils.js';
+import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
 import { 
     getMemberById, 
     getAllCourses, 
@@ -8,12 +8,39 @@ import {
     updateGalleryItem,
     createGalleryItem
 } from './api-service.js';
-import { getCurrentUserId, getAuthToken } from './auth.js';
+
+// Authentication utility functions
+function isUserLoggedIn() {
+    return !!localStorage.getItem('authToken');
+}
+
+function getCurrentUserId() {
+    return localStorage.getItem('userId');
+}
+
+function getAuthToken() {
+    return localStorage.getItem('authToken');
+}
 
 class MemberPageEdit {
     constructor() {
+        // Redirect to login if not authenticated
+        if (!isUserLoggedIn()) {
+            window.location.href = 'login.html';
+            return;
+        }
+
         this.currentLang = getCurrentLang();
         this.memberId = getCurrentUserId();
+        
+        // Additional validation
+        const urlMemberId = new URLSearchParams(window.location.search).get('id');
+        if (!urlMemberId || urlMemberId !== this.memberId) {
+            alert('Unauthorized access');
+            window.location.href = 'members.html';
+            return;
+        }
+
         this.allCourses = [];
         this.memberCourses = [];
         this.memberData = null;

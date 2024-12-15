@@ -111,21 +111,32 @@
     </div>
 
     <script type="module">
-        import { isUserLoggedIn, getCurrentUserId } from './js/auth.js';
+        import { isUserLoggedIn, getCurrentUserId } from '/js/auth.js';
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Redirect to login if not authenticated
+            if (!isUserLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             const memberId = new URLSearchParams(window.location.search).get('id');
             const currentUserId = getCurrentUserId();
-            const isOwner = memberId === currentUserId;
 
-            // Dynamically load appropriate script
+            // Validate member ID
+            if (!memberId) {
+                alert('Invalid member ID');
+                window.location.href = 'members.html';
+                return;
+            }
+
+            // Determine script to load
             const scriptElement = document.createElement('script');
             scriptElement.type = 'module';
             
-            if (isUserLoggedIn() && isOwner) {
+            if (memberId === currentUserId) {
                 scriptElement.src = './js/member-page-edit.js';
-                // Show edit button for profile owner
-                document.getElementById('edit-button').style.display = 'block';
+                document.body.classList.add('edit-mode');
             } else {
                 scriptElement.src = './js/member-page-view.js';
             }

@@ -127,32 +127,68 @@
         let isLoggedIn = false;
         let currentUserId = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const memberId = new URLSearchParams(window.location.search).get('id');
-            
-            // Validate member ID
-            if (!memberId) {
-                alert('Invalid member ID');
-                window.location.href = 'members.html';
-                return;
-            }
-
-            // Check login status and session
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get session token and member ID
             const sessionToken = localStorage.getItem('sessionToken');
-            const authToken = localStorage.getItem('authToken');
+            const memberId = new URLSearchParams(window.location.search).get('id');
+
+            // Function to validate session
+            const validateSession = async () => {
+                // If no token, return false
+                if (!sessionToken) {
+                    console.log('No session token found');
+                    return { isLoggedIn: false, userData: null };
+                }
+
+                try {
+                    const response = await fetch('https://optopia-3-0-backend.onrender.com/api/auth/validate', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${sessionToken}`
+                        }
+                    });
+
+                    console.log('Session validation response:', response.status);
+                    console.log('Session token:', sessionToken);
+
+                    if (!response.ok) {
+                        console.log('Invalid session token');
+                        localStorage.removeItem('sessionToken');
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('userId');
+                        return { isLoggedIn: false, userData: null };
+                    }
+
+                    const userData = await response.json();
+                    console.log('Validated user data:', userData);
+
+                    return { 
+                        isLoggedIn: true, 
+                        userData: userData.member 
+                    };
+                } catch (error) {
+                    console.error('Session validation error:', error);
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userId');
+                    return { isLoggedIn: false, userData: null };
+                }
+            };
 
             // Determine which script to load
-            const loadMemberScript = () => {
+            const loadMemberScript = async () => {
+                const { isLoggedIn, userData } = await validateSession();
+                
                 const scriptElement = document.createElement('script');
                 scriptElement.type = 'module';
 
                 console.log('Loading script - Final check');
                 console.log('Is logged in:', isLoggedIn);
-                console.log('Current user ID:', currentUserId);
-                console.log('Member ID:', memberId);
+                console.log('Member ID from URL:', memberId);
+                console.log('User data:', userData);
 
                 // If logged in and member is the current user, load edit mode
-                if (isLoggedIn && currentUserId === memberId) {
+                if (isLoggedIn && userData && userData.id === memberId) {
                     console.log('CONDITION MET: Loading EDIT script');
                     scriptElement.src = './js/member-page-edit.js';
                     document.body.classList.add('edit-mode');
@@ -166,65 +202,8 @@
                 document.body.appendChild(scriptElement);
             };
 
-            // If no session token, load view script
-            if (!sessionToken) {
-                loadMemberScript();
-                return;
-            }
-
-            // Validate session
-            fetch('https://optopia-3-0-backend.onrender.com/api/auth/validate', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${sessionToken}`
-                }
-            })
-            .then(response => {
-                console.log('Session validation response:', response.status);
-                console.log('Session token:', sessionToken);
-                console.log('Current user ID:', currentUserId);
-                console.log('Member ID from URL:', memberId);
-
-                if (!response.ok) {
-                    // Invalid token, load view script
-                    isLoggedIn = false;
-                    localStorage.removeItem('sessionToken');
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('userId');
-                    loadMemberScript();
-                    return null;
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data) {
-                    isLoggedIn = true;
-                    currentUserId = data.member.id.toString(); // Ensure string comparison
-                    memberId = memberId.toString(); // Ensure string comparison
-                    
-                    console.log('Validated user data:', data);
-                    console.log('Is logged in:', isLoggedIn);
-                    console.log('Current user ID:', currentUserId);
-                    console.log('Member ID:', memberId);
-                    
-                    // Store tokens for compatibility with existing scripts
-                    localStorage.setItem('authToken', sessionToken);
-                    localStorage.setItem('userId', currentUserId);
-                }
-                
-                // Load appropriate script
-                loadMemberScript();
-            })
-            .catch(error => {
-                console.error('Login check failed:', error);
-                localStorage.removeItem('sessionToken');
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userId');
-                
-                // Always load view script on error
-                isLoggedIn = false;
-                loadMemberScript();
-            });
+            // Call the function to load the appropriate script
+            loadMemberScript();
         });
     </script>
 </body>

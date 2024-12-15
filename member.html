@@ -111,18 +111,25 @@
     </div>
 
     <script type="module">
-        import { isUserLoggedIn, getCurrentUserId } from 'https://optopia-3-0-backend.onrender.com/routes/auth.js';
+        import { getLangText, getCurrentLang, setCurrentLang } from './js/utils.js';
+        import { getMemberById, updateMember, getAllCourses } from './js/api-service.js';
+
+        // Global state with clear structure
+        let currentLang = getCurrentLang();
+        let isEditMode = false;
+        let originalData = null;
+        let currentData = {
+            memberDetails: null,
+            allCourses: [],
+            galleryItems: [],
+            teachingRelationships: []
+        };
+        let isLoggedIn = false;
+        let currentUserId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Redirect to login if not authenticated
-            if (!isUserLoggedIn()) {
-                window.location.href = 'login.html';
-                return;
-            }
-
             const memberId = new URLSearchParams(window.location.search).get('id');
-            const currentUserId = getCurrentUserId();
-
+            
             // Validate member ID
             if (!memberId) {
                 alert('Invalid member ID');
@@ -130,18 +137,71 @@
                 return;
             }
 
-            // Determine script to load
-            const scriptElement = document.createElement('script');
-            scriptElement.type = 'module';
-            
-            if (memberId === currentUserId) {
-                scriptElement.src = './js/member-page-edit.js';
-                document.body.classList.add('edit-mode');
-            } else {
-                scriptElement.src = './js/member-page-view.js';
+            // Check login status and session
+            const sessionToken = localStorage.getItem('sessionToken');
+            const authToken = localStorage.getItem('authToken');
+
+            // Determine which script to load
+            const loadMemberScript = () => {
+                const scriptElement = document.createElement('script');
+                scriptElement.type = 'module';
+
+                // If logged in and member is the current user, load edit mode
+                if (isLoggedIn && memberId === currentUserId) {
+                    scriptElement.src = './js/member-page-edit.js';
+                    document.body.classList.add('edit-mode');
+                } else {
+                    // Otherwise, load view mode
+                    scriptElement.src = './js/member-page-view.js';
+                }
+
+                document.body.appendChild(scriptElement);
+            };
+
+            // If no session token, load view script
+            if (!sessionToken) {
+                loadMemberScript();
+                return;
             }
 
-            document.body.appendChild(scriptElement);
+            // Validate session
+            fetch('https://optopia-3-0-backend.onrender.com/api/auth/validate', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${sessionToken}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Invalid token, load view script
+                    isLoggedIn = false;
+                    loadMemberScript();
+                    return null;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                    isLoggedIn = true;
+                    currentUserId = data.member.id;
+                    
+                    // Store tokens for compatibility with existing scripts
+                    localStorage.setItem('authToken', sessionToken);
+                    localStorage.setItem('userId', currentUserId);
+                }
+                
+                // Load appropriate script
+                loadMemberScript();
+            })
+            .catch(error => {
+                console.error('Login check failed:', error);
+                localStorage.removeItem('sessionToken');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userId');
+                
+                // Load view script
+                loadMemberScript();
+            });
         });
     </script>
 </body>

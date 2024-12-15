@@ -110,6 +110,28 @@
         </main>
     </div>
 
-    <script type="module" src="./js/member-page.js"></script>
+    <script type="module">
+        import { isUserLoggedIn, getCurrentUserId } from './js/auth.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const memberId = new URLSearchParams(window.location.search).get('id');
+            const currentUserId = getCurrentUserId();
+            const isOwner = memberId === currentUserId;
+
+            // Dynamically load appropriate script
+            const scriptElement = document.createElement('script');
+            scriptElement.type = 'module';
+            
+            if (isUserLoggedIn() && isOwner) {
+                scriptElement.src = './js/member-page-edit.js';
+                // Show edit button for profile owner
+                document.getElementById('edit-button').style.display = 'block';
+            } else {
+                scriptElement.src = './js/member-page-view.js';
+            }
+
+            document.body.appendChild(scriptElement);
+        });
+    </script>
 </body>
 </html>

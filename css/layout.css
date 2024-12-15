@@ -196,3 +196,56 @@ section .nav-btn {
         grid-template-columns: 1fr;
     }
 }
+
+/* Member Page Specific Styles */
+#cookie-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    z-index: 1000;
+    display: none;
+}
+
+/* Editable class - ONLY active in edit mode */
+.edit-mode .editable {
+    border: 1px dashed #ccc;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.edit-mode .editable:hover {
+    background: #f5f5f5;
+}
+
+/* View mode: no special styling for editable */
+.editable {
+    cursor: default;
+}
+
+.edit-controls {
+    display: none;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.edit-mode .edit-controls {
+    display: block;
+}
+
+/* Inline Language Toggle Styles */
+[data-lang="en"] {
+    display: none;
+}
+
+.en-mode [data-lang="he"] {
+    display: none;
+}
+
+.en-mode [data-lang="en"] {
+    display: inline;
+}

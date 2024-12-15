@@ -1,5 +1,9 @@
 import { getLangText, getCurrentLang } from './utils.js';
-import { getMemberById, getAllCourses, getAllGalleryItems } from './api-service.js';
+import { 
+    getMemberById, 
+    getAllCourses, 
+    getAllGalleryItems 
+} from './api-service.js';
 
 class MemberPageView {
     constructor() {
@@ -10,16 +14,36 @@ class MemberPageView {
     async init() {
         try {
             const [memberData, courses, galleryItems] = await Promise.all([
-                getMemberById(this.memberId),
-                getAllCourses(),
-                getAllGalleryItems()
+                this.fetchMemberDetails(),
+                this.fetchMemberCourses(),
+                this.fetchMemberGalleryItems()
             ]);
 
             this.renderMemberDetails(memberData);
             this.renderMemberCourses(courses);
+            this.renderMemberGallery(galleryItems);
         } catch (error) {
             this.handleError(error);
         }
+    }
+
+    async fetchMemberDetails() {
+        return await getMemberById(this.memberId);
+    }
+
+    async fetchMemberCourses() {
+        const allCourses = await getAllCourses();
+        // Filter courses where this member is a teacher
+        return allCourses.filter(course => 
+            course.teachers && 
+            course.teachers.some(teacher => teacher.id === parseInt(this.memberId))
+        );
+    }
+
+    async fetchMemberGalleryItems() {
+        const allGalleryItems = await getAllGalleryItems();
+        // Filter gallery items by this member
+        return allGalleryItems.filter(item => item.artist_id === parseInt(this.memberId));
     }
 
     renderMemberDetails(memberData) {
@@ -46,13 +70,7 @@ class MemberPageView {
         const coursesContainer = document.getElementById('member-courses');
         coursesContainer.innerHTML = ''; // Clear existing courses
 
-        // Filter courses where this member is a teacher
-        const memberCourses = courses.filter(course => 
-            course.teachers && 
-            course.teachers.some(teacher => teacher.memberId === this.memberId)
-        );
-
-        if (memberCourses.length === 0) {
+        if (courses.length === 0) {
             const noCoursesMessage = document.createElement('p');
             noCoursesMessage.textContent = getLangText({
                 he: 'אין קורסים כרגע',
@@ -62,16 +80,45 @@ class MemberPageView {
             return;
         }
 
-        memberCourses.forEach(course => {
+        courses.forEach(course => {
             const courseElement = document.createElement('div');
             courseElement.classList.add('course-item');
             
             // Use language-specific course name
             courseElement.textContent = this.currentLang === 'he' 
-                ? course.name_he 
-                : course.name_en;
+                ? course.title_he 
+                : course.title_en;
             
             coursesContainer.appendChild(courseElement);
+        });
+    }
+
+    renderMemberGallery(galleryItems) {
+        const galleryContainer = document.getElementById('member-gallery');
+        galleryContainer.innerHTML = ''; // Clear existing gallery
+
+        if (galleryItems.length === 0) {
+            const noGalleryMessage = document.createElement('p');
+            noGalleryMessage.textContent = getLangText({
+                he: 'אין פריטים בגלריה כרגע',
+                en: 'No gallery items at the moment'
+            }, this.currentLang);
+            galleryContainer.appendChild(noGalleryMessage);
+            return;
+        }
+
+        galleryItems.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.classList.add('gallery-item');
+            
+            const img = document.createElement('img');
+            img.src = item.image_url;
+            img.alt = this.currentLang === 'he' 
+                ? (item.title_he || 'תמונה') 
+                : (item.title_en || 'Image');
+            
+            itemElement.appendChild(img);
+            galleryContainer.appendChild(itemElement);
         });
     }
 

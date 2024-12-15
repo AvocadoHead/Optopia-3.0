@@ -1,14 +1,36 @@
-import { getLangText, getCurrentLang } from './utils.js';
+import { getLangText, getCurrentLang, setCurrentLang } from './utils.js';
 import { 
     getMemberById, 
     getAllCourses, 
     getAllGalleryItems 
 } from './api-service.js';
 
+// Authentication utility functions
+function isUserLoggedIn() {
+    return !!localStorage.getItem('authToken');
+}
+
+function getCurrentUserId() {
+    return localStorage.getItem('userId');
+}
+
 class MemberPageView {
     constructor() {
+        // Redirect to login if not authenticated
+        if (!isUserLoggedIn()) {
+            window.location.href = 'login.html';
+            return;
+        }
+
         this.currentLang = getCurrentLang();
         this.memberId = new URLSearchParams(window.location.search).get('id');
+        
+        // Additional validation
+        if (!this.memberId) {
+            alert('Invalid member ID');
+            window.location.href = 'members.html';
+            return;
+        }
     }
 
     async init() {

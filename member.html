@@ -4,45 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://optopia-3-0-backend.onrender.com https://optopia-3-0-backend.onrender.com/api/* http://localhost:3000/* https://www.google-analytics.com; script-src 'self' https://www.googletagmanager.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://* http://*;">
+    
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-V7QFQB5TH4"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', 'G-V7QFQB5TH4');
+        gtag('config', 'G-V7QFQB5TH4', {
+            'anonymize_ip': true,
+            'allow_ad_personalization_signals': false
+        });
     </script>
+
     <title>Optopia - Member Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/layout.css">
-    <style>
-        .edit-mode .editable {
-            border: 1px dashed #ccc;
-            padding: 5px;
-            cursor: pointer;
-        }
-        .edit-mode .editable:hover {
-            background: #f5f5f5;
-        }
-        .edit-controls {
-            display: none;
-            margin-top: 20px;
-            text-align: center;
-        }
-        .edit-mode .edit-controls {
-            display: block;
-        }
-    </style>
 </head>
 <body>
+    <div id="cookie-banner">
+        <p>
+            This website uses cookies to improve your experience. 
+            <button id="accept-cookies">Accept</button>
+            <button id="reject-cookies">Reject</button>
+        </p>
+    </div>
+
     <div class="container">
         <header class="secondary-header">
             <div class="logo-title-wrapper">
                 <h1 class="site-title">Optopia</h1>
-                <img src="https://drive.google.com/thumbnail?id=12iXrVE-B1wleWdjiNW7bC4Hl8plPnZfo" alt="Optopia Logo" class="logo">
+                <img src="assets/optopia-logo.png" alt="Optopia Logo" class="logo">
             </div>
             <div class="nav-buttons">
                 <a href="index.html" class="nav-btn">
@@ -73,13 +68,13 @@
                         <input type="file" id="image-upload" style="display: none;" accept="image/*">
                     </div>
                     <div class="member-info">
-                        <h1 id="member-name">
-                            <span class="editable" data-field="name_he" data-lang="he"></span>
-                            <span class="editable" data-field="name_en" data-lang="en" style="display:none;"></span>
+                        <h1 id="member-name" class="editable" data-field="name">
+                            <span data-lang="he"></span>
+                            <span data-lang="en" style="display:none;"></span>
                         </h1>
-                        <p id="member-role" class="member-role">
-                            <span class="editable" data-field="role_he" data-lang="he"></span>
-                            <span class="editable" data-field="role_en" data-lang="en" style="display:none;"></span>
+                        <p id="member-role" class="editable" data-field="role">
+                            <span data-lang="he"></span>
+                            <span data-lang="en" style="display:none;"></span>
                         </p>
                         <button id="edit-button" class="nav-btn" style="display: none;">
                             <span data-lang="he">ערוך פרופיל</span>
@@ -89,9 +84,9 @@
                 </div>
                 
                 <div class="member-bio">
-                    <p id="member-bio">
-                        <span class="editable" data-field="bio_he" data-lang="he"></span>
-                        <span class="editable" data-field="bio_en" data-lang="en" style="display:none;"></span>
+                    <p id="member-bio" class="editable" data-field="bio">
+                        <span data-lang="he"></span>
+                        <span data-lang="en" style="display:none;"></span>
                     </p>
                 </div>
 
@@ -111,56 +106,80 @@
     </div>
 
     <script type="module">
-        import { getLangText, getCurrentLang, setCurrentLang } from './js/utils.js';
-        import { getMemberById, updateMember, getAllCourses } from './js/api-service.js';
+        import { isLoggedIn } from './js/api-service.js';
+        import { getMemberIdFromUrl } from './js/utils.js';
 
-        // Global state with clear structure
-        let currentLang = getCurrentLang();
-        let isEditMode = false;
-        let originalData = null;
-        let currentData = {
-            memberDetails: null,
-            allCourses: [],
-            galleryItems: [],
-            teachingRelationships: []
-        };
-        let isLoggedIn = false;
-        let currentUserId = null;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const memberId = new URLSearchParams(window.location.search).get('id');
+        function initializeMemberPage() {
+            console.log('Initializing Member Page');
             
-            // Validate member ID
+            const memberId = getMemberIdFromUrl();
+            console.log('Member ID:', memberId);
+
             if (!memberId) {
-                alert('Invalid member ID');
+                console.error('Invalid member ID');
                 window.location.href = 'members.html';
                 return;
             }
 
-            // Determine which script to load
-            const loadMemberScript = () => {
-                const scriptElement = document.createElement('script');
-                scriptElement.type = 'module';
+            const loggedIn = isLoggedIn();
+            const currentUserId = localStorage.getItem('userId');
+            
+            console.log('Login Status:', {
+                isLoggedIn: loggedIn,
+                currentUserId: currentUserId,
+                memberId: memberId
+            });
 
-                // Check if user is logged in and is the current member
-                const sessionToken = localStorage.getItem('sessionToken');
-                const currentUserId = localStorage.getItem('userId');
+            const isOwnProfile = loggedIn && currentUserId === memberId;
+            const scriptToLoad = isOwnProfile 
+                ? './js/member-page-edit.js' 
+                : './js/member-page-view.js';
 
-                // By default, load view script
-                scriptElement.src = './js/member-page-view.js';
-                document.body.classList.remove('edit-mode');
+            console.log('Loading script:', scriptToLoad);
 
-                // If logged in and current user matches member, load edit script
-                if (sessionToken && currentUserId === memberId) {
-                    scriptElement.src = './js/member-page-edit.js';
-                    document.body.classList.add('edit-mode');
-                }
+            import(scriptToLoad)
+                .then(() => {
+                    console.log('Script loaded successfully');
+                    
+                    const editButton = document.getElementById('edit-button');
+                    if (editButton) {
+                        editButton.style.display = isOwnProfile ? 'block' : 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading member page script:', error);
+                });
+        }
 
-                document.body.appendChild(scriptElement);
-            };
+        function initCookieConsent() {
+            const cookieBanner = document.getElementById('cookie-banner');
+            const acceptButton = document.getElementById('accept-cookies');
+            const rejectButton = document.getElementById('reject-cookies');
 
-            // Load the appropriate script
-            loadMemberScript();
+            if (localStorage.getItem('cookie-consent') === null) {
+                cookieBanner.style.display = 'block';
+            }
+
+            acceptButton.addEventListener('click', () => {
+                localStorage.setItem('cookie-consent', 'accepted');
+                cookieBanner.style.display = 'none';
+                gtag('consent', 'update', {
+                    'analytics_storage': 'granted'
+                });
+            });
+
+            rejectButton.addEventListener('click', () => {
+                localStorage.setItem('cookie-consent', 'rejected');
+                cookieBanner.style.display = 'none';
+                gtag('consent', 'update', {
+                    'analytics_storage': 'denied'
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMemberPage();
+            initCookieConsent();
         });
     </script>
 </body>

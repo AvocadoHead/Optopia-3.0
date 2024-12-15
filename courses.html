@@ -61,18 +61,15 @@
     <script type="module" src="js/api-service.js"></script>
     <script type="module" src="js/main.js"></script>
     <script type="module">
-
-        // OLD CODE LEFTOVERS?
-        // import { initCoursesPage } from './js/main.js';
+        import { initCoursesPage } from './js/main.js';
         
-        // document.addEventListener('DOMContentLoaded', async () => {
-        //     try {
-        //         await initCoursesPage();
-        //     } catch (error) {
-        //         console.error('Error initializing courses page:', error);
-        //     }
-        //     }
-);
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await initCoursesPage();
+            } catch (error) {
+                console.error('Error initializing courses page:', error);
+            }
+        });
     </script>
-</body>
+    </body>
 </html>

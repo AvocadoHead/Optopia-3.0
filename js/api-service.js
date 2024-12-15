@@ -140,7 +140,7 @@ export async function getGalleryItemById(id) {
 
 export async function createGalleryItem(formData, token) {
     try {
-        // If formData is not a FormData object, convert it
+        // Ensure formData is a FormData object
         const dataToSend = formData instanceof FormData 
             ? formData 
             : Object.keys(formData).reduce((form, key) => {
@@ -158,7 +158,7 @@ export async function createGalleryItem(formData, token) {
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Error response:', errorText);
+            console.error('Gallery Item Creation Error:', errorText);
             throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
         }
         
@@ -298,37 +298,6 @@ export async function updateCourse(id, data) {
         return await response.json();
     } catch (error) {
         console.error('Error updating course:', error);
-        throw error;
-    }
-}
-
-export async function createGalleryItem(formData, token) {
-    try {
-        // If formData is not a FormData object, convert it
-        const dataToSend = formData instanceof FormData 
-            ? formData 
-            : Object.keys(formData).reduce((form, key) => {
-                form.append(key, formData[key]);
-                return form;
-            }, new FormData());
-
-        const response = await fetch(`${API_BASE_URL}/gallery`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token || localStorage.getItem('authToken')}`
-            },
-            body: dataToSend
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        console.error('Error creating gallery item:', error);
         throw error;
     }
 }

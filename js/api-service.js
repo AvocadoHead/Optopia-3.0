@@ -28,10 +28,6 @@ export async function getAllCourses() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const courses = await response.json();
-        
-        // Log detailed course data for debugging
-        console.log('Courses with Teachers:', JSON.stringify(courses, null, 2));
-        
         return courses;
     } catch (error) {
         console.error('Error fetching courses with teachers:', error);
@@ -142,6 +138,77 @@ export async function getGalleryItemById(id) {
     }
 }
 
+export async function createGalleryItem(formData, token) {
+    try {
+        // If formData is not a FormData object, convert it
+        const dataToSend = formData instanceof FormData 
+            ? formData 
+            : Object.keys(formData).reduce((form, key) => {
+                form.append(key, formData[key]);
+                return form;
+            }, new FormData());
+
+        const response = await fetch(`${API_BASE_URL}/gallery`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token || localStorage.getItem('authToken')}`
+            },
+            body: dataToSend
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error creating gallery item:', error);
+        throw error;
+    }
+}
+
+export async function updateGalleryItem(id, data) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/gallery/${id}`, {
+            method: 'PUT',
+            headers: defaultHeaders,
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating gallery item:', error);
+        throw error;
+    }
+}
+
+export async function deleteGalleryItem(id, token) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/gallery/${id}`, {
+            method: 'DELETE',
+            headers: {
+                ...defaultHeaders,
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error deleting gallery item:', error);
+        throw error;
+    }
+}
+
 // Authentication API
 export async function login(identifier, password) {
     try {
@@ -218,23 +285,6 @@ export function isLoggedIn() {
 }
 
 // Update functions
-export async function updateGalleryItem(id, data) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/gallery/${id}`, {
-            method: 'PUT',
-            headers: defaultHeaders,
-            body: JSON.stringify(data)
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error updating gallery item:', error);
-        throw error;
-    }
-}
-
 export async function updateCourse(id, data) {
     try {
         const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
@@ -248,6 +298,37 @@ export async function updateCourse(id, data) {
         return await response.json();
     } catch (error) {
         console.error('Error updating course:', error);
+        throw error;
+    }
+}
+
+export async function createGalleryItem(formData, token) {
+    try {
+        // If formData is not a FormData object, convert it
+        const dataToSend = formData instanceof FormData 
+            ? formData 
+            : Object.keys(formData).reduce((form, key) => {
+                form.append(key, formData[key]);
+                return form;
+            }, new FormData());
+
+        const response = await fetch(`${API_BASE_URL}/gallery`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token || localStorage.getItem('authToken')}`
+            },
+            body: dataToSend
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error creating gallery item:', error);
         throw error;
     }
 }

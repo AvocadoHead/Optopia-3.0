@@ -63,6 +63,11 @@ function renderMemberDetails(member) {
         imageElement.src = member.image_url || 'assets/default-profile.jpg';
         imageElement.alt = currentLang === 'he' ? member.name_he : member.name_en;
 
+        // Prepare data attributes for potential edit mode
+        [nameElement, roleElement, bioElement].forEach(el => {
+            el.setAttribute('data-field', el.id.replace('member-', ''));
+        });
+
         log('Member details rendered successfully');
     } catch (error) {
         logError('Error rendering member details', error);

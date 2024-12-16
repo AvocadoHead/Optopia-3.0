@@ -149,32 +149,6 @@
                 });
         }
 
-        function initCookieConsent() {
-            const cookieBanner = document.getElementById('cookie-banner');
-            const acceptButton = document.getElementById('accept-cookies');
-            const rejectButton = document.getElementById('reject-cookies');
-
-            if (localStorage.getItem('cookie-consent') === null) {
-                cookieBanner.style.display = 'block';
-            }
-
-            acceptButton.addEventListener('click', () => {
-                localStorage.setItem('cookie-consent', 'accepted');
-                cookieBanner.style.display = 'none';
-                gtag('consent', 'update', {
-                    'analytics_storage': 'granted'
-                });
-            });
-
-            rejectButton.addEventListener('click', () => {
-                localStorage.setItem('cookie-consent', 'rejected');
-                cookieBanner.style.display = 'none';
-                gtag('consent', 'update', {
-                    'analytics_storage': 'denied'
-                });
-            });
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             initializeMemberPage();
             initCookieConsent();

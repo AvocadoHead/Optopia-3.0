@@ -25,9 +25,46 @@
     <link rel="stylesheet" href="css/layout.css">
     
     <!-- Load our modules in correct order -->
+    <script type="module">
+        import { isLoggedIn } from './js/api-service.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const memberPageViewScript = document.createElement('script');
+            memberPageViewScript.type = 'module';
+            memberPageViewScript.src = './js/member-page-view.js';
+
+            const memberPageEditScript = document.createElement('script');
+            memberPageEditScript.type = 'module';
+            memberPageEditScript.src = './js/member-page-edit.js';
+
+            try {
+                const loggedIn = await isLoggedIn();
+                
+                if (loggedIn) {
+                    // Show edit-related elements
+                    document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
+                        el.style.display = 'block';
+                    });
+                    
+                    // Replace view script with edit script
+                    document.head.appendChild(memberPageEditScript);
+                } else {
+                    // Hide edit-related elements
+                    document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                    
+                    // Use view script
+                    document.head.appendChild(memberPageViewScript);
+                }
+            } catch (error) {
+                console.error('Authentication check failed:', error);
+                // Fallback to view script
+                document.head.appendChild(memberPageViewScript);
+            }
+        });
+    </script>
     <script type="module" src="js/main.js" defer></script>
-    <script type="module" src="js/member-page-view.js" defer></script>
-    <script type="module" src="js/member-page-edit.js" defer></script>
 </head>
 <body>
     <div id="cookie-banner">
@@ -42,7 +79,7 @@
             </div>
         </div>
     </div>
-
+    
     <div class="container">
         <header class="secondary-header">
             <div class="nav-buttons">

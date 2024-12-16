@@ -11,7 +11,6 @@ import {
     handleError, 
     getLangText, 
     getCurrentLang, 
-    setCurrentLang, 
     getMemberIdFromUrl 
 } from './utils.js';
 
@@ -19,12 +18,6 @@ let currentLang = getCurrentLang() || 'he';
 let memberData = null;
 let coursesData = [];
 let galleryData = [];
-
-function updateLanguageDisplay() {
-    document.querySelectorAll('[data-lang]').forEach(el => {
-        el.style.display = el.dataset.lang === currentLang ? '' : 'none';
-    });
-}
 
 function renderMemberDetails(member) {
     if (!member) return;
@@ -250,7 +243,6 @@ function initMemberPage() {
         return;
     }
 
-    updateLanguageDisplay();
     loadMemberData();
 
     // Setup event listeners

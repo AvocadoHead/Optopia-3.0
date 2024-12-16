@@ -186,8 +186,6 @@ function renderMemberGallery(items) {
 // Main data loading function
 async function loadMemberData() {
     try {
-        log('Starting loadMemberData');
-        
         // Log localStorage contents for debugging
         console.log('LocalStorage Contents:', {
             sessionToken: localStorage.getItem('sessionToken'),

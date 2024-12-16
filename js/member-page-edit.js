@@ -4,8 +4,7 @@ import {
     getAllGalleryItems,
     updateMember,
     updateMemberCourses,
-    createGalleryItem,
-    deleteGalleryItem
+    createGalleryItem
 } from './api-service.js';
 import { 
     handleError, 
@@ -203,9 +202,21 @@ async function handleGalleryItemUpload(event) {
     }
 }
 
-const deleteGalleryItem = async (itemId) => {
+async function deleteGalleryItem(itemId) {
     try {
-        // Implementation of deleteGalleryItem
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            throw new Error('Authentication required');
+        }
+
+        const confirmDelete = confirm(getLangText({
+            he: 'האם אתה בטוח שברצונך למחוק פריט זה?',
+            en: 'Are you sure you want to delete this item?'
+        }, currentLang));
+
+        if (!confirmDelete) return;
+
+        // Delete from database
         const { error } = await supabase
             .from('gallery_items')
             .delete()
@@ -213,7 +224,7 @@ const deleteGalleryItem = async (itemId) => {
 
         if (error) throw error;
 
-        // Remove the corresponding image from storage
+        // Remove image from storage
         const { data: galleryItem } = await supabase
             .from('gallery_items')
             .select('image_url')
@@ -225,12 +236,18 @@ const deleteGalleryItem = async (itemId) => {
             await deleteImage(imagePath, STORAGE_BUCKETS.GALLERY_ITEMS);
         }
 
-        return true;
+        alert(getLangText({
+            he: 'פריט הגלריה נמחק בהצלחה',
+            en: 'Gallery item deleted successfully'
+        }, currentLang));
+
+        // Reload gallery data
+        await loadMemberData();
+
     } catch (error) {
-        console.error('Error deleting gallery item:', error);
-        return false;
+        handleError(error);
     }
-};
+}
 
 function initMemberPage() {
     // Check authentication

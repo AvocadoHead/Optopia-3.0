@@ -122,7 +122,7 @@
             }
 
             const loggedIn = isLoggedIn();
-            const currentUserId = localStorage.getItem('userId');
+            const currentUserId = localStorage.getItem('memberId');
             
             console.log('Login Status:', {
                 isLoggedIn: loggedIn,
@@ -131,9 +131,7 @@
             });
 
             const isOwnProfile = loggedIn && currentUserId === memberId;
-            const scriptToLoad = isOwnProfile 
-                ? './js/member-page-edit.js' 
-                : './js/member-page-view.js';
+            const scriptToLoad = './js/member-page-view.js';
 
             console.log('Loading script:', scriptToLoad);
 

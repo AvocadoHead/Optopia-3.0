@@ -19,6 +19,10 @@ function logError(message, error = null) {
     console.error(`[MemberPageView] ${message}`, error || '');
 }
 
+// Ensure global logging for debugging
+window.memberPageViewLog = log;
+window.memberPageViewLogError = logError;
+
 // Current language setting
 const currentLang = getCurrentLang() || 'he';
 
@@ -55,13 +59,23 @@ function renderMemberDetails(member) {
         }
 
         // Populate details with language-specific content
-        nameElement.textContent = currentLang === 'he' ? member.name_he : member.name_en;
-        roleElement.textContent = currentLang === 'he' ? member.role_he : member.role_en;
-        bioElement.textContent = currentLang === 'he' ? member.bio_he : member.bio_en;
+        const nameHe = nameElement.querySelector('[data-lang="he"]');
+        const nameEn = nameElement.querySelector('[data-lang="en"]');
+        const roleHe = roleElement.querySelector('[data-lang="he"]');
+        const roleEn = roleElement.querySelector('[data-lang="en"]');
+        const bioHe = bioElement.querySelector('[data-lang="he"]');
+        const bioEn = bioElement.querySelector('[data-lang="en"]');
+
+        if (nameHe) nameHe.textContent = member.name_he || '';
+        if (nameEn) nameEn.textContent = member.name_en || '';
+        if (roleHe) roleHe.textContent = member.role_he || '';
+        if (roleEn) roleEn.textContent = member.role_en || '';
+        if (bioHe) bioHe.textContent = member.bio_he || '';
+        if (bioEn) bioEn.textContent = member.bio_en || '';
         
         // Set image with fallback
         imageElement.src = member.image_url || 'assets/default-profile.jpg';
-        imageElement.alt = currentLang === 'he' ? member.name_he : member.name_en;
+        imageElement.alt = member.name_he || member.name_en || 'Member Profile';
 
         // Prepare data attributes for potential edit mode
         [nameElement, roleElement, bioElement].forEach(el => {
@@ -94,6 +108,13 @@ function renderMemberCourses(courses) {
 
     log('Filtered member courses', { memberCoursesCount: memberCourses.length });
 
+    if (memberCourses.length === 0) {
+        const noCoursesMessage = document.createElement('p');
+        noCoursesMessage.textContent = currentLang === 'he' ? 'אין קורסים זמינים' : 'No courses available';
+        coursesContainer.appendChild(noCoursesMessage);
+        return;
+    }
+
     memberCourses.forEach(course => {
         const courseCard = document.createElement('div');
         courseCard.className = 'course-card';
@@ -103,8 +124,8 @@ function renderMemberCourses(courses) {
 
         courseCard.innerHTML = `
             <div class="course-card-content">
-                <h3 class="course-title">${title}</h3>
-                <p class="course-description">${description}</p>
+                <h3 class="course-title">${title || 'Untitled Course'}</h3>
+                <p class="course-description">${description || ''}</p>
             </div>
         `;
         
@@ -132,6 +153,13 @@ function renderMemberGallery(items) {
 
     log('Filtered member gallery items', { memberGalleryItemsCount: memberGalleryItems.length });
 
+    if (memberGalleryItems.length === 0) {
+        const noGalleryMessage = document.createElement('p');
+        noGalleryMessage.textContent = currentLang === 'he' ? 'אין פריטי גלריה זמינים' : 'No gallery items available';
+        galleryContainer.appendChild(noGalleryMessage);
+        return;
+    }
+
     memberGalleryItems.forEach(item => {
         const card = document.createElement('div');
         card.className = 'gallery-card';
@@ -141,11 +169,11 @@ function renderMemberGallery(items) {
         card.innerHTML = `
             <div class="gallery-image">
                 <img src="${item.image_url || 'assets/default-gallery.jpg'}" 
-                     alt="${title}" 
+                     alt="${title || 'Untitled Gallery Item'}" 
                      onerror="this.src='assets/default-gallery.jpg'">
             </div>
             <div class="gallery-card-content">
-                <h3 class="gallery-title">${title}</h3>
+                <h3 class="gallery-title">${title || 'Untitled'}</h3>
             </div>
         `;
         
@@ -162,43 +190,44 @@ async function loadMemberData() {
         
         // Get member ID from URL
         const memberId = getMemberIdFromUrl();
-        log('Member ID from URL', memberId);
-        
+        log('Member ID from URL:', memberId);
+
         if (!memberId) {
-            logError('No member ID provided');
-            throw new Error('No member ID provided');
-        }
-
-        log('Fetching member data...');
-        const [member, courses, galleryItems] = await Promise.all([
-            getMemberById(memberId),
-            getAllCourses(),
-            getAllGalleryItems()
-        ]);
-
-        log('Fetched data', { 
-            member, 
-            coursesCount: courses.length, 
-            galleryItemsCount: galleryItems.length 
-        });
-
-        if (!member) {
-            logError('No member data found');
+            logError('Invalid or missing member ID');
             return;
         }
 
-        // Store fetched data
-        memberData = member;
-        coursesData = courses;
-        galleryData = galleryItems;
+        // Fetch member details
+        const member = await getMemberById(memberId);
+        log('Fetched member details:', member);
 
-        // Render all sections
+        if (!member) {
+            logError('No member data found for ID:', memberId);
+            return;
+        }
+
+        // Store member data globally
+        memberData = member;
+
+        // Render member details
         renderMemberDetails(member);
+
+        // Fetch all courses
+        const courses = await getAllCourses();
+        log('Fetched all courses:', courses);
+
+        // Render member courses
         renderMemberCourses(courses);
+
+        // Fetch all gallery items
+        const galleryItems = await getAllGalleryItems();
+        log('Fetched all gallery items:', galleryItems);
+
+        // Render member gallery
         renderMemberGallery(galleryItems);
+
     } catch (error) {
-        logError('Complete loadMemberData error', error);
-        handleError(error);
+        logError('Error in loadMemberData:', error);
     }
 }
 

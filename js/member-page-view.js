@@ -186,51 +186,29 @@ function renderMemberGallery(items) {
 // Main data loading function
 async function loadMemberData() {
     try {
-        // Log localStorage contents for debugging
-        console.log('LocalStorage Contents:', {
-            sessionToken: localStorage.getItem('sessionToken'),
-            memberId: localStorage.getItem('memberId')
-        });
-
         // Get member ID from URL
         const memberId = getMemberIdFromUrl();
         log('Member ID from URL:', memberId);
 
         if (!memberId) {
             logError('Invalid or missing member ID');
-            // Optionally redirect or show an error message
-            const errorContainer = document.createElement('div');
-            errorContainer.className = 'error-message';
-            errorContainer.textContent = currentLang === 'he' 
-                ? 'לא נמצא מזהה חבר תקף' 
-                : 'Invalid member ID';
-            
-            const mainContent = document.querySelector('main');
-            if (mainContent) {
-                mainContent.innerHTML = '';
-                mainContent.appendChild(errorContainer);
+            // Show error message to user
+            const errorContainer = document.getElementById('member-details');
+            if (errorContainer) {
+                errorContainer.innerHTML = `
+                    <p class="error-message" data-lang="he">לא נמצא מידע על החבר</p>
+                    <p class="error-message" data-lang="en" style="display:none;">No member information found</p>
+                `;
             }
             return;
         }
 
-        // Fetch member details
+        // Fetch member data
         const member = await getMemberById(memberId);
-        log('Fetched member details:', member);
+        log('Fetched member data:', member);
 
         if (!member) {
-            logError('No member data found for ID:', memberId);
-            // Create and display error message
-            const errorContainer = document.createElement('div');
-            errorContainer.className = 'error-message';
-            errorContainer.textContent = currentLang === 'he' 
-                ? 'לא נמצאו פרטי חבר' 
-                : 'Member details not found';
-            
-            const mainContent = document.querySelector('main');
-            if (mainContent) {
-                mainContent.innerHTML = '';
-                mainContent.appendChild(errorContainer);
-            }
+            logError('No member data retrieved');
             return;
         }
 
@@ -240,38 +218,35 @@ async function loadMemberData() {
         // Render member details
         renderMemberDetails(member);
 
-        // Fetch all courses
-        const courses = await getAllCourses();
-        log('Fetched all courses:', courses);
+        // Fetch and render courses and gallery items
+        const [courses, galleryItems] = await Promise.all([
+            getAllCourses(),
+            getAllGalleryItems()
+        ]);
 
-        // Render member courses
+        log('Fetched courses and gallery items', { 
+            coursesCount: courses.length, 
+            galleryItemsCount: galleryItems.length 
+        });
+
+        // Store global data
+        coursesData = courses;
+        galleryData = galleryItems;
+
+        // Render member-specific content
         renderMemberCourses(courses);
-
-        // Fetch all gallery items
-        const galleryItems = await getAllGalleryItems();
-        log('Fetched all gallery items:', galleryItems);
-
-        // Render member gallery
         renderMemberGallery(galleryItems);
 
     } catch (error) {
-        logError('Comprehensive error in loadMemberData:', error);
+        logError('Error loading member data', error);
         
-        // Create and display comprehensive error message
-        const errorContainer = document.createElement('div');
-        errorContainer.className = 'error-message';
-        errorContainer.innerHTML = `
-            <h2>${currentLang === 'he' ? 'שגיאה' : 'Error'}</h2>
-            <p>${currentLang === 'he' 
-                ? 'אירעה שגיאה בטעינת נתוני החבר' 
-                : 'An error occurred while loading member data'}</p>
-            <pre>${error.message}</pre>
-        `;
-        
-        const mainContent = document.querySelector('main');
-        if (mainContent) {
-            mainContent.innerHTML = '';
-            mainContent.appendChild(errorContainer);
+        // Show error message to user
+        const errorContainer = document.getElementById('member-details');
+        if (errorContainer) {
+            errorContainer.innerHTML = `
+                <p class="error-message" data-lang="he">אירעה שגיאה בטעינת המידע</p>
+                <p class="error-message" data-lang="en" style="display:none;">An error occurred while loading data</p>
+            `;
         }
     }
 }

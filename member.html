@@ -40,27 +40,25 @@
             try {
                 const loggedIn = await isLoggedIn();
                 
+                // Always load view script first
+                document.head.appendChild(memberPageViewScript);
+
                 if (loggedIn) {
                     // Show edit-related elements
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
-                        el.style.display = 'block';
+                        if (el) el.style.display = 'block';
                     });
                     
-                    // Replace view script with edit script
+                    // Then load edit script
                     document.head.appendChild(memberPageEditScript);
                 } else {
                     // Hide edit-related elements
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
-                        el.style.display = 'none';
+                        if (el) el.style.display = 'none';
                     });
-                    
-                    // Use view script
-                    document.head.appendChild(memberPageViewScript);
                 }
             } catch (error) {
                 console.error('Authentication check failed:', error);
-                // Fallback to view script
-                document.head.appendChild(memberPageViewScript);
             }
         });
     </script>

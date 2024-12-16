@@ -13,6 +13,7 @@ import {
     getCurrentLang, 
     getMemberIdFromUrl 
 } from './utils.js';
+import { uploadImage, deleteImage, STORAGE_BUCKETS } from './storage-utils.js';
 
 let currentLang = getCurrentLang() || 'he';
 let memberData = null;
@@ -202,33 +203,34 @@ async function handleGalleryItemUpload(event) {
     }
 }
 
-async function deleteGalleryItem(itemId) {
+const deleteGalleryItem = async (itemId) => {
     try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            throw new Error('Authentication required');
+        // Implementation of deleteGalleryItem
+        const { error } = await supabase
+            .from('gallery_items')
+            .delete()
+            .eq('id', itemId);
+
+        if (error) throw error;
+
+        // Remove the corresponding image from storage
+        const { data: galleryItem } = await supabase
+            .from('gallery_items')
+            .select('image_url')
+            .eq('id', itemId)
+            .single();
+
+        if (galleryItem && galleryItem.image_url) {
+            const imagePath = galleryItem.image_url.split('/').pop();
+            await deleteImage(imagePath, STORAGE_BUCKETS.GALLERY_ITEMS);
         }
 
-        const confirmDelete = confirm(getLangText({
-            he: 'האם אתה בטוח שברצונך למחוק פריט זה?',
-            en: 'Are you sure you want to delete this item?'
-        }, currentLang));
-
-        if (!confirmDelete) return;
-
-        await deleteGalleryItem(itemId, token);
-
-        alert(getLangText({
-            he: 'פריט הגלריה נמחק בהצלחה',
-            en: 'Gallery item deleted successfully'
-        }, currentLang));
-
-        // Reload gallery data
-        await loadMemberData();
+        return true;
     } catch (error) {
-        handleError(error);
+        console.error('Error deleting gallery item:', error);
+        return false;
     }
-}
+};
 
 function initMemberPage() {
     // Check authentication

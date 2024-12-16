@@ -31,37 +31,30 @@
 </head>
 <body>
     <div id="cookie-banner">
-        <p>
-            This website uses cookies to improve your experience. 
-            <button id="accept-cookies">Accept</button>
-            <button id="reject-cookies">Reject</button>
-        </p>
+        <div class="cookie-content">
+            <p data-lang="he">אנו משתמשים בעוגיות כדי לשפר את חווית המשתמש</p>
+            <p data-lang="en" style="display:none;">We use cookies to improve your user experience</p>
+            <div class="cookie-buttons">
+                <button id="accept-cookies" data-lang="he">מקבל</button>
+                <button id="accept-cookies" data-lang="en" style="display:none;">Accept</button>
+                <button id="reject-cookies" data-lang="he">דוחה</button>
+                <button id="reject-cookies" data-lang="en" style="display:none;">Reject</button>
+            </div>
+        </div>
     </div>
 
     <div class="container">
         <header class="secondary-header">
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn" data-lang="he">דף הבית</a>
+                <a href="index.html" class="nav-btn" data-lang="en" style="display:none;">Home</a>
+                <a href="courses.html" class="nav-btn" data-lang="he">קורסים</a>
+                <a href="courses.html" class="nav-btn" data-lang="en" style="display:none;">Courses</a>
+                <button onclick="toggleLanguage()" class="nav-btn" id="toggle-language">EN</button>
+            </div>
             <div class="logo-title-wrapper">
                 <h1 class="site-title">Optopia</h1>
                 <img src="assets/optopia-logo.png" alt="Optopia Logo" class="logo">
-            </div>
-            <div class="nav-buttons">
-                <a href="index.html" class="nav-btn">
-                    <span data-lang="he">דף הבית</span>
-                    <span data-lang="en" style="display:none;">Home</span>
-                </a>
-                <a href="gallery.html" class="nav-btn">
-                    <span data-lang="he">גלריה</span>
-                    <span data-lang="en" style="display:none;">Gallery</span>
-                </a>
-                <a href="courses.html" class="nav-btn">
-                    <span data-lang="he">קורסים</span>
-                    <span data-lang="en" style="display:none;">Courses</span>
-                </a>
-                <button onclick="toggleLanguage()" class="nav-btn" id="toggle-language">EN</button>
-                <a href="login.html" class="nav-btn">
-                    <span data-lang="he">התחברות</span>
-                    <span data-lang="en" style="display:none;">Login</span>
-                </a>
             </div>
         </header>
 
@@ -109,52 +102,5 @@
             </div>
         </main>
     </div>
-
-    <script>
-        function initializeMemberPage() {
-            console.log('Initializing Member Page');
-            
-            const memberId = getMemberIdFromUrl();
-            console.log('Member ID:', memberId);
-
-            if (!memberId) {
-                console.error('Invalid member ID');
-                window.location.href = 'members.html';
-                return;
-            }
-
-            const loggedIn = isLoggedIn();
-            const currentUserId = localStorage.getItem('memberId');
-            
-            console.log('Login Status:', {
-                isLoggedIn: loggedIn,
-                currentUserId: currentUserId,
-                memberId: memberId
-            });
-
-            const isOwnProfile = loggedIn && currentUserId === memberId;
-            const scriptToLoad = './js/member-page-view.js';
-
-            console.log('Loading script:', scriptToLoad);
-
-            import(scriptToLoad)
-                .then(() => {
-                    console.log('Script loaded successfully');
-                    
-                    const editButton = document.getElementById('edit-button');
-                    if (editButton) {
-                        editButton.style.display = isOwnProfile ? 'block' : 'none';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading member page script:', error);
-                });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeMemberPage();
-            initCookieConsent();
-        });
-    </script>
 </body>
 </html>

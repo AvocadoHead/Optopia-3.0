@@ -4,7 +4,8 @@ import {
     getAllGalleryItems,
     updateMember,
     updateMemberCourses,
-    createGalleryItem
+    createGalleryItem,
+    deleteGalleryItem
 } from './api-service.js';
 import { 
     handleError, 
@@ -181,7 +182,17 @@ async function handleGalleryItemUpload(event) {
     const formData = new FormData(form);
 
     try {
-        await createGalleryItem(formData);
+        // Get the token from localStorage
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            throw new Error('Authentication required');
+        }
+
+        // Add member ID to the form data
+        formData.append('artist_id', memberData.id);
+
+        await createGalleryItem(formData, token);
+
         alert(getLangText({
             he: 'פריט גלריה נוסף בהצלחה',
             en: 'Gallery item added successfully'
@@ -198,7 +209,47 @@ async function handleGalleryItemUpload(event) {
     }
 }
 
+async function deleteGalleryItem(itemId) {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            throw new Error('Authentication required');
+        }
+
+        const confirmDelete = confirm(getLangText({
+            he: 'האם אתה בטוח שברצונך למחוק פריט זה?',
+            en: 'Are you sure you want to delete this item?'
+        }, currentLang));
+
+        if (!confirmDelete) return;
+
+        await deleteGalleryItem(itemId, token);
+
+        alert(getLangText({
+            he: 'פריט הגלריה נמחק בהצלחה',
+            en: 'Gallery item deleted successfully'
+        }, currentLang));
+
+        // Reload gallery data
+        await loadMemberData();
+    } catch (error) {
+        handleError(error);
+    }
+}
+
 function initMemberPage() {
+    // Check authentication
+    const isLoggedIn = localStorage.getItem('sessionToken') !== null;
+    const currentUserId = localStorage.getItem('memberId');
+    const memberId = getMemberIdFromUrl();
+
+    if (!isLoggedIn || currentUserId !== memberId) {
+        console.error('Unauthorized access to edit page');
+        // Redirect to view mode or home page
+        window.location.href = `member.html?id=${memberId}`;
+        return;
+    }
+
     updateLanguageDisplay();
     loadMemberData();
 
@@ -216,7 +267,7 @@ function initMemberPage() {
         galleryContainer.addEventListener('click', (event) => {
             if (event.target.classList.contains('delete-btn')) {
                 const itemId = event.target.dataset.id;
-                // Implement delete gallery item logic here
+                deleteGalleryItem(itemId);
             }
         });
     }

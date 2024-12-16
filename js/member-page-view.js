@@ -188,12 +188,30 @@ async function loadMemberData() {
     try {
         log('Starting loadMemberData');
         
+        // Log localStorage contents for debugging
+        console.log('LocalStorage Contents:', {
+            sessionToken: localStorage.getItem('sessionToken'),
+            memberId: localStorage.getItem('memberId')
+        });
+
         // Get member ID from URL
         const memberId = getMemberIdFromUrl();
         log('Member ID from URL:', memberId);
 
         if (!memberId) {
             logError('Invalid or missing member ID');
+            // Optionally redirect or show an error message
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'error-message';
+            errorContainer.textContent = currentLang === 'he' 
+                ? 'לא נמצא מזהה חבר תקף' 
+                : 'Invalid member ID';
+            
+            const mainContent = document.querySelector('main');
+            if (mainContent) {
+                mainContent.innerHTML = '';
+                mainContent.appendChild(errorContainer);
+            }
             return;
         }
 
@@ -203,6 +221,18 @@ async function loadMemberData() {
 
         if (!member) {
             logError('No member data found for ID:', memberId);
+            // Create and display error message
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'error-message';
+            errorContainer.textContent = currentLang === 'he' 
+                ? 'לא נמצאו פרטי חבר' 
+                : 'Member details not found';
+            
+            const mainContent = document.querySelector('main');
+            if (mainContent) {
+                mainContent.innerHTML = '';
+                mainContent.appendChild(errorContainer);
+            }
             return;
         }
 
@@ -227,7 +257,24 @@ async function loadMemberData() {
         renderMemberGallery(galleryItems);
 
     } catch (error) {
-        logError('Error in loadMemberData:', error);
+        logError('Comprehensive error in loadMemberData:', error);
+        
+        // Create and display comprehensive error message
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.innerHTML = `
+            <h2>${currentLang === 'he' ? 'שגיאה' : 'Error'}</h2>
+            <p>${currentLang === 'he' 
+                ? 'אירעה שגיאה בטעינת נתוני החבר' 
+                : 'An error occurred while loading member data'}</p>
+            <pre>${error.message}</pre>
+        `;
+        
+        const mainContent = document.querySelector('main');
+        if (mainContent) {
+            mainContent.innerHTML = '';
+            mainContent.appendChild(errorContainer);
+        }
     }
 }
 

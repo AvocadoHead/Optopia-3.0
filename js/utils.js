@@ -61,6 +61,21 @@ export function setCurrentLang(lang) {
 
 // Get member ID from URL
 export function getMemberIdFromUrl() {
+    // Get the current URL
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('id');
+    const memberId = urlParams.get('id');
+    
+    console.log('URL Parameters:', {
+        fullURL: window.location.href,
+        searchParams: window.location.search,
+        memberId: memberId
+    });
+
+    // Validate memberId
+    if (!memberId) {
+        console.error('No member ID found in URL');
+        return null;
+    }
+
+    return memberId;
 }

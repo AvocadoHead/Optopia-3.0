@@ -23,6 +23,11 @@
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/layout.css">
+    
+    <!-- Load our modules in correct order -->
+    <script type="module" src="js/main.js" defer></script>
+    <script type="module" src="js/member-page-view.js" defer></script>
+    <script type="module" src="js/member-page-edit.js" defer></script>
 </head>
 <body>
     <div id="cookie-banner">
@@ -105,10 +110,7 @@
         </main>
     </div>
 
-    <script type="module">
-        import { isLoggedIn } from './js/api-service.js';
-        import { getMemberIdFromUrl } from './js/utils.js';
-
+    <script>
         function initializeMemberPage() {
             console.log('Initializing Member Page');
             

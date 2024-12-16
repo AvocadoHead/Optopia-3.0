@@ -196,6 +196,8 @@ function renderGalleryItem(item, container) {
     
     const img = document.createElement('img');
     const title = currentLang === 'he' ? item.title_he : item.title_en;
+    const description = currentLang === 'he' ? item.description_he : item.description_en;
+    
     img.alt = title;
     img.src = item.image_url || 'assets/default-gallery.jpg';
     
@@ -203,10 +205,7 @@ function renderGalleryItem(item, container) {
     info.className = 'gallery-info';
     info.innerHTML = `
         <h3>${title || ''}</h3>
-        ${item.description_he || item.description_en ? 
-            `<p class="description">${currentLang === 'he' ? item.description_he : item.description_en}</p>` : ''}
-        ${item.artist_name_he || item.artist_name_en ? 
-            `<p class="artist">${currentLang === 'he' ? item.artist_name_he : item.artist_name_en}</p>` : ''}
+        ${description ? `<p class="description">${description}</p>` : ''}
     `;
     
     imageWrapper.appendChild(img);

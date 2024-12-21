@@ -903,3 +903,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Expose necessary global functions
 window.toggleLanguage = toggleLanguage;
 window.toggleMembers = toggleMembers;
+
+// Expose page initializers
+export { 
+    initCoursesPage, 
+    initializeAppData, 
+    getCurrentLang, 
+    setCurrentLang, 
+    toggleLanguage 
+};

@@ -1,11 +1,5 @@
 // Utility functions for the Optopia website
 
-// Utility function for multilingual text retrieval
-export function getLangText(textObj, lang) {
-    if (!textObj) return '';
-    return textObj[lang] || textObj['en'] || textObj['he'] || '';
-}
-
 // Error handling utilities
 export function handleError(error, defaultMessage = '') {
     console.error('Error:', error);
@@ -40,42 +34,4 @@ export function formatTime(timeString) {
     if (!timeString) return '';
     const time = new Date(`1970-01-01T${timeString}`);
     return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-// Get current language
-export function getCurrentLang() {
-    // Check localStorage first
-    const storedLang = localStorage.getItem('language');
-    if (storedLang) {
-        return storedLang;
-    }
-    
-    // Default to Hebrew if no language is set
-    return 'he';
-}
-
-// Set current language
-export function setCurrentLang(lang) {
-    localStorage.setItem('language', lang);
-}
-
-// Get member ID from URL
-export function getMemberIdFromUrl() {
-    // Get the current URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const memberId = urlParams.get('id');
-    
-    console.log('URL Parameters:', {
-        fullURL: window.location.href,
-        searchParams: window.location.search,
-        memberId: memberId
-    });
-
-    // Validate memberId
-    if (!memberId) {
-        console.error('No member ID found in URL');
-        return null;
-    }
-
-    return memberId;
 }

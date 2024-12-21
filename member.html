@@ -27,13 +27,12 @@
     <!-- Load our modules in correct order -->
     <script type="module">
         import { isLoggedIn } from './js/api-service.js';
-        import { loadMemberData as loadViewMemberData } from './js/member-page-view.js';
-        import { initMemberPage as initEditMemberPage } from './js/member-page-edit.js';
+        import { loadMemberData } from './js/member-page-view.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Always load member data
-                await loadViewMemberData();
+                await loadMemberData();
 
                 const loggedIn = await isLoggedIn();
                 
@@ -42,9 +41,12 @@
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
                         if (el) el.style.display = 'block';
                     });
-                    
-                    // Initialize edit functionality
-                    await initEditMemberPage();
+
+                    // Dynamically load edit script
+                    const editScript = document.createElement('script');
+                    editScript.type = 'module';
+                    editScript.src = './js/member-page-edit.js';
+                    document.head.appendChild(editScript);
                 } else {
                     // Hide edit-related elements
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {

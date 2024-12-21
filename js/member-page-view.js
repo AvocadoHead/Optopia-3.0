@@ -1,13 +1,17 @@
 import { 
     getMemberById, 
     getAllCourses, 
-    getAllGalleryItems 
+    getAllGalleryItems
 } from './api-service.js';
 import { 
     handleError, 
     getCurrentLang, 
     getMemberIdFromUrl 
 } from './utils.js';
+import { 
+    createGalleryItem,
+    deleteGalleryItem
+} from './main.js';
 
 // Logging utility
 function log(message, data = null) {
@@ -31,6 +35,31 @@ let memberData = null;
 let coursesData = [];
 let galleryData = [];
 
+// Debugging function to log all available data
+function debugLogMemberData(member) {
+    console.group('Member Data Debug');
+    console.log('Full Member Object:', member);
+    
+    // Check for expected fields
+    const expectedFields = [
+        'id', 
+        'name_he', 'name_en', 
+        'role_he', 'role_en', 
+        'bio_he', 'bio_en', 
+        'image_url'
+    ];
+
+    expectedFields.forEach(field => {
+        console.log(`${field}: ${member[field] || 'MISSING'}`);
+    });
+
+    // Additional checks
+    console.log('Has courses:', member.courses ? member.courses.length : 'No courses');
+    console.log('Has gallery items:', member.galleryItems ? member.galleryItems.length : 'No gallery items');
+    
+    console.groupEnd();
+}
+
 // Render member details
 function renderMemberDetails(member) {
     log('Rendering member details', member);
@@ -39,6 +68,9 @@ function renderMemberDetails(member) {
         logError('No member data to render');
         return;
     }
+
+    // Debug log
+    debugLogMemberData(member);
 
     try {
         // Basic details elements
@@ -66,16 +98,17 @@ function renderMemberDetails(member) {
         const bioHe = bioElement.querySelector('[data-lang="he"]');
         const bioEn = bioElement.querySelector('[data-lang="en"]');
 
-        if (nameHe) nameHe.textContent = member.name_he || '';
-        if (nameEn) nameEn.textContent = member.name_en || '';
-        if (roleHe) roleHe.textContent = member.role_he || '';
-        if (roleEn) roleEn.textContent = member.role_en || '';
-        if (bioHe) bioHe.textContent = member.bio_he || '';
-        if (bioEn) bioEn.textContent = member.bio_en || '';
+        // Fallback to empty string if field is missing
+        if (nameHe) nameHe.textContent = member.name_he || member.name || 'שם לא זמין';
+        if (nameEn) nameEn.textContent = member.name_en || member.name || 'Name Unavailable';
+        if (roleHe) roleHe.textContent = member.role_he || member.role || 'תפקיד לא זמין';
+        if (roleEn) roleEn.textContent = member.role_en || member.role || 'Role Unavailable';
+        if (bioHe) bioHe.textContent = member.bio_he || member.bio || 'אין ביוגרפיה זמינה';
+        if (bioEn) bioEn.textContent = member.bio_en || member.bio || 'No biography available';
         
-        // Set image with fallback
-        imageElement.src = member.image_url || 'assets/default-profile.jpg';
-        imageElement.alt = member.name_he || member.name_en || 'Member Profile';
+        // Set image with multiple fallbacks
+        imageElement.src = member.image_url || member.imageUrl || 'assets/default-profile.jpg';
+        imageElement.alt = member.name_he || member.name_en || member.name || 'Member Profile';
 
         // Prepare data attributes for potential edit mode
         [nameElement, roleElement, bioElement].forEach(el => {

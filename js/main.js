@@ -912,3 +912,57 @@ export {
     setCurrentLang, 
     toggleLanguage 
 };
+
+// Gallery-related functions
+async function createGalleryItem(formData, token) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/gallery`, {
+            method: 'POST',
+            headers: {
+                ...defaultHeaders,
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error creating gallery item:', error);
+        throw error;
+    }
+}
+
+async function deleteGalleryItem(itemId, token) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/gallery/${itemId}`, {
+            method: 'DELETE',
+            headers: {
+                ...defaultHeaders,
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error deleting gallery item:', error);
+        throw error;
+    }
+}
+
+// Expose these functions for export
+export { 
+    createGalleryItem, 
+    deleteGalleryItem 
+};

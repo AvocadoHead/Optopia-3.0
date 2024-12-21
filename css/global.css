@@ -198,7 +198,7 @@ header {
 
 .logo-title-wrapper {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
     width: 100%;
     gap: 20px;
@@ -234,7 +234,7 @@ header {
 
 .secondary-header .logo-title-wrapper {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     gap: var(--spacing-lg);
     margin-top: var(--spacing-lg);

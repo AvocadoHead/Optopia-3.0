@@ -171,3 +171,26 @@ export async function updateCourse(id, data) {
         throw error;
     }
 }
+
+export async function updateMember(id, data, token) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+            method: 'PATCH',
+            headers: {
+                ...defaultHeaders,
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating member:', error);
+        throw error;
+    }
+}

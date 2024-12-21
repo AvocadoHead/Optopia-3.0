@@ -27,30 +27,24 @@
     <!-- Load our modules in correct order -->
     <script type="module">
         import { isLoggedIn } from './js/api-service.js';
+        import { loadMemberData as loadViewMemberData } from './js/member-page-view.js';
+        import { initMemberPage as initEditMemberPage } from './js/member-page-edit.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const memberPageViewScript = document.createElement('script');
-            memberPageViewScript.type = 'module';
-            memberPageViewScript.src = './js/member-page-view.js';
-
-            const memberPageEditScript = document.createElement('script');
-            memberPageEditScript.type = 'module';
-            memberPageEditScript.src = './js/member-page-edit.js';
-
             try {
+                // Always load member data
+                await loadViewMemberData();
+
                 const loggedIn = await isLoggedIn();
                 
-                // Always load view script first
-                document.head.appendChild(memberPageViewScript);
-
                 if (loggedIn) {
                     // Show edit-related elements
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
                         if (el) el.style.display = 'block';
                     });
                     
-                    // Then load edit script
-                    document.head.appendChild(memberPageEditScript);
+                    // Initialize edit functionality
+                    await initEditMemberPage();
                 } else {
                     // Hide edit-related elements
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {

@@ -75,6 +75,19 @@ export async function getAllMembers() {
     }
 }
 
+export async function getMemberById(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/members/${id}`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching member:', error);
+        throw error;
+    }
+}
+
 export async function getAllGalleryItems() {
     try {
         const response = await fetch(`${API_BASE_URL}/gallery`, { headers: defaultHeaders });

@@ -3,9 +3,12 @@ import {
     getAllCourses, 
     getAllGalleryItems,
     updateMember,
-    updateMemberCourses,
-    createGalleryItem
+    updateMemberCourses
 } from './api-service.js';
+import { 
+    createGalleryItem,
+    deleteGalleryItem
+} from './main.js';
 import { 
     handleError, 
     getLangText, 

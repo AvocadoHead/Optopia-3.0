@@ -18,6 +18,76 @@ function setAuthToken(token) {
     }
 }
 
+// Courses API
+export async function getAllCourses() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/courses`, { 
+            headers: defaultHeaders 
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const courses = await response.json();
+        return courses;
+    } catch (error) {
+        console.error('Error fetching courses with teachers:', error);
+        throw error;
+    }
+}
+
+export async function getCourseById(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/courses/${id}`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching course:', error);
+        throw error;
+    }
+}
+
+export async function searchCourses(query) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/courses/search/${encodeURIComponent(query)}`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error searching courses:', error);
+        throw error;
+    }
+}
+
+// Members API
+export async function getAllMembers() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/members`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error('Failed to fetch members');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching members:', error);
+        throw error;
+    }
+}
+
+export async function getAllGalleryItems() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/gallery`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error('Failed to fetch gallery items');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching gallery items:', error);
+        throw error;
+    }
+}
+
 // Authentication API
 export async function login(identifier, password) {
     try {

@@ -910,7 +910,9 @@ export {
     initializeAppData, 
     getCurrentLang, 
     setCurrentLang, 
-    toggleLanguage 
+    toggleLanguage,
+    createGalleryItem,
+    deleteGalleryItem
 };
 
 // Gallery-related functions

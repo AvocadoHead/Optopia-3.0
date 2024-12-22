@@ -904,17 +904,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.toggleLanguage = toggleLanguage;
 window.toggleMembers = toggleMembers;
 
-// Expose page initializers
-export { 
-    initCoursesPage, 
-    initializeAppData, 
-    getCurrentLang, 
-    setCurrentLang, 
-    toggleLanguage,
-    createGalleryItem,
-    deleteGalleryItem
-};
-
 // Gallery-related functions
 async function createGalleryItem(formData, token) {
     try {
@@ -963,8 +952,11 @@ async function deleteGalleryItem(itemId, token) {
     }
 }
 
-// Expose these functions for export
+// Expose page initializers
 export { 
-    createGalleryItem, 
-    deleteGalleryItem 
+    initCoursesPage, 
+    initializeAppData, 
+    getCurrentLang, 
+    setCurrentLang, 
+    toggleLanguage
 };

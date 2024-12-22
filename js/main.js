@@ -958,5 +958,7 @@ export {
     initializeAppData, 
     getCurrentLang, 
     setCurrentLang, 
-    toggleLanguage
+    toggleLanguage,
+    createGalleryItem,
+    deleteGalleryItem
 };

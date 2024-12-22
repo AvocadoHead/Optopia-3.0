@@ -26,27 +26,38 @@
     
     <!-- Load our modules in correct order -->
     <script type="module">
-        import { isLoggedIn } from './js/api-service.js';
-        import { loadMemberData } from './js/member-page-view.js';
+        // Dynamic script loader
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Check if in edit mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const isEditMode = urlParams.get('edit') === 'true';
+        const token = localStorage.getItem('authToken');
+
+        async function initializeMemberPage() {
             try {
-                // Always load member data
-                await loadMemberData();
-
-                const loggedIn = await isLoggedIn();
+                // Load base scripts in order
+                await loadScript('./js/utils.js');
+                await loadScript('./js/api-service.js');
+                await loadScript('./js/main.js');
+                await loadScript('./js/member-page-view.js');
                 
-                if (loggedIn) {
+                // Load edit script only if in edit mode and authenticated
+                if (isEditMode && token) {
                     // Show edit-related elements
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
                         if (el) el.style.display = 'block';
                     });
-
-                    // Dynamically load edit script
-                    const editScript = document.createElement('script');
-                    editScript.type = 'module';
-                    editScript.src = './js/member-page-edit.js';
-                    document.head.appendChild(editScript);
+                    await loadScript('./js/member-page-edit.js');
                 } else {
                     // Hide edit-related elements
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
@@ -54,11 +65,13 @@
                     });
                 }
             } catch (error) {
-                console.error('Authentication check failed:', error);
+                console.error('Error loading member page scripts:', error);
             }
-        });
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeMemberPage);
     </script>
-    <script type="module" src="js/main.js" defer></script>
 </head>
 <body>
     <div id="cookie-banner">

@@ -1,5 +1,5 @@
 // API base URL - use production URL in production, localhost in development
-export const API_BASE_URL = location.hostname === 'localhost' 
+const API_BASE_URL = location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://optopia-3-0-backend.onrender.com/api';
 
@@ -19,7 +19,7 @@ function setAuthToken(token) {
 }
 
 // Courses API
-export async function getAllCourses() {
+async function getAllCourses() {
     try {
         console.log('Attempting to fetch all courses');
         const response = await fetch(`${API_BASE_URL}/courses`, {
@@ -42,7 +42,7 @@ export async function getAllCourses() {
     }
 }
 
-export async function getCourseById(id) {
+async function getCourseById(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/courses/${id}`, { headers: defaultHeaders });
         if (!response.ok) {
@@ -55,7 +55,7 @@ export async function getCourseById(id) {
     }
 }
 
-export async function searchCourses(query) {
+async function searchCourses(query) {
     try {
         const response = await fetch(`${API_BASE_URL}/courses/search/${encodeURIComponent(query)}`, { headers: defaultHeaders });
         if (!response.ok) {
@@ -69,7 +69,7 @@ export async function searchCourses(query) {
 }
 
 // Members API
-export async function getAllMembers() {
+async function getAllMembers() {
     try {
         const response = await fetch(`${API_BASE_URL}/members`, { headers: defaultHeaders });
         if (!response.ok) {
@@ -82,7 +82,7 @@ export async function getAllMembers() {
     }
 }
 
-export async function getMemberById(id) {
+async function getMemberById(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/members/${id}`, { headers: defaultHeaders });
         if (!response.ok) {
@@ -95,7 +95,7 @@ export async function getMemberById(id) {
     }
 }
 
-export async function getAllGalleryItems() {
+async function getAllGalleryItems() {
     try {
         const response = await fetch(`${API_BASE_URL}/gallery`, { headers: defaultHeaders });
         if (!response.ok) {
@@ -109,7 +109,7 @@ export async function getAllGalleryItems() {
 }
 
 // Authentication API
-export async function login(username, password) {
+async function login(username, password) {
     try {
         // Simply normalize the username by removing hyphens and converting to lowercase
         const processedUsername = username.replace(/-/g, '').toLowerCase();
@@ -145,7 +145,7 @@ export async function login(username, password) {
     }
 }
 
-export async function logout() {
+async function logout() {
     try {
         // Remove the token from localStorage
         localStorage.removeItem('authToken');
@@ -156,13 +156,13 @@ export async function logout() {
     }
 }
 
-export async function isLoggedIn() {
+async function isLoggedIn() {
     const token = localStorage.getItem('authToken');
     return !!token;
 }
 
 // Update functions
-export async function updateCourse(id, data) {
+async function updateCourse(id, data) {
     try {
         const token = localStorage.getItem('authToken');
         const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
@@ -187,7 +187,7 @@ export async function updateCourse(id, data) {
     }
 }
 
-export async function updateMember(id, data, token) {
+async function updateMember(id, data, token) {
     try {
         const response = await fetch(`${API_BASE_URL}/members/${id}`, {
             method: 'PATCH',
@@ -210,6 +210,31 @@ export async function updateMember(id, data, token) {
     }
 }
 
+async function updateMemberCourses(memberId, courseIds) {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`${API_BASE_URL}/members/${memberId}/courses`, {
+            method: 'PATCH',
+            headers: {
+                ...defaultHeaders,
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ courseIds })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Update Member Courses Error:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating member courses:', error);
+        throw error;
+    }
+}
+
 // Export all API functions
 export { 
     login,
@@ -220,6 +245,7 @@ export {
     getAllGalleryItems,
     updateMember,
     updateCourse,
+    updateMemberCourses,
     getAllMembers,
     getCourseById,
     searchCourses,

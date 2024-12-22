@@ -1,269 +1,226 @@
-import { 
-    getMemberById, 
-    getAllCourses, 
-    getAllGalleryItems
-} from './api-service.js';
-import { 
-    handleError, 
-    getCurrentLang, 
-    getMemberIdFromUrl 
-} from './utils.js';
-import { 
-    createGalleryItem,
-    deleteGalleryItem
-} from './main.js';
+// API base URL - use production URL in production, localhost in development
+export const API_BASE_URL = location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api'
+    : 'https://optopia-3-0-backend.onrender.com/api';
 
-// Logging utility
-function log(message, data = null) {
-    console.log(`[MemberPageView] ${message}`, data || '');
-}
+// Default headers for API calls
+const defaultHeaders = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+};
 
-// Error logging utility
-function logError(message, error = null) {
-    console.error(`[MemberPageView] ${message}`, error || '');
-}
-
-// Ensure global logging for debugging
-window.memberPageViewLog = log;
-window.memberPageViewLogError = logError;
-
-// Current language setting
-const currentLang = getCurrentLang() || 'he';
-
-// Global state
-let memberData = null;
-let coursesData = [];
-let galleryData = [];
-
-// Debugging function to log all available data
-function debugLogMemberData(member) {
-    console.group('Member Data Debug');
-    console.log('Full Member Object:', member);
-    
-    // Check for expected fields
-    const expectedFields = [
-        'id', 
-        'name_he', 'name_en', 
-        'role_he', 'role_en', 
-        'bio_he', 'bio_en', 
-        'image_url'
-    ];
-
-    expectedFields.forEach(field => {
-        console.log(`${field}: ${member[field] || 'MISSING'}`);
-    });
-
-    // Additional checks
-    console.log('Has courses:', member.courses ? member.courses.length : 'No courses');
-    console.log('Has gallery items:', member.galleryItems ? member.galleryItems.length : 'No gallery items');
-    
-    console.groupEnd();
-}
-
-// Render member details
-function renderMemberDetails(member) {
-    log('Rendering member details', member);
-
-    if (!member) {
-        logError('No member data to render');
-        return;
+// Helper function to set auth token for API calls
+function setAuthToken(token) {
+    if (token) {
+        defaultHeaders['Authorization'] = `Bearer ${token}`;
+    } else {
+        delete defaultHeaders['Authorization'];
     }
+}
 
-    // Debug log
-    debugLogMemberData(member);
-
+// Courses API
+export async function getAllCourses() {
     try {
-        // Basic details elements
-        const nameElement = document.getElementById('member-name');
-        const roleElement = document.getElementById('member-role');
-        const bioElement = document.getElementById('member-bio');
-        const imageElement = document.getElementById('member-image');
-
-        // Validate elements exist
-        if (!nameElement || !roleElement || !bioElement || !imageElement) {
-            logError('Missing DOM elements for member details', {
-                nameElement: !!nameElement,
-                roleElement: !!roleElement,
-                bioElement: !!bioElement,
-                imageElement: !!imageElement
-            });
-            return;
-        }
-
-        // Populate details with language-specific content
-        const nameHe = nameElement.querySelector('[data-lang="he"]');
-        const nameEn = nameElement.querySelector('[data-lang="en"]');
-        const roleHe = roleElement.querySelector('[data-lang="he"]');
-        const roleEn = roleElement.querySelector('[data-lang="en"]');
-        const bioHe = bioElement.querySelector('[data-lang="he"]');
-        const bioEn = bioElement.querySelector('[data-lang="en"]');
-
-        // Fallback to empty string if field is missing
-        if (nameHe) nameHe.textContent = member.name_he || member.name || 'שם לא זמין';
-        if (nameEn) nameEn.textContent = member.name_en || member.name || 'Name Unavailable';
-        if (roleHe) roleHe.textContent = member.role_he || member.role || 'תפקיד לא זמין';
-        if (roleEn) roleEn.textContent = member.role_en || member.role || 'Role Unavailable';
-        if (bioHe) bioHe.textContent = member.bio_he || member.bio || 'אין ביוגרפיה זמינה';
-        if (bioEn) bioEn.textContent = member.bio_en || member.bio || 'No biography available';
-        
-        // Set image with multiple fallbacks
-        imageElement.src = member.image_url || member.imageUrl || 'assets/default-profile.jpg';
-        imageElement.alt = member.name_he || member.name_en || member.name || 'Member Profile';
-
-        // Prepare data attributes for potential edit mode
-        [nameElement, roleElement, bioElement].forEach(el => {
-            el.setAttribute('data-field', el.id.replace('member-', ''));
+        console.log('Attempting to fetch all courses');
+        const response = await fetch(`${API_BASE_URL}/courses`, {
+            method: 'GET',
+            headers: defaultHeaders
         });
 
-        log('Member details rendered successfully');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error fetching courses:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        const courses = await response.json();
+        console.log('Courses fetched successfully:', courses.length);
+        return courses;
     } catch (error) {
-        logError('Error rendering member details', error);
+        console.error('Error in getAllCourses:', error);
+        throw error;
     }
 }
 
-// Render member courses
-function renderMemberCourses(courses) {
-    log('Rendering member courses', { coursesCount: courses.length });
-
-    const coursesContainer = document.getElementById('member-courses-grid');
-    if (!coursesContainer) {
-        logError('Courses container not found');
-        return;
-    }
-
-    coursesContainer.innerHTML = ''; // Clear existing courses
-
-    // Filter courses where member is a teacher
-    const memberCourses = courses.filter(course => 
-        course.teachers && 
-        course.teachers.some(teacher => teacher.id === memberData.id)
-    );
-
-    log('Filtered member courses', { memberCoursesCount: memberCourses.length });
-
-    if (memberCourses.length === 0) {
-        const noCoursesMessage = document.createElement('p');
-        noCoursesMessage.textContent = currentLang === 'he' ? 'אין קורסים זמינים' : 'No courses available';
-        coursesContainer.appendChild(noCoursesMessage);
-        return;
-    }
-
-    memberCourses.forEach(course => {
-        const courseCard = document.createElement('div');
-        courseCard.className = 'course-card';
-        
-        const title = currentLang === 'he' ? course.title_he : course.title_en;
-        const description = currentLang === 'he' ? course.description_he : course.description_en;
-
-        courseCard.innerHTML = `
-            <div class="course-card-content">
-                <h3 class="course-title">${title || 'Untitled Course'}</h3>
-                <p class="course-description">${description || ''}</p>
-            </div>
-        `;
-        
-        coursesContainer.appendChild(courseCard);
-    });
-
-    log('Member courses rendering complete');
-}
-
-// Render member gallery
-function renderMemberGallery(items) {
-    log('Rendering member gallery', { itemsCount: items.length });
-
-    const galleryContainer = document.getElementById('member-gallery-grid');
-    if (!galleryContainer) {
-        logError('Gallery container not found');
-        return;
-    }
-
-    galleryContainer.innerHTML = ''; // Clear existing gallery items
-
-    const memberGalleryItems = items.filter(item => 
-        item.artist && item.artist.id === memberData.id
-    );
-
-    log('Filtered member gallery items', { memberGalleryItemsCount: memberGalleryItems.length });
-
-    if (memberGalleryItems.length === 0) {
-        const noGalleryMessage = document.createElement('p');
-        noGalleryMessage.textContent = currentLang === 'he' ? 'אין פריטי גלריה זמינים' : 'No gallery items available';
-        galleryContainer.appendChild(noGalleryMessage);
-        return;
-    }
-
-    memberGalleryItems.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'gallery-card';
-        
-        const title = currentLang === 'he' ? item.title_he : item.title_en;
-
-        card.innerHTML = `
-            <div class="gallery-image">
-                <img src="${item.image_url || 'assets/default-gallery.jpg'}" 
-                     alt="${title || 'Untitled Gallery Item'}" 
-                     onerror="this.src='assets/default-gallery.jpg'">
-            </div>
-            <div class="gallery-card-content">
-                <h3 class="gallery-title">${title || 'Untitled'}</h3>
-            </div>
-        `;
-        
-        galleryContainer.appendChild(card);
-    });
-
-    log('Member gallery rendering complete');
-}
-
-// Main data loading function
-async function loadMemberData() {
+export async function getCourseById(id) {
     try {
-        log('Loading member data');
-        
-        // Get member ID from URL
-        const memberId = getMemberIdFromUrl();
-        if (!memberId) {
-            logError('No member ID found in URL');
-            return;
+        const response = await fetch(`${API_BASE_URL}/courses/${id}`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        // Fetch member details
-        const member = await getMemberById(memberId);
-        if (!member) {
-            logError('Failed to fetch member data');
-            return;
-        }
-
-        // Store member data globally
-        memberData = member;
-
-        // Render member details
-        renderMemberDetails(member);
-
-        // Fetch and render courses
-        try {
-            const courses = await getAllCourses();
-            coursesData = courses;
-            renderMemberCourses(courses);
-        } catch (courseError) {
-            logError('Error fetching courses', courseError);
-        }
-
-        // Fetch and render gallery items
-        try {
-            const galleryItems = await getAllGalleryItems();
-            galleryData = galleryItems;
-            renderMemberGallery(galleryItems);
-        } catch (galleryError) {
-            logError('Error fetching gallery items', galleryError);
-        }
-
-        log('Member data loading complete');
+        return await response.json();
     } catch (error) {
-        logError('Error in loadMemberData', error);
+        console.error('Error fetching course:', error);
+        throw error;
     }
 }
 
-// Initialize only once when DOM is loaded
-document.addEventListener('DOMContentLoaded', loadMemberData);
+export async function searchCourses(query) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/courses/search/${encodeURIComponent(query)}`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error searching courses:', error);
+        throw error;
+    }
+}
+
+// Members API
+export async function getAllMembers() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/members`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error('Failed to fetch members');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching members:', error);
+        throw error;
+    }
+}
+
+export async function getMemberById(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/members/${id}`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching member:', error);
+        throw error;
+    }
+}
+
+export async function getAllGalleryItems() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/gallery`, { headers: defaultHeaders });
+        if (!response.ok) {
+            throw new Error('Failed to fetch gallery items');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching gallery items:', error);
+        throw error;
+    }
+}
+
+// Authentication API
+export async function login(username, password) {
+    try {
+        // Simply normalize the username by removing hyphens and converting to lowercase
+        const processedUsername = username.replace(/-/g, '').toLowerCase();
+
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...defaultHeaders
+            },
+            body: JSON.stringify({
+                username: processedUsername,
+                password: password
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Login Error:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        const data = await response.json();
+        // Store the token in localStorage
+        if (data.token) {
+            localStorage.setItem('authToken', data.token);
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
+}
+
+export async function logout() {
+    try {
+        // Remove the token from localStorage
+        localStorage.removeItem('authToken');
+        return true;
+    } catch (error) {
+        console.error('Logout error:', error);
+        throw error;
+    }
+}
+
+export async function isLoggedIn() {
+    const token = localStorage.getItem('authToken');
+    return !!token;
+}
+
+// Update functions
+export async function updateCourse(id, data) {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+            method: 'PATCH',
+            headers: {
+                ...defaultHeaders,
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Update Course Error:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating course:', error);
+        throw error;
+    }
+}
+
+export async function updateMember(id, data, token) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+            method: 'PATCH',
+            headers: {
+                ...defaultHeaders,
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating member:', error);
+        throw error;
+    }
+}
+
+// Export all API functions
+export { 
+    login,
+    getMemberById,
+    getAllCourses,
+    getAllGalleryItems,
+    updateMember,
+    updateCourse,
+    getAllMembers,
+    getCourseById,
+    searchCourses,
+    logout,
+    isLoggedIn
+};

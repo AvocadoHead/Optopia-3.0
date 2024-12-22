@@ -102,12 +102,42 @@ export async function getAllGalleryItems() {
 }
 
 // Authentication API
-export async function login(identifier, password) {
+export async function login(username, password) {
     try {
+        // Normalize username input
+        username = username.trim();
+
+        // Handle potential name formats:
+        // 1. First Last
+        // 2. Last, First
+        // 3. FirstLast
+        // 4. first last
+        // 5. FIRST LAST
+        let processedUsername = username;
+
+        // Check if username contains a comma (Last, First format)
+        if (username.includes(',')) {
+            // Split and reverse if comma exists
+            const parts = username.split(',').map(part => part.trim());
+            processedUsername = parts.length > 1 ? `${parts[1]} ${parts[0]}` : username;
+        } else {
+            // Handle potential multi-word names and normalize case
+            const parts = username.split(/\s+/);
+            processedUsername = parts.map(part => 
+                part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+            ).join(' ');
+        }
+
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
-            headers: defaultHeaders,
-            body: JSON.stringify({ identifier, password })
+            headers: {
+                'Content-Type': 'application/json',
+                ...defaultHeaders
+            },
+            body: JSON.stringify({
+                username: processedUsername,
+                password: password
+            })
         });
 
         if (!response.ok) {

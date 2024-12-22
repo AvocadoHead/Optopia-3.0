@@ -213,6 +213,8 @@ export async function updateMember(id, data, token) {
 // Export all API functions
 export { 
     login,
+    logout,
+    isLoggedIn,
     getMemberById,
     getAllCourses,
     getAllGalleryItems,
@@ -221,6 +223,5 @@ export {
     getAllMembers,
     getCourseById,
     searchCourses,
-    logout,
-    isLoggedIn
+    API_BASE_URL
 };

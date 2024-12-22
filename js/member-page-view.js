@@ -219,29 +219,19 @@ function renderMemberGallery(items) {
 // Main data loading function
 async function loadMemberData() {
     try {
+        log('Loading member data');
+        
         // Get member ID from URL
         const memberId = getMemberIdFromUrl();
-        log('Member ID from URL:', memberId);
-
         if (!memberId) {
-            logError('Invalid or missing member ID');
-            // Show error message to user
-            const errorContainer = document.getElementById('member-details');
-            if (errorContainer) {
-                errorContainer.innerHTML = `
-                    <p class="error-message" data-lang="he">לא נמצא מידע על החבר</p>
-                    <p class="error-message" data-lang="en" style="display:none;">No member information found</p>
-                `;
-            }
+            logError('No member ID found in URL');
             return;
         }
 
-        // Fetch member data
+        // Fetch member details
         const member = await getMemberById(memberId);
-        log('Fetched member data:', member);
-
         if (!member) {
-            logError('No member data retrieved');
+            logError('Failed to fetch member data');
             return;
         }
 
@@ -251,38 +241,29 @@ async function loadMemberData() {
         // Render member details
         renderMemberDetails(member);
 
-        // Fetch and render courses and gallery items
-        const [courses, galleryItems] = await Promise.all([
-            getAllCourses(),
-            getAllGalleryItems()
-        ]);
-
-        log('Fetched courses and gallery items', { 
-            coursesCount: courses.length, 
-            galleryItemsCount: galleryItems.length 
-        });
-
-        // Store global data
-        coursesData = courses;
-        galleryData = galleryItems;
-
-        // Render member-specific content
-        renderMemberCourses(courses);
-        renderMemberGallery(galleryItems);
-
-    } catch (error) {
-        logError('Error loading member data', error);
-        
-        // Show error message to user
-        const errorContainer = document.getElementById('member-details');
-        if (errorContainer) {
-            errorContainer.innerHTML = `
-                <p class="error-message" data-lang="he">אירעה שגיאה בטעינת המידע</p>
-                <p class="error-message" data-lang="en" style="display:none;">An error occurred while loading data</p>
-            `;
+        // Fetch and render courses
+        try {
+            const courses = await getAllCourses();
+            coursesData = courses;
+            renderMemberCourses(courses);
+        } catch (courseError) {
+            logError('Error fetching courses', courseError);
         }
+
+        // Fetch and render gallery items
+        try {
+            const galleryItems = await getAllGalleryItems();
+            galleryData = galleryItems;
+            renderMemberGallery(galleryItems);
+        } catch (galleryError) {
+            logError('Error fetching gallery items', galleryError);
+        }
+
+        log('Member data loading complete');
+    } catch (error) {
+        logError('Error in loadMemberData', error);
     }
 }
 
-// Initialize when DOM is loaded
+// Initialize only once when DOM is loaded
 document.addEventListener('DOMContentLoaded', loadMemberData);

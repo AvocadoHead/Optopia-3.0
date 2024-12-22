@@ -1,17 +1,41 @@
 import { 
     getMemberById, 
     getAllCourses, 
-    getAllGalleryItems
+    getAllGalleryItems,
+    getAllMembers
 } from './api-service.js';
 import { 
     handleError, 
     getCurrentLang, 
     getMemberIdFromUrl 
 } from './utils.js';
-import { 
-    createGalleryItem,
-    deleteGalleryItem
-} from './main.js';
+
+// Global state variables
+let galleryData = [];
+let coursesData = [];
+let membersData = [];
+
+// Data initialization function
+async function initializeAppData() {
+    try {
+        // Fetch all data in parallel
+        const [galleryItems, courses, members] = await Promise.all([
+            getAllGalleryItems(),
+            getAllCourses(),
+            getAllMembers()
+        ]);
+        
+        // Store the data
+        galleryData = galleryItems || [];
+        coursesData = courses || [];
+        membersData = members || [];
+        
+        return { galleryData, coursesData, membersData };
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        throw error;
+    }
+}
 
 // Logging utility
 function log(message, data = null) {
@@ -23,41 +47,21 @@ function logError(message, error = null) {
     console.error(`[MemberPageView] ${message}`, error || '');
 }
 
-// Ensure global logging for debugging
-window.memberPageViewLog = log;
-window.memberPageViewLogError = logError;
-
-// Current language setting
-const currentLang = getCurrentLang() || 'he';
-
-// Global state
-let memberData = null;
-let coursesData = [];
-let galleryData = [];
-
-// Debugging function to log all available data
-function debugLogMemberData(member) {
-    console.group('Member Data Debug');
-    console.log('Full Member Object:', member);
+// Error display function
+function displayErrorMessage(message) {
+    const errorContainer = document.createElement('div');
+    errorContainer.classList.add('error-message');
+    errorContainer.innerHTML = `
+        <h2>Oops! Something went wrong</h2>
+        <p>${message}</p>
+        <button onclick="window.location.reload()">Try Again</button>
+    `;
     
-    // Check for expected fields
-    const expectedFields = [
-        'id', 
-        'name_he', 'name_en', 
-        'role_he', 'role_en', 
-        'bio_he', 'bio_en', 
-        'image_url'
-    ];
-
-    expectedFields.forEach(field => {
-        console.log(`${field}: ${member[field] || 'MISSING'}`);
-    });
-
-    // Additional checks
-    console.log('Has courses:', member.courses ? member.courses.length : 'No courses');
-    console.log('Has gallery items:', member.galleryItems ? member.galleryItems.length : 'No gallery items');
-    
-    console.groupEnd();
+    const mainContent = document.querySelector('main');
+    if (mainContent) {
+        mainContent.innerHTML = '';
+        mainContent.appendChild(errorContainer);
+    }
 }
 
 // Render member details
@@ -68,9 +72,6 @@ function renderMemberDetails(member) {
         logError('No member data to render');
         return;
     }
-
-    // Debug log
-    debugLogMemberData(member);
 
     try {
         // Basic details elements
@@ -90,6 +91,10 @@ function renderMemberDetails(member) {
             return;
         }
 
+        // Update image
+        imageElement.src = member.image_url || 'assets/default-member.jpg';
+        imageElement.alt = member.name_he || member.name_en || 'Member Image';
+
         // Populate details with language-specific content
         const nameHe = nameElement.querySelector('[data-lang="he"]');
         const nameEn = nameElement.querySelector('[data-lang="en"]');
@@ -98,24 +103,13 @@ function renderMemberDetails(member) {
         const bioHe = bioElement.querySelector('[data-lang="he"]');
         const bioEn = bioElement.querySelector('[data-lang="en"]');
 
-        // Fallback to empty string if field is missing
-        if (nameHe) nameHe.textContent = member.name_he || member.name || 'שם לא זמין';
-        if (nameEn) nameEn.textContent = member.name_en || member.name || 'Name Unavailable';
-        if (roleHe) roleHe.textContent = member.role_he || member.role || 'תפקיד לא זמין';
-        if (roleEn) roleEn.textContent = member.role_en || member.role || 'Role Unavailable';
-        if (bioHe) bioHe.textContent = member.bio_he || member.bio || 'אין ביוגרפיה זמינה';
-        if (bioEn) bioEn.textContent = member.bio_en || member.bio || 'No biography available';
-        
-        // Set image with multiple fallbacks
-        imageElement.src = member.image_url || member.imageUrl || 'assets/default-profile.jpg';
-        imageElement.alt = member.name_he || member.name_en || member.name || 'Member Profile';
-
-        // Prepare data attributes for potential edit mode
-        [nameElement, roleElement, bioElement].forEach(el => {
-            el.setAttribute('data-field', el.id.replace('member-', ''));
-        });
-
-        log('Member details rendered successfully');
+        // Update text content
+        if (nameHe) nameHe.textContent = member.name_he || '';
+        if (nameEn) nameEn.textContent = member.name_en || '';
+        if (roleHe) roleHe.textContent = member.role_he || '';
+        if (roleEn) roleEn.textContent = member.role_en || '';
+        if (bioHe) bioHe.textContent = member.bio_he || '';
+        if (bioEn) bioEn.textContent = member.bio_en || '';
     } catch (error) {
         logError('Error rendering member details', error);
     }
@@ -123,147 +117,147 @@ function renderMemberDetails(member) {
 
 // Render member courses
 function renderMemberCourses(courses) {
-    log('Rendering member courses', { coursesCount: courses.length });
-
-    const coursesContainer = document.getElementById('member-courses-grid');
+    const coursesContainer = document.getElementById('member-courses');
     if (!coursesContainer) {
         logError('Courses container not found');
         return;
     }
 
-    coursesContainer.innerHTML = ''; // Clear existing courses
+    // Clear previous courses
+    coursesContainer.innerHTML = '';
 
-    // Filter courses where member is a teacher
-    const memberCourses = courses.filter(course => 
-        course.teachers && 
-        course.teachers.some(teacher => teacher.id === memberData.id)
-    );
-
-    log('Filtered member courses', { memberCoursesCount: memberCourses.length });
-
-    if (memberCourses.length === 0) {
-        const noCoursesMessage = document.createElement('p');
-        noCoursesMessage.textContent = currentLang === 'he' ? 'אין קורסים זמינים' : 'No courses available';
-        coursesContainer.appendChild(noCoursesMessage);
+    // Check if there are courses
+    if (!courses || courses.length === 0) {
+        const noCourseMessage = document.createElement('p');
+        noCourseMessage.textContent = 'No courses found';
+        coursesContainer.appendChild(noCourseMessage);
         return;
     }
 
-    memberCourses.forEach(course => {
+    // Render each course
+    courses.forEach(course => {
         const courseCard = document.createElement('div');
         courseCard.className = 'course-card';
+        courseCard.onclick = () => window.location.href = `course-item.html?id=${course.id}`;
         
+        // Use current language to display title and description
+        const currentLang = getCurrentLang() || 'he';
         const title = currentLang === 'he' ? course.title_he : course.title_en;
         const description = currentLang === 'he' ? course.description_he : course.description_en;
-
+        
         courseCard.innerHTML = `
-            <div class="course-card-content">
-                <h3 class="course-title">${title || 'Untitled Course'}</h3>
-                <p class="course-description">${description || ''}</p>
-            </div>
+            <h3>${title || 'Untitled Course'}</h3>
+            <p>${description || 'No description available'}</p>
         `;
         
         coursesContainer.appendChild(courseCard);
     });
-
-    log('Member courses rendering complete');
 }
 
 // Render member gallery
 function renderMemberGallery(items) {
-    log('Rendering member gallery', { itemsCount: items.length });
-
-    const galleryContainer = document.getElementById('member-gallery-grid');
+    const galleryContainer = document.getElementById('member-gallery');
     if (!galleryContainer) {
         logError('Gallery container not found');
         return;
     }
 
-    galleryContainer.innerHTML = ''; // Clear existing gallery items
+    // Clear previous gallery items
+    galleryContainer.innerHTML = '';
 
-    const memberGalleryItems = items.filter(item => 
-        item.artist && item.artist.id === memberData.id
-    );
-
-    log('Filtered member gallery items', { memberGalleryItemsCount: memberGalleryItems.length });
-
-    if (memberGalleryItems.length === 0) {
-        const noGalleryMessage = document.createElement('p');
-        noGalleryMessage.textContent = currentLang === 'he' ? 'אין פריטי גלריה זמינים' : 'No gallery items available';
-        galleryContainer.appendChild(noGalleryMessage);
+    // Check if there are gallery items
+    if (!items || items.length === 0) {
+        const noItemMessage = document.createElement('p');
+        noItemMessage.textContent = 'No gallery items found';
+        galleryContainer.appendChild(noItemMessage);
         return;
     }
 
-    memberGalleryItems.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'gallery-card';
+    // Render each gallery item
+    items.forEach(item => {
+        const galleryItem = document.createElement('div');
+        galleryItem.className = 'gallery-item';
         
+        // Use current language to display title and description
+        const currentLang = getCurrentLang() || 'he';
         const title = currentLang === 'he' ? item.title_he : item.title_en;
-
-        card.innerHTML = `
-            <div class="gallery-image">
-                <img src="${item.image_url || 'assets/default-gallery.jpg'}" 
-                     alt="${title || 'Untitled Gallery Item'}" 
-                     onerror="this.src='assets/default-gallery.jpg'">
-            </div>
-            <div class="gallery-card-content">
-                <h3 class="gallery-title">${title || 'Untitled'}</h3>
+        const description = currentLang === 'he' ? item.description_he : item.description_en;
+        
+        galleryItem.innerHTML = `
+            <img src="${item.imageUrl || 'assets/placeholder.jpg'}" 
+                 alt="${title || 'Gallery Item'}"
+                 onerror="this.src='assets/placeholder.jpg'">
+            <div class="overlay">
+                <h3>${title || 'Untitled'}</h3>
+                <p>${description || 'No description'}</p>
             </div>
         `;
         
-        galleryContainer.appendChild(card);
+        galleryItem.addEventListener('click', () => {
+            window.location.href = `gallery-item.html?id=${item.id}`;
+        });
+        
+        galleryContainer.appendChild(galleryItem);
     });
-
-    log('Member gallery rendering complete');
 }
 
 // Main data loading function
 async function loadMemberData() {
     try {
-        log('Loading member data');
-        
         // Get member ID from URL
-        const memberId = getMemberIdFromUrl();
+        const urlParams = new URLSearchParams(window.location.search);
+        const memberId = urlParams.get('id');
+        
         if (!memberId) {
             logError('No member ID found in URL');
+            displayErrorMessage('No member ID found');
             return;
         }
 
-        // Fetch member details
-        const member = await getMemberById(memberId);
+        // Find member in pre-loaded data
+        const member = membersData.find(m => m.id === memberId);
+        
         if (!member) {
-            logError('Failed to fetch member data');
+            logError('Member not found in data');
+            displayErrorMessage('Member not found');
             return;
         }
-
-        // Store member data globally
-        memberData = member;
 
         // Render member details
         renderMemberDetails(member);
 
-        // Fetch and render courses
-        try {
-            const courses = await getAllCourses();
-            coursesData = courses;
-            renderMemberCourses(courses);
-        } catch (courseError) {
-            logError('Error fetching courses', courseError);
-        }
+        // Render member's gallery items
+        const memberGalleryItems = galleryData.filter(item => item.artist === memberId);
+        renderMemberGallery(memberGalleryItems);
 
-        // Fetch and render gallery items
-        try {
-            const galleryItems = await getAllGalleryItems();
-            galleryData = galleryItems;
-            renderMemberGallery(galleryItems);
-        } catch (galleryError) {
-            logError('Error fetching gallery items', galleryError);
-        }
+        // Render member's courses
+        const memberCourses = coursesData.filter(course => 
+            course.teachers && course.teachers.some(teacher => teacher.id === memberId)
+        );
+        renderMemberCourses(memberCourses);
 
-        log('Member data loading complete');
     } catch (error) {
         logError('Error in loadMemberData', error);
+        displayErrorMessage('An error occurred while loading member data');
     }
 }
 
-// Initialize only once when DOM is loaded
-document.addEventListener('DOMContentLoaded', loadMemberData);
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Ensure app data is initialized
+        await initializeAppData();
+        
+        // Then load member data
+        loadMemberData();
+    } catch (error) {
+        logError('Error initializing page', error);
+        displayErrorMessage('Failed to initialize page');
+    }
+});
+
+// Expose functions for potential external use
+export {
+    initializeAppData,
+    loadMemberData
+};

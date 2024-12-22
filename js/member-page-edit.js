@@ -13,7 +13,8 @@ import {
     handleError, 
     getLangText, 
     getCurrentLang, 
-    getMemberIdFromUrl 
+    getMemberIdFromUrl,
+    isLoggedIn
 } from './utils.js';
 import { uploadImage, deleteImage, STORAGE_BUCKETS } from './storage-utils.js';
 
@@ -287,8 +288,32 @@ function initMemberPage() {
     }
 }
 
+// Authentication and edit mode initialization
+async function initializeMemberEditPage() {
+    try {
+        const loggedIn = await isLoggedIn();
+        
+        if (loggedIn) {
+            // Show edit-related elements
+            document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
+                if (el) el.style.display = 'block';
+            });
+
+            // Load edit functionality
+            await initMemberPage();
+        } else {
+            // Hide edit-related elements
+            document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
+                if (el) el.style.display = 'none';
+            });
+        }
+    } catch (error) {
+        console.error('Authentication check failed:', error);
+    }
+}
+
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', initMemberPage);
+document.addEventListener('DOMContentLoaded', initializeMemberEditPage);
 
 // Expose functions for potential external use
 window.initMemberPage = initMemberPage;

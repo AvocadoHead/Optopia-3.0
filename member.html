@@ -38,28 +38,32 @@
             });
         }
 
-        // Check if in edit mode
+        // Check authentication and edit mode
         const urlParams = new URLSearchParams(window.location.search);
         const isEditMode = urlParams.get('edit') === 'true';
         const token = localStorage.getItem('authToken');
 
         async function initializeMemberPage() {
             try {
-                // Load base scripts in order
+                // Always load base and view scripts
                 await loadScript('./js/utils.js');
                 await loadScript('./js/api-service.js');
                 await loadScript('./js/main.js');
                 await loadScript('./js/member-page-view.js');
                 
-                // Load edit script only if in edit mode and authenticated
-                if (isEditMode && token) {
-                    // Show edit-related elements
+                // Conditionally load edit script based on authentication
+                if (token) {
+                    // Show edit-related elements if authenticated
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
                         if (el) el.style.display = 'block';
                     });
-                    await loadScript('./js/member-page-edit.js');
+
+                    // Only load edit script if in edit mode
+                    if (isEditMode) {
+                        await loadScript('./js/member-page-edit.js');
+                    }
                 } else {
-                    // Hide edit-related elements
+                    // Hide edit-related elements if not authenticated
                     document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
                         if (el) el.style.display = 'none';
                     });

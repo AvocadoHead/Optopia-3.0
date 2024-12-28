@@ -1,5 +1,5 @@
 import { normalizeUsername } from './utils.js';
-import { loginUser } from './api-services.js';
+import { loginUser } from './api-service.js';
 
 // Handles user login
 async function login(username, password) {

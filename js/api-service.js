@@ -112,7 +112,7 @@ async function getAllGalleryItems() {
 async function login(username, password) {
     try {
         // Simply normalize the username by removing hyphens and converting to lowercase
-        // const processedUsername = username.replace(/-/g, '').toLowerCase();
+        const processedUsername = username.replace(/-/g, '').toLowerCase();
 
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',

@@ -22,6 +22,18 @@ export function showErrorNotification(message, lang = 'he') {
     return errorMessage;
 }
 
+// Username normalization utility
+export function normalizeUsername(username) {
+    if (!username) return '';
+    const normalized = username.replace(/-/g, '').toLowerCase(); // Remove existing hyphens and lowercase
+    return normalized
+        .split('') // Add hyphens back in the correct format
+        .reduce((acc, char, idx) => {
+            if ([3, 7].includes(idx)) acc += '-'; // Example format: xxx-xxxx-xxxx
+            return acc + char;
+        }, '');
+}
+
 // Date formatting utility
 export function formatDate(dateString) {
     if (!dateString) return '';

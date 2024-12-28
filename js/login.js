@@ -4,20 +4,24 @@ import { loginUser } from './api-service.js';
 // Handles user login
 async function login(username, password) {
     try {
-        const normalizedUsername = normalizeUsername(username); // Normalize the username
-        const response = await loginUser(normalizedUsername, password); // Call API
+        // Normalize the username
+        const normalizedUsername = normalizeUsername(username);
 
-        if (response.success) {
+        // Call the login API
+        const response = await loginUser(normalizedUsername, password);
+
+        // Check the response structure
+        if (response && response.token) {
             console.log('Login successful!');
             localStorage.setItem('authToken', response.token); // Save token in localStorage
+            return { success: true, message: 'Login successful!' };
         } else {
             console.error('Invalid username or password');
+            return { success: false, message: 'Invalid username or password' };
         }
-
-        return response;
     } catch (error) {
         console.error('Login error:', error.message);
-        throw error;
+        return { success: false, message: 'Login failed. Please try again.' };
     }
 }
 
@@ -25,15 +29,16 @@ async function login(username, password) {
 async function logout() {
     try {
         localStorage.removeItem('authToken'); // Remove token from localStorage
-        return true;
+        console.log('Logout successful');
+        return { success: true, message: 'Logout successful' };
     } catch (error) {
         console.error('Logout error:', error);
-        throw error;
+        return { success: false, message: 'Logout failed. Please try again.' };
     }
 }
 
 // Checks if the user is logged in by verifying the presence of an auth token
-async function isLoggedIn() {
+function isLoggedIn() {
     const token = localStorage.getItem('authToken');
     return !!token; // Return true if token exists, otherwise false
 }

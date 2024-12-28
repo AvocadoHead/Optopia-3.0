@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://optopia-3-0-backend.onrender.com https://optopia-3-0-backend.onrender.com/api/* http://localhost:3000/* https://www.google-analytics.com; script-src 'self' https://www.googletagmanager.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://* http://*;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://optopia-3-0-backend.onrender.com; script-src 'self' https://www.googletagmanager.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*;">
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-V7QFQB5TH4"></script>
     <script>
@@ -46,21 +46,21 @@
                 <h2 data-lang="he" class="section-title">התחברות</h2>
                 <h2 data-lang="en" class="section-title" style="display:none;">Login</h2>
                 
-                <form id="login-form" class="login-form">
+                <form id="login-form" class="login-form" novalidate>
                     <div class="form-group">
                         <label for="username" data-lang="he">דוא״ל או שם משתמש</label>
                         <label for="username" data-lang="en" style="display:none;">Email or Username</label>
                         <input type="text" id="username" name="username" required class="form-control" 
-                               placeholder="email@example.com / username">
+                               placeholder="email@example.com / username" aria-required="true">
                     </div>
                     
                     <div class="form-group">
                         <label for="password" data-lang="he">סיסמה</label>
                         <label for="password" data-lang="en" style="display:none;">Password</label>
-                        <input type="password" id="password" name="password" required class="form-control">
+                        <input type="password" id="password" name="password" required class="form-control" aria-required="true">
                     </div>
                     
-                    <div id="login-error" class="error-message" style="display:none;"></div>
+                    <div id="login-error" class="error-message" style="display:none;" aria-live="polite"></div>
                     
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">

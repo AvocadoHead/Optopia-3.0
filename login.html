@@ -1,67 +1,84 @@
-const API_BASE_URL = location.hostname === 'localhost' 
-    ? 'http://localhost:3000/api' 
-    : 'https://optopia-3-0-backend.onrender.com/api';
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; 
+               connect-src 'self' https://optopia-3-0-backend.onrender.com https://www.google-analytics.com; 
+               script-src 'self' https://www.googletagmanager.com 'unsafe-inline'; 
+               style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; 
+               font-src 'self' https://fonts.gstatic.com; 
+               img-src 'self' data: https://* http://*;">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V7QFQB5TH4"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-V7QFQB5TH4');
+    </script>
+    <title>Optopia - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <div class="container">
+        <header class="secondary-header">
+            <div class="logo-title-wrapper">
+                <img src="assets/optopia-logo.png" alt="Optopia Logo" class="logo">
+                <h1 class="site-title">Optopia</h1>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">
+                    <span data-lang="he">דף הבית</span>
+                    <span data-lang="en" style="display:none;">Home</span>
+                </a>
+                <a href="gallery.html" class="nav-btn">
+                    <span data-lang="he">גלריה</span>
+                    <span data-lang="en" style="display:none;">Gallery</span>
+                </a>
+                <a href="courses.html" class="nav-btn">
+                    <span data-lang="he">קורסים</span>
+                    <span data-lang="en" style="display:none;">Courses</span>
+                </a>
+                <button class="nav-btn" id="toggle-language">EN</button>
+            </div>
+        </header>
 
-/**
- * Helper function to make API requests.
- * @param {string} endpoint - The API endpoint.
- * @param {string} method - HTTP method (GET, POST, PATCH, DELETE).
- * @param {Object} [data] - Request body data.
- * @param {Object} [headers] - Additional headers.
- * @returns {Promise<Object>} - Response JSON.
- */
-async function apiRequest(endpoint, method = 'GET', data = null, headers = {}) {
-    const defaultHeaders = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...headers,
-    };
+        <main>
+            <section class="login-section">
+                <h2 data-lang="he" class="section-title">התחברות</h2>
+                <h2 data-lang="en" class="section-title" style="display:none;">Login</h2>
+                
+                <form id="login-form" class="login-form" novalidate>
+                    <div class="form-group">
+                        <label for="username" data-lang="he">דוא״ל או שם משתמש</label>
+                        <label for="username" data-lang="en" style="display:none;">Email or Username</label>
+                        <input type="text" id="username" name="username" required class="form-control" 
+                               placeholder="email@example.com / username" aria-required="true">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" data-lang="he">סיסמה</label>
+                        <label for="password" data-lang="en" style="display:none;">Password</label>
+                        <input type="password" id="password" name="password" required class="form-control" aria-required="true">
+                    </div>
+                    
+                    <div id="login-error" class="error-message" style="display:none;" aria-live="polite"></div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <span data-lang="he">התחברות</span>
+                            <span data-lang="en" style="display:none;">Login</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
 
-    const config = {
-        method,
-        headers: defaultHeaders,
-    };
-
-    if (data) {
-        config.body = JSON.stringify(data);
-    }
-
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API Request failed: ${response.status} ${response.statusText}`, errorText);
-        throw new Error(`Error: ${response.statusText}`);
-    }
-
-    return response.json();
-}
-
-/**
- * Log in a user.
- * @param {string} username - The user's username.
- * @param {string} password - The user's password.
- * @returns {Promise<Object>} - Response containing the token and user data.
- */
-async function loginUser(username, password) {
-    return apiRequest('/auth/login', 'POST', { username, password });
-}
-
-/**
- * Log out a user (placeholder for server-side logout if needed).
- */
-function logoutUser() {
-    // Example placeholder for logout functionality
-    localStorage.removeItem('authToken');
-}
-
-/**
- * Fetch user data by ID.
- * @param {string} userId - The ID of the user.
- * @returns {Promise<Object>} - User data.
- */
-async function getUserById(userId) {
-    return apiRequest(`/users/${userId}`);
-}
-
-export { loginUser, logoutUser, getUserById };
+    <script type="module" src="js/login.js"></script>
+</body>
+</html>

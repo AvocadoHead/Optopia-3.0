@@ -48,7 +48,7 @@ async function loginUser(username, password) {
 }
 
 /**
- * Log out a user (placeholder for server-side logout if needed).
+ * Log out a user.
  */
 function logoutUser() {
     localStorage.removeItem('authToken'); // Clear the token from local storage

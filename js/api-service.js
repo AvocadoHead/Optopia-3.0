@@ -71,4 +71,12 @@ async function getAllCourses() {
     return apiRequest('/courses', 'GET');
 }
 
-export { loginUser, logoutUser, getUserById, getAllCourses };
+/**
+ * Fetch all gallery items.
+ * @returns {Promise<Array>} - List of all gallery items.
+ */
+async function getAllGalleryItems() {
+    return apiRequest('/gallery', 'GET');
+}
+
+export { loginUser, logoutUser, getUserById, getAllCourses, getAllGalleryItems };

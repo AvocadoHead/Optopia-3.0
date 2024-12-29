@@ -87,4 +87,21 @@ async function getAllMembers() {
     return apiRequest('/members', 'GET');
 }
 
-export { loginUser, logoutUser, getUserById, getAllCourses, getAllGalleryItems, getAllMembers };
+/**
+ * Fetch member data by ID.
+ * @param {string} memberId - The ID of the member.
+ * @returns {Promise<Object>} - Member data.
+ */
+async function getMemberById(memberId) {
+    return apiRequest(`/members/${memberId}`);
+}
+
+export { 
+    loginUser, 
+    logoutUser, 
+    getUserById, 
+    getAllCourses, 
+    getAllGalleryItems, 
+    getAllMembers, 
+    getMemberById 
+};

@@ -26,15 +26,20 @@ async function apiRequest(endpoint, method = 'GET', data = null, headers = {}) {
         config.body = JSON.stringify(data);
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API Request failed: ${response.status} ${response.statusText}`, errorText);
-        throw new Error(`Error: ${response.statusText}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`API Request failed: ${response.status} ${response.statusText}`, errorText);
+            throw new Error(`Error: ${response.statusText}`);
+        }
+
+        return response.json();
+    } catch (error) {
+        console.error('Network error:', error.message);
+        throw new Error('Network error. Please try again.');
     }
-
-    return response.json();
 }
 
 /**
@@ -48,10 +53,10 @@ async function loginUser(username, password) {
 }
 
 /**
- * Log out a user.
+ * Log out a user by clearing the auth token from local storage.
  */
 function logoutUser() {
-    localStorage.removeItem('authToken'); // Clear the token from local storage
+    localStorage.removeItem('authToken');
 }
 
 /**

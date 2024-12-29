@@ -4,95 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://optopia-3-0-backend.onrender.com https://optopia-3-0-backend.onrender.com/api/* http://localhost:3000/* https://www.google-analytics.com; script-src 'self' https://www.googletagmanager.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://* http://*;">
-    
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-V7QFQB5TH4"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', 'G-V7QFQB5TH4', {
-            'anonymize_ip': true,
-            'allow_ad_personalization_signals': false
-        });
+        gtag('config', 'G-V7QFQB5TH4');
     </script>
-
     <title>Optopia - Member Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/layout.css">
-    
-    <!-- Load our modules in correct order -->
-    <script type="module">
-        // Dynamic script loader
-        function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.type = 'module';
-                script.src = src;
-                script.onload = resolve;
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
+    <style>
+        .edit-mode .editable {
+            border: 1px dashed #ccc;
+            padding: 5px;
+            cursor: pointer;
         }
-
-        // Check authentication and edit mode
-        const urlParams = new URLSearchParams(window.location.search);
-        const isEditMode = urlParams.get('edit') === 'true';
-        const token = localStorage.getItem('authToken');
-
-        async function initializeMemberPage() {
-            try {
-                // Always load base and view scripts
-                await loadScript('./js/utils.js');
-                await loadScript('./js/api-service.js');
-                await loadScript('./js/main.js');
-                await loadScript('./js/member-page-view.js');
-                
-                // Conditionally load edit script based on authentication
-                if (token) {
-                    // Show edit-related elements if authenticated
-                    document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
-                        if (el) el.style.display = 'block';
-                    });
-
-                    // Only load edit script if in edit mode
-                    if (isEditMode) {
-                        await loadScript('./js/member-page-edit.js');
-                    }
-                } else {
-                    // Hide edit-related elements if not authenticated
-                    document.querySelectorAll('#edit-button, #add-gallery-item, #add-course').forEach(el => {
-                        if (el) el.style.display = 'none';
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading member page scripts:', error);
-            }
+        .edit-mode .editable:hover {
+            background: #f5f5f5;
         }
-
-        // Initialize when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initializeMemberPage);
-    </script>
+        .edit-controls {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .edit-mode .edit-controls {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <div id="cookie-banner">
-        <div class="cookie-content">
-            <p data-lang="he">אנו משתמשים בעוגיות כדי לשפר את חווית המשתמש</p>
-            <p data-lang="en" style="display:none;">We use cookies to improve your user experience</p>
-            <div class="cookie-buttons">
-                <button id="accept-cookies" data-lang="he">מקבל</button>
-                <button id="accept-cookies" data-lang="en" style="display:none;">Accept</button>
-                <button id="reject-cookies" data-lang="he">דוחה</button>
-                <button id="reject-cookies" data-lang="en" style="display:none;">Reject</button>
-            </div>
-        </div>
-    </div>
-    
     <div class="container">
         <header class="secondary-header">
+            <div class="logo-title-wrapper">
+                <h1 class="site-title">Optopia</h1>
+                <img src="https://drive.google.com/thumbnail?id=12iXrVE-B1wleWdjiNW7bC4Hl8plPnZfo" alt="Optopia Logo" class="logo">
+            </div>
             <div class="nav-buttons">
                 <a href="index.html" class="nav-btn">
                     <span data-lang="he">דף הבית</span>
@@ -112,10 +63,6 @@
                     <span data-lang="en" style="display:none;">Login</span>
                 </a>
             </div>
-            <div class="logo-title-wrapper">
-                <h1 class="site-title">Optopia</h1>
-                <img src="assets/optopia-logo.png" alt="Optopia Logo" class="logo">
-            </div>
         </header>
 
         <main>
@@ -126,13 +73,13 @@
                         <input type="file" id="image-upload" style="display: none;" accept="image/*">
                     </div>
                     <div class="member-info">
-                        <h1 id="member-name" class="editable" data-field="name">
-                            <span data-lang="he"></span>
-                            <span data-lang="en" style="display:none;"></span>
+                        <h1 id="member-name">
+                            <span class="editable" data-field="name_he" data-lang="he"></span>
+                            <span class="editable" data-field="name_en" data-lang="en" style="display:none;"></span>
                         </h1>
-                        <p id="member-role" class="editable" data-field="role">
-                            <span data-lang="he"></span>
-                            <span data-lang="en" style="display:none;"></span>
+                        <p id="member-role" class="member-role">
+                            <span class="editable" data-field="role_he" data-lang="he"></span>
+                            <span class="editable" data-field="role_en" data-lang="en" style="display:none;"></span>
                         </p>
                         <button id="edit-button" class="nav-btn" style="display: none;">
                             <span data-lang="he">ערוך פרופיל</span>
@@ -142,9 +89,9 @@
                 </div>
                 
                 <div class="member-bio">
-                    <p id="member-bio" class="editable" data-field="bio">
-                        <span data-lang="he"></span>
-                        <span data-lang="en" style="display:none;"></span>
+                    <p id="member-bio">
+                        <span class="editable" data-field="bio_he" data-lang="he"></span>
+                        <span class="editable" data-field="bio_en" data-lang="en" style="display:none;"></span>
                     </p>
                 </div>
 
@@ -152,15 +99,35 @@
                     <h2 data-lang="he">גלריית האמן</h2>
                     <h2 data-lang="en" style="display:none;">Artist Gallery</h2>
                     <div id="member-gallery-grid" class="grid-gallery"></div>
+                    <button id="add-gallery-item" class="nav-btn" style="display: none;">
+                        <span data-lang="he">הוסף פריט לגלריה</span>
+                        <span data-lang="en" style="display:none;">Add Gallery Item</span>
+                    </button>
                 </div>
 
                 <div class="member-courses-section">
                     <h2 data-lang="he">קורסים</h2>
                     <h2 data-lang="en" style="display:none;">Courses</h2>
                     <div id="member-courses-grid" class="grid-gallery"></div>
+                    <button id="add-course" class="nav-btn" style="display: none;">
+                        <span data-lang="he">הוסף קורס</span>
+                        <span data-lang="en" style="display:none;">Add Course</span>
+                    </button>
+                </div>
+                <div class="edit-controls">
+                    <button id="save-changes" class="nav-btn">
+                        <span data-lang="he">שמור שינויים</span>
+                        <span data-lang="en" style="display:none;">Save Changes</span>
+                    </button>
+                    <button id="cancel-changes" class="nav-btn">
+                        <span data-lang="he">בטל שינויים</span>
+                        <span data-lang="en" style="display:none;">Cancel Changes</span>
+                    </button>
                 </div>
             </div>
         </main>
     </div>
+
+    <script type="module" src="./js/member-page.js"></script>
 </body>
 </html>

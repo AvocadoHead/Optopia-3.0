@@ -1,47 +1,55 @@
-import { normalizeUsername } from './utils.js';
-import { loginUser } from './api-service.js';
+import { getCurrentLang, setCurrentLang } from './utils.js';
+import { API_BASE_URL, login } from './api-service.js';
 
-// Handles user login
-async function login(username, password) {
-    try {
-        // Normalize the username
-        const normalizedUsername = normalizeUsername(username);
+let currentLang = getCurrentLang();
 
-        // Call the login API
-        const response = await loginUser(normalizedUsername, password);
+// Language toggle functionality
+window.toggleLanguage = function() {
+    currentLang = currentLang === 'he' ? 'en' : 'he';
+    setCurrentLang(currentLang);
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
+    updateLanguageDisplay();
+};
 
-        // Check the response structure
-        if (response && response.token) {
-            console.log('Login successful!');
-            localStorage.setItem('authToken', response.token); // Save token in localStorage
-            return { success: true, message: 'Login successful!' };
+function updateLanguageDisplay() {
+    document.querySelectorAll('[data-lang]').forEach(el => {
+        if (el.getAttribute('data-lang') === currentLang) {
+            el.style.display = '';
         } else {
-            console.error('Invalid username or password');
-            return { success: false, message: 'Invalid username or password' };
+            el.style.display = 'none';
         }
-    } catch (error) {
-        console.error('Login error:', error.message);
-        return { success: false, message: 'Login failed. Please try again.' };
-    }
+    });
 }
 
-// Logs out the user by clearing the auth token
-async function logout() {
+// Handle login form submission
+async function handleLogin(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('login-error');
+    
     try {
-        localStorage.removeItem('authToken'); // Remove token from localStorage
-        console.log('Logout successful');
-        return { success: true, message: 'Logout successful' };
+        const { memberId } = await login(username, password);
+        
+        // Redirect to member page in edit mode
+        window.location.href = `https://avocadohead.github.io/Optopia-3.0/member.html?id=${memberId}&edit=true`;
     } catch (error) {
-        console.error('Logout error:', error);
-        return { success: false, message: 'Logout failed. Please try again.' };
+        console.error('Login error:', error);
+        errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
     }
 }
 
-// Checks if the user is logged in by verifying the presence of an auth token
-function isLoggedIn() {
-    const token = localStorage.getItem('authToken');
-    return !!token; // Return true if token exists, otherwise false
-}
-
-// Export all login-related functions
-export { login, logout, isLoggedIn };
+// Initialize page
+document.addEventListener('DOMContentLoaded', () => {
+    // Set up form submission
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Initialize language display
+    updateLanguageDisplay();
+});

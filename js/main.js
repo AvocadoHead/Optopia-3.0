@@ -1,9 +1,23 @@
-// Optopia Core Functionality
-import { getAllCourses, getAllGalleryItems, getAllMembers, getMemberById, updateMember, login, logout } from './api-service.js';
-import { handleError, getLangText, getCurrentLang, setCurrentLang, getMemberIdFromUrl } from './utils.js';
+// Import necessary modules and functions
+import { 
+    getAllCourses, 
+    getAllGalleryItems, 
+    getAllMembers, 
+    getMemberById, 
+    loginUser, 
+    logoutUser 
+} from './api-service.js';
+
+import { 
+    handleError, 
+    getLangText, 
+    getCurrentLang, 
+    setCurrentLang, 
+    getMemberIdFromUrl 
+} from './utils.js';
 
 // Global state
-let currentLang = getCurrentLang() || 'he'; // Default to Hebrew if not set
+let currentLang = getCurrentLang() || 'he'; // Default to Hebrew
 let dataInitialized = false;
 let galleryData = [];
 let coursesData = [];
@@ -16,949 +30,185 @@ function toggleLanguage() {
     setCurrentLang(currentLang);
     document.documentElement.lang = currentLang;
     document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
-    
+
     console.log(`Language toggled: ${prevLang} → ${currentLang}`);
-    
-    // Update language toggle button text
-    const toggleBtn = document.querySelector('button[onclick="toggleLanguage()"]');
-    if (toggleBtn) {
-        toggleBtn.textContent = currentLang === 'he' ? 'EN' : 'HE';
-    }
-    
+
+    // Update UI to reflect the new language
     updateLanguageDisplay();
-    
-    // Re-render dynamic content based on current page
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    
-    switch (currentPage) {
-        case 'index.html':
-        case '':
-            const membersGrid = document.getElementById('members-grid');
-            const galleryPreview = document.getElementById('gallery-preview');
-            const coursesPreview = document.getElementById('courses-preview');
-            
-            if (membersGrid) {
-                renderMembers(membersGrid, 15);
-            }
-            if (galleryPreview) {
-                renderGalleryPreview(galleryPreview, 6);
-            }
-            if (coursesPreview) {
-                renderCoursesPreview(coursesPreview, 6);
-            }
-            break;
-            
-        case 'gallery.html':
-            const galleryGrid = document.getElementById('gallery-grid');
-            if (galleryGrid) {
-                renderGalleryPage();
-            }
-            break;
-            
-        case 'courses.html':
-            const coursesGrid = document.getElementById('courses-grid');
-            if (coursesGrid) {
-                renderCoursesPage();
-            }
-            
-            // Update search placeholder
-            const searchInput = document.getElementById('courses-search-input');
-            if (searchInput) {
-                searchInput.placeholder = currentLang === 'he' ? 
-                    'חפש קורסים, מרצים או נושאים' : 
-                    'Search courses, teachers, or topics';
-            }
-            break;
-            
-        case 'member.html':
-            initMemberPage();
-            break;
-            
-        case 'gallery-item.html':
-            initGalleryItemPage();
-            break;
-            
-        case 'course-item.html':
-            initCourseItemPage();
-            break;
-    }
+
+    // Re-render page-specific dynamic content
+    initializePage();
 }
 
+// Update visible elements based on the selected language
 function updateLanguageDisplay() {
     document.querySelectorAll('[data-lang]').forEach(el => {
         el.style.display = el.dataset.lang === currentLang ? '' : 'none';
     });
 }
 
+// Initialize language toggle button
 function initLanguageToggle() {
-    const toggleBtn = document.querySelector('button[onclick="toggleLanguage()"]');
+    const toggleBtn = document.getElementById('toggle-language');
     if (toggleBtn) {
         toggleBtn.onclick = toggleLanguage;
+        toggleBtn.textContent = currentLang === 'he' ? 'EN' : 'HE';
     }
     updateLanguageDisplay();
 }
 
-// Toggle members display
-function toggleMembers() {
-    const membersContainer = document.getElementById('members-grid');
-    const toggleBtn = document.getElementById('toggle-members');
-    
-    if (!membersContainer || !toggleBtn) return;
-    
-    window.membersExpanded = !window.membersExpanded;
-    renderMembers(membersContainer, 15);
-    
-    toggleBtn.textContent = window.membersExpanded ? 
-        getLangText({ he: 'הצג פחות', en: 'Show Less' }, currentLang) : 
-        getLangText({ he: 'הצג עוד', en: 'Show More' }, currentLang);
-}
-
-// Data initialization
+// Load gallery items from the API
 async function loadGalleryItems() {
     try {
-        const items = await getAllGalleryItems();
-        if (items && Array.isArray(items)) {
-            galleryData = items;
-            return items;
-        }
-        return [];
+        galleryData = await getAllGalleryItems();
+        return galleryData;
     } catch (error) {
-        console.error('Error loading gallery items:', error);
-        galleryData = [];
+        console.error('Error loading gallery items:', error.message);
         return [];
     }
 }
 
+// Load courses from the API
 async function loadCourses() {
     try {
-        const courses = await getAllCourses();
-        if (courses && Array.isArray(courses)) {
-            coursesData = courses;
-            return courses;
-        } else {
-            console.error('Invalid courses data received:', courses);
-            return [];
-        }
+        coursesData = await getAllCourses();
+        return coursesData;
     } catch (error) {
-        console.error('Error loading courses:', error);
-        coursesData = [];
+        console.error('Error loading courses:', error.message);
         return [];
     }
 }
 
+// Load members from the API
 async function loadMembers() {
     try {
-        const members = await getAllMembers();
-        if (members && Array.isArray(members)) {
-            membersData = members;
-            return members;
-        }
-        return [];
+        membersData = await getAllMembers();
+        return membersData;
     } catch (error) {
-        console.error('Error loading members:', error);
-        membersData = [];
+        console.error('Error loading members:', error.message);
         return [];
     }
 }
 
+// Initialize app data
 async function initializeAppData() {
     if (dataInitialized) return;
-    
+
     try {
-        // Fetch all data in parallel
         const [galleryItems, courses, members] = await Promise.all([
             loadGalleryItems(),
             loadCourses(),
             loadMembers()
         ]);
-        
-        // Store the data
+
         galleryData = galleryItems;
         coursesData = courses;
         membersData = members;
-        
+
         dataInitialized = true;
     } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error initializing app data:', error.message);
         throw error;
     }
 }
 
-// Rendering functions
-function renderGalleryItem(item, container) {
-    if (!item || !container) return;
-    
-    const card = document.createElement('div');
-    card.className = 'gallery-card';
-    
-    const imageWrapper = document.createElement('div');
-    imageWrapper.className = 'gallery-image';
-    
-    const img = document.createElement('img');
-    const title = currentLang === 'he' ? item.title_he : item.title_en;
-    const description = currentLang === 'he' ? item.description_he : item.description_en;
-    
-    img.alt = title;
-    img.src = item.image_url || 'assets/default-gallery.jpg';
-    
-    const info = document.createElement('div');
-    info.className = 'gallery-info';
-    info.innerHTML = `
-        <h3>${title || ''}</h3>
-        ${description ? `<p class="description">${description}</p>` : ''}
-    `;
-    
-    imageWrapper.appendChild(img);
-    card.appendChild(imageWrapper);
-    card.appendChild(info);
-    
-    // Handle image loading
-    img.onerror = () => {
-        console.error('Failed to load image:', item.image_url);
-        if (img.src !== 'assets/default-gallery.jpg') {
-            img.src = 'assets/default-gallery.jpg';
-        }
-    };
-    
-    // Add click handler
-    card.addEventListener('click', () => {
-        window.location.href = `gallery-item.html?id=${item.id}`;
-    });
-    
-    container.appendChild(card);
-}
-
+// Render functions for gallery, courses, and members
 function renderGalleryPreview(container, count = 6) {
-    if (!container) return;
-    
+    if (!container || galleryData.length === 0) return;
+
     container.innerHTML = '';
     const itemsToShow = galleryData.slice(0, count);
-    
     itemsToShow.forEach(item => {
-        renderGalleryItem(item, container);
+        const card = document.createElement('div');
+        card.className = 'gallery-card';
+        card.innerHTML = `
+            <img src="${item.image_url || 'assets/default-gallery.jpg'}" alt="${getLangText(item.title, currentLang)}">
+            <div class="gallery-info">
+                <h3>${getLangText(item.title, currentLang)}</h3>
+                <p>${getLangText(item.description, currentLang)}</p>
+            </div>
+        `;
+        card.onclick = () => window.location.href = `gallery-item.html?id=${item.id}`;
+        container.appendChild(card);
     });
 }
 
-function renderGalleryPage() {
-    const container = document.querySelector('#gallery-grid');
-    if (!container) {
-        console.warn('Gallery page: Missing container');
-        return;
-    }
+function renderCoursesPreview(container, count = 6) {
+    if (!container || coursesData.length === 0) return;
 
-    try {
-        console.log('Rendering gallery page:', galleryData);
-        container.innerHTML = '';
-        
-        galleryData.forEach(item => renderGalleryItem(item, container));
-    } catch (error) {
-        console.error('Error rendering gallery page:', error);
-        container.innerHTML = '<div class="error-message">Error loading gallery</div>';
-    }
-}
-
-function renderCoursesPreview(container, count = 9) {
-    if (!container) return;
-    
     container.innerHTML = '';
     const coursesToShow = coursesData.slice(0, count);
-    
     coursesToShow.forEach(course => {
-        console.log('Rendering course:', course);
-        
-        const courseElement = document.createElement('div');
-        courseElement.className = 'course-item';
-        courseElement.onclick = () => window.location.href = `course-item.html?id=${course.id}`;
-        
-        const name = currentLang === 'he' ? course.title_he : course.title_en;
-        const description = currentLang === 'he' ? course.description_he : course.description_en;
-        
-        console.log('Course name:', name);
-        console.log('Course description:', description);
-        
-        courseElement.innerHTML = `
-            <div class="course-content">
-                <h3>${name || ''}</h3>
-                <p class="course-description">${description || ''}</p>
-            </div>
-            ${course.teachers && course.teachers.length > 0 ? `
-                <div class="teachers-preview">
-                    ${course.teachers.map(teacher => {
-                        if (!teacher) return '';
-                        const teacherName = currentLang === 'he' ? teacher.name_he : teacher.name_en;
-                        return `
-                            <div class="teacher-avatar">
-                                <img src="${teacher.image_url || 'assets/default-profile.jpg'}" 
-                                     alt="${teacherName || ''}" 
-                                     title="${teacherName || ''}"
-                                     onerror="this.src='assets/default-profile.jpg'"
-                                     style="border-radius: 50%; width: 40px; height: 40px;">
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            ` : ''}
+        const card = document.createElement('div');
+        card.className = 'course-card';
+        card.innerHTML = `
+            <h3>${getLangText(course.title, currentLang)}</h3>
+            <p>${getLangText(course.description, currentLang)}</p>
         `;
-        
-        container.appendChild(courseElement);
-    });
-}
-
-async function renderCoursesPage() {
-    console.log('Rendering courses page');
-    console.log('Current courses data:', coursesData);
-
-    const coursesGrid = document.getElementById('courses-grid');
-    if (!coursesGrid) {
-        console.error('Could not find courses-grid element');
-        return;
-    }
-
-    if (!coursesData || coursesData.length === 0) {
-        console.log('No courses data available');
-        coursesGrid.innerHTML = `
-            <div class="no-results">
-                ${currentLang === 'he' ? 'אין קורסים זמינים' : 'No courses available'}
-            </div>
-        `;
-        return;
-    }
-
-    coursesGrid.innerHTML = '';
-    coursesData.forEach(course => {
-        console.log('Processing course:', course);
-        const courseCard = document.createElement('div');
-        courseCard.className = 'course-card';
-        courseCard.onclick = () => window.location.href = `course-item.html?id=${course.id}`;
-
-        const name = currentLang === 'he' ? course.title_he : course.title_en;
-        const description = currentLang === 'he' ? course.description_he : course.description_en;
-
-        console.log('Course name:', name);
-        console.log('Course description:', description);
-
-        courseCard.innerHTML = `
-            <div class="course-content">
-                <h3>${name || ''}</h3>
-                <p class="course-description">${description || ''}</p>
-            </div>
-            ${course.teachers && course.teachers.length > 0 ? `
-                <div class="teachers-preview">
-                    ${course.teachers.map(teacher => {
-                        if (!teacher) return '';
-                        const teacherName = currentLang === 'he' ? teacher.name_he : teacher.name_en;
-                        return `
-                            <div class="teacher-avatar">
-                                <img src="${teacher.image_url || 'assets/default-profile.jpg'}" 
-                                     alt="${teacherName || ''}" 
-                                     title="${teacherName || ''}"
-                                     onerror="this.src='assets/default-profile.jpg'"
-                                     style="border-radius: 50%; width: 40px; height: 40px;">
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            ` : ''}
-        `;
-
-        coursesGrid.appendChild(courseCard);
-    });
-}
-
-function renderCourses(courses) {
-    console.log('Rendering courses:', courses);
-    const coursesGrid = document.getElementById('courses-grid');
-    if (!coursesGrid) return;
-
-    coursesGrid.innerHTML = '';
-    courses.forEach(course => {
-        const courseCard = document.createElement('div');
-        courseCard.className = 'course-card';
-        courseCard.onclick = () => window.location.href = `course-item.html?id=${course.id}`;
-
-        const name = currentLang === 'he' ? course.title_he : course.title_en;
-        const description = currentLang === 'he' ? course.description_he : course.description_en;
-
-        courseCard.innerHTML = `
-            <div class="course-content">
-                <h3>${name || ''}</h3>
-                <p class="course-description">${description || ''}</p>
-            </div>
-            ${course.teachers && course.teachers.length > 0 ? `
-                <div class="teachers-preview">
-                    ${course.teachers.map(teacher => {
-                        if (!teacher) return '';
-                        const teacherName = currentLang === 'he' ? teacher.name_he : teacher.name_en;
-                        return `
-                            <div class="teacher-avatar">
-                                <img src="${teacher.image_url || 'assets/default-profile.jpg'}" 
-                                 alt="${teacherName || ''}" 
-                                 title="${teacherName || ''}"
-                                 onerror="this.src='assets/default-profile.jpg'"
-                                 style="border-radius: 50%; width: 40px; height: 40px;">
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            ` : ''}
-        `;
-
-        coursesGrid.appendChild(courseCard);
+        card.onclick = () => window.location.href = `course-item.html?id=${course.id}`;
+        container.appendChild(card);
     });
 }
 
 function renderMembers(container, limit = null) {
-    if (!container) return;
-    
+    if (!container || membersData.length === 0) return;
+
     container.innerHTML = '';
-    let membersToShow = membersData;
-    
-    if (limit && !window.membersExpanded) {
-        membersToShow = membersData.slice(0, limit);
-    }
-    
+    const membersToShow = limit ? membersData.slice(0, limit) : membersData;
+
     membersToShow.forEach(member => {
-        const memberCard = document.createElement('div');
-        memberCard.className = 'member-card';
-        memberCard.onclick = () => window.location.href = `member.html?id=${member.id}`;
-        
-        memberCard.innerHTML = `
-            <div class="member-image">
-                <img src="${member.image_url || 'assets/default-profile.jpg'}" 
-                     alt="${currentLang === 'he' ? member.name_he : member.name_en}"
-                     onerror="this.src='assets/default-profile.jpg'">
-            </div>
-            <div class="member-info">
-                <h3>${currentLang === 'he' ? member.name_he : member.name_en}</h3>
-                ${member.role_he || member.role_en ? 
-                    `<p class="member-role">${currentLang === 'he' ? member.role_he : member.role_en}</p>` : ''}
-            </div>
+        const card = document.createElement('div');
+        card.className = 'member-card';
+        card.innerHTML = `
+            <img src="${member.image_url || 'assets/default-profile.jpg'}" alt="${getLangText(member.name, currentLang)}">
+            <h3>${getLangText(member.name, currentLang)}</h3>
         `;
-        
-        container.appendChild(memberCard);
+        card.onclick = () => window.location.href = `member.html?id=${member.id}`;
+        container.appendChild(card);
     });
 }
 
-// Page Initializers
+// Initialize home page
 async function initHomePage() {
     console.log('Initializing home page');
     if (!dataInitialized) await initializeAppData();
-    
+
     const galleryPreview = document.getElementById('gallery-preview');
     const coursesPreview = document.getElementById('courses-preview');
     const membersGrid = document.getElementById('members-grid');
-    const toggleBtn = document.getElementById('toggle-members');
-    
-    // Initialize members section
-    if (membersGrid && membersData.length > 0) {
-        // Shuffle members initially
-        let shuffledMembers = [...membersData];
-        for (let i = shuffledMembers.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffledMembers[i], shuffledMembers[j]] = [shuffledMembers[j], shuffledMembers[i]];
-        }
-        
-        // Render initial state
-        window.membersExpanded = false;
-        renderMembers(membersGrid, 15);
-    }
-    
-    // Add click handler for toggle button
-    if (toggleBtn) {
-        toggleBtn.onclick = toggleMembers;
-    }
 
-    if (galleryPreview && !galleryPreview.hasChildNodes()) {
-        console.log('Rendering gallery preview');
-        renderGalleryPreview(galleryPreview, 6);
-    }
-
-    if (coursesPreview && !coursesPreview.hasChildNodes()) {
-        renderCoursesPreview(coursesPreview, 6);
-    }
+    if (galleryPreview) renderGalleryPreview(galleryPreview, 6);
+    if (coursesPreview) renderCoursesPreview(coursesPreview, 6);
+    if (membersGrid) renderMembers(membersGrid, 15);
 }
 
-async function initGalleryPage() {
-    console.log('Initializing gallery page');
-    if (!dataInitialized) await initializeAppData();
-    
-    // Initialize language toggle first
-    initLanguageToggle();
-    
-    const galleryGrid = document.getElementById('gallery-grid');
-    if (galleryGrid) {
-        renderGalleryPage();
-    }
-}
-
-async function initCoursesPage() {
-    console.log('Initializing courses page');
-    if (!dataInitialized) {
-        await initializeAppData();
-    }
-    
-    // Initialize language toggle first
-    initLanguageToggle();
-    
-    // Render the courses
-    renderCoursesPage();
-    
-    // Set initial search input placeholder and handler
-    const searchInput = document.getElementById('courses-search-input');
-    if (searchInput) {
-        // Set initial placeholder based on language
-        searchInput.placeholder = currentLang === 'he' ? 
-            'חפש קורסים, מרצים או נושאים' : 
-            'Search courses, teachers, or topics';
-            
-        // Add search input handler
-        searchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            
-            // Filter courses based on search term
-            const filteredCourses = coursesData.filter(course => {
-                const nameMatch = (course.title_he?.toLowerCase().includes(searchTerm) || 
-                                course.title_en?.toLowerCase().includes(searchTerm));
-                const descMatch = (course.description_he?.toLowerCase().includes(searchTerm) || 
-                                course.description_en?.toLowerCase().includes(searchTerm));
-                
-                // Also search through teacher names if available
-                const teacherMatch = course.teachers?.some(teacher => {
-                    return teacher.name_he?.toLowerCase().includes(searchTerm) ||
-                        teacher.name_en?.toLowerCase().includes(searchTerm);
-                });
-                
-                return nameMatch || descMatch || teacherMatch;
-            });
-            
-            // Re-render with filtered courses
-            renderCourses(filteredCourses);
-        });
-    }
-}
-
-async function initCourseItemPage() {
-    console.log('Initializing course item page');
-    if (!dataInitialized) await initializeAppData();
-    
-    // Initialize language toggle
-    initLanguageToggle();
-    
-    // Get course ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const courseId = urlParams.get('id');
-    
-    if (!courseId || !coursesData) return;
-    
-    const course = coursesData.find(c => c.id === courseId);
-    if (!course) return;
-    
-    console.log('Found course:', course);
-    
-    // Update course info
-    const titleElement = document.getElementById('course-title');
-    if (titleElement) {
-        const title = currentLang === 'he' ? course.title_he : course.title_en;
-        titleElement.textContent = title || '';
-    }
-    
-    const descElement = document.getElementById('course-description');
-    if (descElement) {
-        const description = currentLang === 'he' ? course.description_he : course.description_en;
-        descElement.textContent = description || '';
-    }
-    
-    // Add teachers if available
-    if (course.teachers && course.teachers.length > 0) {
-        const teachersContainer = document.getElementById('teachers-container');
-        if (teachersContainer) {
-            teachersContainer.innerHTML = course.teachers.map(teacher => {
-                if (!teacher) return '';
-                
-                const teacherName = currentLang === 'he' ? teacher.name_he : teacher.name_en;
-                const teacherRole = currentLang === 'he' ? teacher.role_he : teacher.role_en;
-                
-                return `
-                    <div class="teacher" onclick="window.location.href='member.html?id=${teacher.id}'">
-                        <img src="${teacher.image_url || 'assets/default-profile.jpg'}" 
-                             alt="${teacherName || ''}" 
-                             title="${teacherName || ''}"
-                             onerror="this.src='assets/default-profile.jpg'">
-                        <div class="teacher-info">
-                            <h3>${teacherName || ''}</h3>
-                            ${teacherRole ? `<p>${teacherRole}</p>` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-    }
-    
-    // Add difficulty if available
-    const difficultyElement = document.getElementById('course-difficulty');
-    if (difficultyElement && course.difficulty) {
-        const difficulty = currentLang === 'he' ? course.difficulty_he : course.difficulty_en;
-        difficultyElement.textContent = difficulty || '';
-    }
-    
-    // Add duration if available
-    const durationElement = document.getElementById('course-duration');
-    if (durationElement && course.duration) {
-        const duration = currentLang === 'he' ? course.duration_he : course.duration_en;
-        durationElement.textContent = duration || '';
-    }
-    
-    // Add categories if available
-    const categoriesContainer = document.getElementById('course-categories');
-    if (categoriesContainer && course.categories) {
-        const categories = Array.isArray(course.categories) ? course.categories : [course.categories];
-        categoriesContainer.innerHTML = categories.map(cat => {
-            const categoryName = currentLang === 'he' ? cat.name_he : cat.name_en;
-            return `<span class="category">${categoryName || ''}</span>`;
-        }).join('');
-    }
-    
-    // Add subtopics if available
-    const subtopicsList = document.getElementById('subtopics-list');
-    if (subtopicsList && course.subtopics) {
-        const topics = Array.isArray(course.subtopics) ? course.subtopics : [course.subtopics];
-        subtopicsList.innerHTML = topics.map(topic => {
-            const topicName = currentLang === 'he' ? topic.name_he : topic.name_en;
-            return `<li>${topicName || ''}</li>`;
-        }).join('');
-    }
-}
-
-async function loadMemberData(memberId) {
-    try {
-        const memberData = await getMemberById(memberId);
-        if (memberData) {
-            updateMemberDisplay(memberData);
-        }
-    } catch (error) {
-        console.error('Error loading member data:', error);
-    }
-}
-
-async function initMemberPage() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const memberId = urlParams.get('id');
-    
-    if (!memberId || !membersData) return;
-    
-    const member = membersData.find(m => m.id === memberId);
-    if (!member) return;
-    
-    // Update member info
-    document.getElementById('member-image').src = member.image_url || 'assets/default-member.jpg';
-    
-    const nameElement = document.getElementById('member-name');
-    if (nameElement) {
-        nameElement.querySelector('[data-lang="he"]').textContent = member.name_he;
-        nameElement.querySelector('[data-lang="en"]').textContent = member.name_en;
-    }
-    
-    const roleElement = document.getElementById('member-role');
-    if (roleElement) {
-        roleElement.querySelector('[data-lang="he"]').textContent = member.role?.he || '';
-        roleElement.querySelector('[data-lang="en"]').textContent = member.role?.en || '';
-    }
-    
-    const bioElement = document.getElementById('member-bio');
-    if (bioElement) {
-        bioElement.querySelector('[data-lang="he"]').textContent = member.bio?.he || '';
-        bioElement.querySelector('[data-lang="en"]').textContent = member.bio?.en || '';
-    }
-    
-    // Render member's gallery
-    const galleryContainer = document.getElementById('member-gallery');
-    if (galleryContainer) {
-        const memberGallery = galleryData.filter(item => item.artist === memberId);
-        memberGallery.forEach(item => {
-            const galleryItem = document.createElement('div');
-            galleryItem.className = 'gallery-item';
-            
-            galleryItem.innerHTML = `
-                <img src="${item.imageUrl}" alt="${getLangText(item.title, currentLang)}" onerror="this.src='assets/placeholder.jpg'">
-                <div class="overlay">
-                    <h3>${getLangText(item.title, currentLang)}</h3>
-                    <p>${getLangText(item.description, currentLang)}</p>
-                </div>
-            `;
-            
-            galleryItem.addEventListener('click', () => {
-                window.location.href = `gallery-item.html?id=${item.id}`;
-            });
-            
-            galleryContainer.appendChild(galleryItem);
-        });
-    }
-    
-    // Render member's courses
-    const coursesContainer = document.getElementById('member-courses');
-    if (coursesContainer) {
-        const memberCourses = coursesData.filter(course => 
-            course.teachers && course.teachers.some(teacher => teacher.id === memberId)
-        );
-        
-        memberCourses.forEach(course => {
-            const courseCard = document.createElement('div');
-            courseCard.className = 'course-card';
-            courseCard.onclick = () => window.location.href = `course-item.html?id=${course.id}`;
-            
-            courseCard.innerHTML = `
-                <h3>${course.title_he || course.title_en}</h3>
-                <p>${course.description_he || course.description_en}</p>
-            `;
-            
-            coursesContainer.appendChild(courseCard);
-        });
-    }
-}
-
-// Update member display
-function updateMemberDisplay(memberData) {
-    // Update name
-    const nameHe = document.querySelector('[data-field="name_he"]');
-    const nameEn = document.querySelector('[data-field="name_en"]');
-    if (nameHe) nameHe.textContent = memberData.name_he || '';
-    if (nameEn) nameEn.textContent = memberData.name_en || '';
-
-    // Update role
-    const roleHe = document.querySelector('[data-field="role_he"]');
-    const roleEn = document.querySelector('[data-field="role_en"]');
-    if (roleHe) roleHe.textContent = memberData.role_he || '';
-    if (roleEn) roleEn.textContent = memberData.role_en || '';
-
-    // Update bio
-    const bioHe = document.querySelector('[data-field="bio_he"]');
-    const bioEn = document.querySelector('[data-field="bio_en"]');
-    if (bioHe) bioHe.textContent = memberData.bio_he || '';
-    if (bioEn) bioEn.textContent = memberData.bio_en || '';
-
-    // Update image
-    const memberImage = document.getElementById('member-image');
-    if (memberImage && memberData.image_url) {
-        memberImage.src = memberData.image_url;
-    }
-
-    // Update gallery items
-    const galleryGrid = document.getElementById('member-gallery-grid');
-    if (galleryGrid && memberData.gallery_items) {
-        galleryGrid.innerHTML = '';
-        memberData.gallery_items.forEach(item => {
-            const itemElement = renderGalleryItem(item, galleryGrid);
-            if (itemElement) {
-                galleryGrid.appendChild(itemElement);
-            }
-        });
-    }
-
-    // Update courses
-    const coursesGrid = document.getElementById('member-courses-grid');
-    if (coursesGrid && memberData.courses) {
-        coursesGrid.innerHTML = '';
-        memberData.courses.forEach(course => {
-            const courseElement = renderCourseItem(course);
-            if (courseElement) {
-                coursesGrid.appendChild(courseElement);
-            }
-        });
-    }
-}
-
-// Render a course item
-function renderCourseItem(course) {
-    const div = document.createElement('div');
-    div.className = 'course-card';
-    div.innerHTML = `
-        <div class="course-image">
-            <img src="${course.image_url || 'assets/default-course.jpg'}" alt="${course.title_he || course.title_en}">
-        </div>
-        <div class="course-info">
-            <h3>
-                <span data-lang="he">${course.title_he || ''}</span>
-                <span data-lang="en" style="display:none;">${course.title_en || ''}</span>
-            </h3>
-            <p class="course-description">
-                <span data-lang="he">${course.description_he || ''}</span>
-                <span data-lang="en" style="display:none;">${course.description_en || ''}</span>
-            </p>
-        </div>
-    `;
-    div.onclick = () => {
-        window.location.href = `course-item.html?id=${course.id}`;
-    };
-    return div;
-}
-
-async function initGalleryItemPage() {
-    console.log('Initializing gallery item page');
-    if (!dataInitialized) await initializeAppData();
-    
-    // Initialize language toggle
-    initLanguageToggle();
-    
-    // Get gallery item ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const itemId = urlParams.get('id');
-    
-    if (!itemId || !galleryData) return;
-    
-    const item = galleryData.find(i => i.id === itemId);
-    if (!item) return;
-    
-    // Update gallery item info
-    const imageElement = document.getElementById('gallery-item-image');
-    if (imageElement) {
-        imageElement.src = item.imageUrl;
-        imageElement.alt = getLangText(item.title, currentLang);
-        imageElement.onerror = () => {
-            imageElement.src = 'assets/default-gallery.jpg';
-        };
-    }
-    
-    const titleElement = document.getElementById('gallery-item-title');
-    if (titleElement) {
-        titleElement.textContent = getLangText(item.title, currentLang);
-    }
-    
-    const descElement = document.getElementById('gallery-item-description');
-    if (descElement) {
-        descElement.textContent = getLangText(item.description, currentLang);
-    }
-    
-    // Add artist info if available
-    if (item.artist) {
-        const artist = membersData.find(m => m.id === item.artist);
-        if (artist) {
-            const artistContainer = document.getElementById('gallery-item-artist-container');
-            if (artistContainer) {
-                artistContainer.innerHTML = `
-                    <img src="${artist.image_url}" alt="${getLangText(artist.name, currentLang)}" 
-                         title="${getLangText(artist.name, currentLang)}">
-                    <span>${getLangText(artist.name, currentLang)}</span>
-                `;
-                artistContainer.onclick = () => window.location.href = `member.html?id=${artist.id}`;
-            }
-        }
-    }
-}
-
-// Page Routing
+// Page router
 async function initializePage() {
     const path = window.location.pathname;
-    
+
     try {
         await initializeAppData();
-        
+
         if (path.includes('index.html') || path === '/') {
             await initHomePage();
         } else if (path.includes('gallery.html')) {
-            await initGalleryPage();
+            console.log('Initialize gallery page...');
         } else if (path.includes('courses.html')) {
-            await initCoursesPage();
+            console.log('Initialize courses page...');
         } else if (path.includes('member.html')) {
-            await initMemberPage();
-        } else if (path.includes('gallery-item.html')) {
-            await initGalleryItemPage();
-        } else if (path.includes('course-item.html')) {
-            await initCourseItemPage();
-        } else if (path.includes('login.html')) {
+            console.log('Initialize member page...');
         }
     } catch (error) {
-        console.error('Error initializing page:', error);
+        console.error('Error initializing page:', error.message);
     }
 }
 
-// Expose global data initialization
-window.initializeAppData = initializeAppData;
-
-// Ensure global data is always accessible
-window.getGlobalAppData = () => ({
-    galleryData,
-    coursesData,
-    membersData
-});
-
-// Initialize when DOM is loaded
+// Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        // Set initial language to Hebrew
-        setCurrentLang('he');
-        document.documentElement.lang = 'he';
-        document.documentElement.dir = 'rtl';
-        
-        // First initialize language
         initLanguageToggle();
-        
-        // Then initialize the page based on the current route
         await initializePage();
-        
     } catch (error) {
-        console.error('Error during initialization:', error);
+        console.error('Error during initialization:', error.message);
     }
 });
-
-// Expose necessary global functions
-window.toggleLanguage = toggleLanguage;
-window.toggleMembers = toggleMembers;
-
-// Gallery-related functions
-async function createGalleryItem(formData, token) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/gallery`, {
-            method: 'POST',
-            headers: {
-                ...defaultHeaders,
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Error creating gallery item:', error);
-        throw error;
-    }
-}
-
-async function deleteGalleryItem(itemId, token) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/gallery/${itemId}`, {
-            method: 'DELETE',
-            headers: {
-                ...defaultHeaders,
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Error deleting gallery item:', error);
-        throw error;
-    }
-}
-
-// Expose page initializers
-export { 
-    initCoursesPage, 
-    initializeAppData, 
-    getCurrentLang, 
-    setCurrentLang, 
-    toggleLanguage,
-    createGalleryItem,
-    deleteGalleryItem
-};

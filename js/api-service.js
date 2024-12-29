@@ -51,8 +51,7 @@ async function loginUser(username, password) {
  * Log out a user (placeholder for server-side logout if needed).
  */
 function logoutUser() {
-    // Example placeholder for logout functionality
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('authToken'); // Clear the token from local storage
 }
 
 /**
@@ -64,4 +63,12 @@ async function getUserById(userId) {
     return apiRequest(`/users/${userId}`);
 }
 
-export { loginUser, logoutUser, getUserById };
+/**
+ * Fetch all courses.
+ * @returns {Promise<Array>} - List of all courses.
+ */
+async function getAllCourses() {
+    return apiRequest('/courses', 'GET');
+}
+
+export { loginUser, logoutUser, getUserById, getAllCourses };
